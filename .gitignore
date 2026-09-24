@@ -1,0 +1,16 @@
+# Зависимости и сборка
+node_modules/
+dist/
+
+# IDE и системные файлы
+.idea/
+.vscode/
+.DS_Store
+
+# Временные файлы LibreOffice
+.~lock.*#
+
+# Локальные переменные окружения
+.env
+.env.*
+!.env.example
