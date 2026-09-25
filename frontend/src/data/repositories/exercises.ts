@@ -2,6 +2,7 @@ import { filterExercises, hasDuplicateName, type ExerciseFilter } from '../../do
 import type { Exercise, ExerciseType, ID, MuscleGroup } from '../../domain/types'
 import type { FitnessDB } from '../db'
 import type { Clock } from './clock'
+import { newId } from '../../domain/id'
 
 export interface ExerciseInput {
   name: string
@@ -38,7 +39,7 @@ export function exercisesRepo(db: FitnessDB, clock: Clock) {
 
     async create(input: ExerciseInput): Promise<Exercise> {
       const exercise: Exercise = {
-        id: crypto.randomUUID(),
+        id: newId(),
         name: await validateName(input.name),
         muscle: input.muscle,
         type: input.type,

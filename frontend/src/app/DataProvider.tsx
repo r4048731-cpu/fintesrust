@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { createRepositories, FitnessDB, type Repositories } from '../data'
 import { DataContext } from './dataContext'
+import { requestPersistentStorage } from './device'
 
 let appRepos: Repositories | null = null
 function defaultRepos(): Repositories {
@@ -23,7 +24,11 @@ export function DataProvider({ children, repos }: Props) {
     let cancelled = false
     value
       .init()
-      .then(() => !cancelled && setState('ready'))
+      .then(() => {
+        if (!cancelled) setState('ready')
+        // Попросить браузер не очищать данные (работает на HTTPS)
+        void requestPersistentStorage()
+      })
       .catch((err: unknown) => {
         console.error(err)
         if (!cancelled) setState('error')

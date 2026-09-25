@@ -189,3 +189,40 @@ export function weeklyTonnage(workouts: Workout[], weeks: number, now: Date): We
   }
   return result
 }
+
+/** Сколько тренировок с каждым упражнением: для списка выбора на экране прогресса. */
+export function exerciseUsage(workouts: Workout[]): Map<ID, number> {
+  const counts = new Map<ID, number>()
+  for (const w of countable(workouts)) {
+    for (const id of new Set(
+      w.entries.filter((e) => doneSets(e.sets).length).map((e) => e.exerciseId),
+    )) {
+      counts.set(id, (counts.get(id) ?? 0) + 1)
+    }
+  }
+  return counts
+}
+
+export interface ActivitySummary {
+  /** Тренировок за последние 7 дней, включая сегодня. */
+  last7: number
+  last30: number
+  tonnage7Kg: number
+  total: number
+}
+
+/** Общая статистика (ТЗ 2.5, п. 3) на момент `now`. */
+export function activitySummary(workouts: Workout[], now: Date): ActivitySummary {
+  const day = (offset: number) =>
+    toISODate(new Date(now.getFullYear(), now.getMonth(), now.getDate() - offset))
+  const from7 = day(6)
+  const from30 = day(29)
+  const list = countable(workouts)
+  const in7 = list.filter((w) => w.date >= from7)
+  return {
+    last7: in7.length,
+    last30: list.filter((w) => w.date >= from30).length,
+    tonnage7Kg: in7.reduce((sum, w) => sum + workoutTonnage(w), 0),
+    total: list.length,
+  }
+}

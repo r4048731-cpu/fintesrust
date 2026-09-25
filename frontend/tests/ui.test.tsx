@@ -55,7 +55,7 @@ describe('навигация', () => {
 
   it('шаг веса сохраняется в настройках', async () => {
     const user = userEvent.setup()
-    const { repos } = await renderApp()
+    const { repos } = await renderApp('/settings')
     await user.click(await screen.findByRole('button', { name: /Шаг веса, кг: увеличить/ }))
     await expect.poll(() => repos.meta.get('weightStepKg')).toBe(2.75)
   })

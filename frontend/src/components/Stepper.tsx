@@ -1,5 +1,5 @@
 import { useId, useState } from 'react'
-import { formatDecimal, parseDecimal, stepValue, clamp } from './number'
+import { formatDecimal, parseDecimal, stepValue, clamp } from '../domain/number'
 import styles from './Stepper.module.css'
 
 interface Props {
@@ -14,6 +14,8 @@ interface Props {
   /** Разрешить дробные значения (вес) или только целые (повторения). */
   decimal?: boolean
   id?: string
+  /** Узкий вариант для строк подходов, где в ряд стоят два счётчика. */
+  compact?: boolean
 }
 
 /**
@@ -29,6 +31,7 @@ export function Stepper({
   label,
   decimal = false,
   id,
+  compact = false,
 }: Props) {
   const autoId = useId()
   const inputId = id ?? autoId
@@ -44,7 +47,7 @@ export function Stepper({
   }
 
   return (
-    <div className={styles.stepper}>
+    <div className={compact ? `${styles.stepper} ${styles.compact}` : styles.stepper}>
       <button
         type="button"
         className={styles.btn}

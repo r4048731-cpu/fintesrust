@@ -31,3 +31,10 @@ export function stepValue(
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value))
 }
+
+const integerFormat = new Intl.NumberFormat('ru', { maximumFractionDigits: 0 })
+
+/** Целое с разделителем тысяч: 12500 → «12 500». Для тоннажа. */
+export function formatInteger(n: number): string {
+  return integerFormat.format(Math.round(n))
+}

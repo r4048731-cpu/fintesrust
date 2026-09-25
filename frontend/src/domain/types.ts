@@ -117,6 +117,14 @@ export interface Workout extends Syncable {
   entries: WorkoutEntry[]
   /** Дублирует exerciseId из entries для мульти-индекса `*exerciseIds`. */
   exerciseIds: ID[]
+  /**
+   * Когда закончится текущий отдых. Хранится метка времени, а не остаток секунд:
+   * таймер остаётся верным после сворачивания, блокировки экрана и перезагрузки.
+   * Необязательное поле: в записях этапа 1 его нет, миграция не нужна.
+   */
+  restEndsAt?: Timestamp | null
+  /** Полная длительность текущего отдыха, для полосы прогресса. */
+  restTotalSec?: number
 }
 
 /** Записи таблицы meta: настройки и служебные указатели. */
@@ -127,6 +135,8 @@ export interface MetaValues {
   activeProgramId: ID | null
   /** Индекс следующего дня для каждой программы. */
   nextDayIndex: Record<ID, number>
+  /** Когда последний раз сохранялась резервная копия; null — ни разу. */
+  lastExportAt: Timestamp | null
 }
 
 export type MetaKey = keyof MetaValues

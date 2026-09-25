@@ -16,6 +16,7 @@ import type {
 import type { FitnessDB } from '../db'
 import type { Clock } from './clock'
 import { programsRepo } from './programs'
+import { newId } from '../../domain/id'
 
 export class ActiveWorkoutExistsError extends Error {
   constructor() {
@@ -156,7 +157,7 @@ export function workoutsRepo(db: FitnessDB, clock: Clock) {
       for (const item of day?.items ?? []) entries.push(await buildEntry(item.exerciseId, item))
       const workout = withIndex(
         {
-          id: crypto.randomUUID(),
+          id: newId(),
           date: toISODate(new Date(now)),
           name: day?.name ?? 'Свободная тренировка',
           programId: program?.id ?? null,

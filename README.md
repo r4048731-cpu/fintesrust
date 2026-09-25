@@ -22,4 +22,4 @@ fitnes/
   backend/     серверная часть, появится только в v3 (Supabase)
 ```
 
-С чего начать: [docs/ROADMAP.md](docs/ROADMAP.md).
+План и статус: [docs/ROADMAP.md](docs/ROADMAP.md). Команды разработки: [frontend/README.md](frontend/README.md).

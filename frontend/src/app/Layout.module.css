@@ -93,3 +93,8 @@
 .active .tabIcon {
   color: var(--accent);
 }
+
+.topActions {
+  display: flex;
+  gap: 8px;
+}

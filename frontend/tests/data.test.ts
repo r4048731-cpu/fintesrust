@@ -5,7 +5,7 @@ import {
   FitnessDB,
   NothingDoneError,
 } from '../src/data'
-import { newPlanItem } from '../src/data/repositories/programs'
+import { newPlanItem } from '../src/domain/programs'
 import { seedIfEmpty } from '../src/data/seed'
 import { DAY, setup } from './helpers'
 

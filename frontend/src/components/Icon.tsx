@@ -8,8 +8,11 @@ const PATHS = {
   minus: 'M5 12h14',
   close: 'M6 6l12 12M18 6 6 18',
   back: 'M15 5l-7 7 7 7',
+  up: 'M6 14l6-6 6 6',
+  down: 'M6 10l6 6 6-6',
   chevron: 'M9 5l7 7-7 7',
   check: 'M5 12.5l4.5 4.5L19 7.5',
+  settings: 'M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4',
   sun: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4',
   moon: 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z',
 } as const

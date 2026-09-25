@@ -1,0 +1,178 @@
+.dayName {
+  font: 600 22px/1.15 var(--title-font);
+}
+
+.plan {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plan li {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+}
+
+.planText {
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.planEmpty {
+  margin: 0;
+  color: var(--muted);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.error {
+  margin: 0;
+  color: var(--danger);
+}
+
+/* Баннер незавершённой тренировки */
+.live {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--gradient);
+  color: var(--accent-ink);
+  text-align: left;
+  box-shadow: 0 8px 24px rgb(124 58 237 / 30%);
+}
+
+.liveText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.liveLabel {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  opacity: 0.85;
+  text-transform: uppercase;
+}
+
+.liveName {
+  font: 600 18px/1.2 var(--title-font);
+}
+
+.liveMeta {
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.liveClock {
+  font: 600 20px/1 var(--num-font);
+  font-variant-numeric: tabular-nums;
+}
+
+.pickGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pickList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.pickList li + li {
+  border-top: 1px solid var(--line);
+}
+
+.pickRow {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 52px;
+  padding: 10px 14px;
+  border: 0;
+  background: none;
+  text-align: left;
+}
+
+.pickName {
+  font-weight: 600;
+}
+
+/* Короткая статистика, ведёт на экран «Прогресс» */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.statLabel {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.statValue {
+  font: 600 20px/1.1 var(--num-font);
+  font-variant-numeric: tabular-nums;
+}
+
+.statValue small {
+  color: var(--muted);
+  font: 500 12px var(--font-body);
+}
+
+.reminder {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  text-align: left;
+}
+
+.reminderTitle {
+  font-weight: 600;
+}
+
+.reminderText {
+  color: var(--muted);
+  font-size: 13px;
+}

@@ -33,3 +33,16 @@
   font-variant-numeric: tabular-nums;
   padding: 0;
 }
+
+.compact {
+  grid-template-columns: 34px minmax(0, 1fr) 34px;
+}
+
+.compact .btn {
+  font-size: 20px;
+}
+
+.compact .input {
+  font: 600 18px/1 var(--font-body);
+  font-variant-numeric: tabular-nums;
+}

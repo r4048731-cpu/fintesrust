@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatDecimal, parseDecimal, stepValue } from '../src/components/number'
+import { formatDecimal, parseDecimal, stepValue } from '../src/domain/number'
 
 describe('parseDecimal', () => {
   it('понимает запятую и точку', () => {

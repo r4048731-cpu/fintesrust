@@ -1,26 +1,9 @@
-import type { Exercise, ID, PlanItem, Program, ProgramDay } from '../../domain/types'
+import { newDay } from '../../domain/programs'
+import type { ID, Program, ProgramDay } from '../../domain/types'
 import type { FitnessDB } from '../db'
 import type { Clock } from './clock'
 import { metaRepo } from './meta'
-
-const DAY_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-
-export function newDay(index: number): ProgramDay {
-  return { id: crypto.randomUUID(), name: `День ${DAY_LETTERS[index] ?? index + 1}`, items: [] }
-}
-
-/** Упражнение в плане со значениями по умолчанию: 3 подхода по 8–12 или 30–60 с. */
-export function newPlanItem(exercise: Pick<Exercise, 'id' | 'type'>): PlanItem {
-  const timed = exercise.type === 'time'
-  return {
-    exerciseId: exercise.id,
-    sets: 3,
-    repsMin: timed ? 30 : 8,
-    repsMax: timed ? 60 : 12,
-    weightKg: 0,
-    restSec: 90,
-  }
-}
+import { newId } from '../../domain/id'
 
 const collator = new Intl.Collator('ru')
 
@@ -52,7 +35,7 @@ export function programsRepo(db: FitnessDB, clock: Clock) {
     /** Новая программа с одним пустым днём. Первая созданная программа становится активной. */
     async create(name = 'Новая программа'): Promise<Program> {
       const program: Program = {
-        id: crypto.randomUUID(),
+        id: newId(),
         name,
         days: [newDay(0)],
         updatedAt: clock(),
@@ -70,9 +53,9 @@ export function programsRepo(db: FitnessDB, clock: Clock) {
       if (!source) throw new Error(`Программа ${id} не найдена`)
       const copy: Program = {
         ...structuredClone(source),
-        id: crypto.randomUUID(),
+        id: newId(),
         name: `${source.name} (копия)`,
-        days: source.days.map((d) => ({ ...structuredClone(d), id: crypto.randomUUID() })),
+        days: source.days.map((d) => ({ ...structuredClone(d), id: newId() })),
         updatedAt: clock(),
         deletedAt: null,
       }

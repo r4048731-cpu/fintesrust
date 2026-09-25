@@ -7,6 +7,7 @@ export const META_DEFAULTS: MetaValues = {
   weightStepKg: 2.5,
   activeProgramId: null,
   nextDayIndex: {},
+  lastExportAt: null,
 }
 
 export function metaRepo(db: FitnessDB) {
