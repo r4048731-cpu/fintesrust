@@ -1,26 +1,69 @@
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding-top: env(safe-area-inset-top, 0px);
+  background: var(--glass);
+  backdrop-filter: saturate(1.6) blur(16px);
+  -webkit-backdrop-filter: saturate(1.6) blur(16px);
+  border-bottom: 1px solid var(--line);
+}
+
+.topbarInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  max-width: var(--content-max);
+  min-height: var(--topbar-h);
+  margin: 0 auto;
+  padding-inline: var(--gutter);
+}
+
+/* Название приложения градиентом */
+.brand {
+  font: 700 18px/1 var(--title-font);
+  letter-spacing: -0.01em;
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
 .main {
   max-width: var(--content-max);
   margin: 0 auto;
   padding-inline: var(--gutter);
-  padding-top: calc(16px + env(safe-area-inset-top, 0px));
-  /* Место под панель вкладок, чтобы она не закрывала последний блок */
-  padding-bottom: calc(var(--tabbar-h) + 24px + env(safe-area-inset-bottom, 0px));
+  padding-top: 16px;
+  /* Место под плавающую панель вкладок, чтобы она не закрывала последний блок */
+  padding-bottom: calc(
+    var(--tabbar-h) + 2 * var(--tabbar-inset) + 16px + env(safe-area-inset-bottom, 0px)
+  );
 }
 
 .tabbar {
   position: fixed;
   inset: auto 0 0;
   z-index: 20;
-  border-top: 1px solid var(--line);
-  background: var(--surface);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-inline: var(--tabbar-inset);
+  padding-bottom: calc(var(--tabbar-inset) + env(safe-area-inset-bottom, 0px));
+  pointer-events: none;
 }
 
 .tabs {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  max-width: var(--content-max);
+  gap: 4px;
+  max-width: calc(var(--content-max) - 2 * var(--tabbar-inset));
   margin: 0 auto;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--glass);
+  backdrop-filter: saturate(1.6) blur(16px);
+  -webkit-backdrop-filter: saturate(1.6) blur(16px);
+  box-shadow: var(--shadow);
+  pointer-events: auto;
 }
 
 .tab {
@@ -28,18 +71,25 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
-  min-height: var(--tabbar-h);
+  gap: 2px;
+  min-height: calc(var(--tabbar-h) - 12px);
+  border-radius: 18px;
   color: var(--muted);
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 600;
   text-decoration: none;
 }
 
+.tabIcon {
+  display: grid;
+  place-items: center;
+}
+
 .active {
+  background: var(--accent-soft);
   color: var(--ink);
 }
 
-.active svg {
+.active .tabIcon {
   color: var(--accent);
 }

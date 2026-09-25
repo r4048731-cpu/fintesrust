@@ -1,52 +1,108 @@
-/* Токены темы. Светлая тема — значения по умолчанию, тёмная включается настройкой системы (ТЗ, раздел 5). */
+/*
+ * Токены темы: белая и чёрная, акценты в оттенках синего, фиолетового и розового.
+ * Тема задаётся атрибутом data-theme на <html> (см. theme.ts): кнопка в верхней панели
+ * переключает её вручную, до первого нажатия действует настройка телефона.
+ */
 :root {
-  --bg: #edefea;
-  --surface: #fbfbf9;
-  --surface-2: #e2e6df;
-  --ink: #171b18;
-  --muted: #5b645e;
-  --line: #d2d7cf;
-  --accent: #d4471d;
-  --accent-ink: #ffffff;
-  --accent-soft: #f6ddd3;
-  --good: #23734a;
-  --good-soft: #d5ebdd;
-  --danger: #b3261e;
-  --backdrop: rgb(10 12 10 / 45%);
-  --shadow: 0 1px 2px rgb(23 27 24 / 6%), 0 6px 24px rgb(23 27 24 / 8%);
-
-  --font-display: 'Oswald', 'Arial Narrow', Impact, sans-serif;
-  --font-body: 'Golos Text', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-
-  --radius: 14px;
-  --radius-sm: 10px;
+  /* Общие размеры и шрифты */
   --tap: 44px; /* минимальный размер цели касания */
   --gutter: 16px;
   --content-max: 560px;
-  --tabbar-h: 58px;
+  --topbar-h: 56px;
+  --tabbar-h: 60px;
+  --tabbar-inset: 12px;
+  --radius: 20px;
+  --radius-sm: 14px;
+  --btn-radius: 14px;
+
+  --font-body: 'Golos Text', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --title-font: 'Unbounded', 'Golos Text', system-ui, sans-serif;
+  --title-weight: 600;
+  --title-size: 24px;
+  --title-transform: none;
+  --title-spacing: -0.01em;
+  --num-font: 'Unbounded', system-ui, sans-serif;
+
+  /* Белая тема */
+  --bg: #f7f6fb;
+  --surface: #ffffff;
+  --surface-2: #efedf6;
+  --ink: #16131f;
+  --muted: #6b6680;
+  --line: #e4e1ee;
+
+  --violet: #7c3aed;
+  --pink: #db2777;
+  --blue: #3563e9;
+  --accent: var(--violet);
+  --accent-ink: #ffffff;
+  --accent-soft: #efe8fd;
+  --gradient: linear-gradient(120deg, #3563e9 0%, #7c3aed 50%, #db2777 100%);
+
+  --good: #15803d;
+  --good-soft: #dcf5e4;
+  --danger: #c81e4a;
+  --backdrop: rgb(22 19 31 / 40%);
+  --shadow: 0 1px 2px rgb(22 19 31 / 5%), 0 8px 28px rgb(76 29 149 / 8%);
+  --glass: rgb(255 255 255 / 82%);
 
   color-scheme: light;
 }
 
+/* Чёрная тема: по настройке телефона, пока пользователь не выбрал тему сам */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #111311;
-    --surface: #1b1e1b;
-    --surface-2: #272b27;
-    --ink: #eceeea;
-    --muted: #9ba49d;
-    --line: #343934;
-    --accent: #e8653a;
-    --accent-ink: #140a06;
-    --accent-soft: #3b2219;
-    --good: #5dbb85;
-    --good-soft: #1c3326;
-    --danger: #f2877e;
-    --backdrop: rgb(0 0 0 / 60%);
-    --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 8px 28px rgb(0 0 0 / 35%);
+  :root:not([data-theme='light']) {
+    --bg: #09080d;
+    --surface: #15131c;
+    --surface-2: #211e2b;
+    --ink: #f4f2fa;
+    --muted: #9d98b0;
+    --line: #2a2636;
+
+    --violet: #a78bfa;
+    --pink: #f472b6;
+    --blue: #7aa2ff;
+    --accent: var(--violet);
+    --accent-ink: #ffffff;
+    --accent-soft: #2a2145;
+    --gradient: linear-gradient(120deg, #4f6ef7 0%, #8b5cf6 50%, #e0447f 100%);
+
+    --good: #4ade80;
+    --good-soft: #10291a;
+    --danger: #fb7196;
+    --backdrop: rgb(0 0 0 / 65%);
+    --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 10px 30px rgb(0 0 0 / 45%);
+    --glass: rgb(21 19 28 / 82%);
 
     color-scheme: dark;
   }
+}
+
+/* Чёрная тема, выбранная кнопкой */
+:root[data-theme='dark'] {
+  --bg: #09080d;
+  --surface: #15131c;
+  --surface-2: #211e2b;
+  --ink: #f4f2fa;
+  --muted: #9d98b0;
+  --line: #2a2636;
+
+  --violet: #a78bfa;
+  --pink: #f472b6;
+  --blue: #7aa2ff;
+  --accent: var(--violet);
+  --accent-ink: #ffffff;
+  --accent-soft: #2a2145;
+  --gradient: linear-gradient(120deg, #4f6ef7 0%, #8b5cf6 50%, #e0447f 100%);
+
+  --good: #4ade80;
+  --good-soft: #10291a;
+  --danger: #fb7196;
+  --backdrop: rgb(0 0 0 / 65%);
+  --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 10px 30px rgb(0 0 0 / 45%);
+  --glass: rgb(21 19 28 / 82%);
+
+  color-scheme: dark;
 }
 
 *,

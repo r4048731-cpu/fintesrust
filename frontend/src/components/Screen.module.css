@@ -23,9 +23,12 @@
 }
 
 .title {
-  font: 600 26px/1.1 var(--font-display);
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
+  font-family: var(--title-font);
+  font-weight: var(--title-weight);
+  font-size: var(--title-size);
+  line-height: 1.1;
+  text-transform: var(--title-transform);
+  letter-spacing: var(--title-spacing);
 }
 
 .label {

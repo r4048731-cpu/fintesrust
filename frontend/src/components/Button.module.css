@@ -6,7 +6,7 @@
   min-height: var(--tap);
   padding: 0 16px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--btn-radius);
   background: var(--surface);
   font-weight: 600;
   font-size: 15px;
@@ -20,9 +20,10 @@
 }
 
 .primary {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--gradient);
+  border-color: transparent;
   color: var(--accent-ink);
+  box-shadow: 0 6px 18px rgb(124 58 237 / 28%);
 }
 
 .secondary {

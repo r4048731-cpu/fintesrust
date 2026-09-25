@@ -127,3 +127,18 @@ describe('Sheet', () => {
     expect(screen.queryByText('Содержимое')).not.toBeInTheDocument()
   })
 })
+
+describe('переключатель темы', () => {
+  it('переключает белую и чёрную тему и запоминает выбор', async () => {
+    const user = userEvent.setup()
+    localStorage.removeItem('fitnes.theme')
+    document.documentElement.dataset.theme = 'light'
+    await renderApp()
+    await user.click(await screen.findByRole('button', { name: 'Включить тёмную тему' }))
+    expect(document.documentElement.dataset.theme).toBe('dark')
+    expect(localStorage.getItem('fitnes.theme')).toBe('dark')
+    await user.click(screen.getByRole('button', { name: 'Включить светлую тему' }))
+    expect(document.documentElement.dataset.theme).toBe('light')
+    expect(localStorage.getItem('fitnes.theme')).toBe('light')
+  })
+})

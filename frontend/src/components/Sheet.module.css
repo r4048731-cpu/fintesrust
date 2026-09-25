@@ -7,7 +7,7 @@
   margin: 0 auto;
   padding: 0;
   border: 0;
-  border-radius: 18px 18px 0 0;
+  border-radius: calc(var(--radius) + 4px) calc(var(--radius) + 4px) 0 0;
   background: var(--surface);
   color: var(--ink);
   box-shadow: var(--shadow);
@@ -40,9 +40,12 @@
 }
 
 .title {
-  font: 600 20px/1.2 var(--font-display);
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
+  font-family: var(--title-font);
+  font-weight: var(--title-weight);
+  font-size: 20px;
+  line-height: 1.2;
+  text-transform: var(--title-transform);
+  letter-spacing: var(--title-spacing);
 }
 
 .body {

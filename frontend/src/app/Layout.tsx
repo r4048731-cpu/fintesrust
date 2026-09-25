@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router'
 import { Icon, type IconName } from '../components/Icon'
+import { ThemeToggle } from '../components/ThemeToggle'
 import styles from './Layout.module.css'
 
 const TABS: { to: string; label: string; icon: IconName }[] = [
@@ -9,10 +10,16 @@ const TABS: { to: string; label: string; icon: IconName }[] = [
   { to: '/progress', label: 'Прогресс', icon: 'progress' },
 ]
 
-/** Каркас приложения: содержимое вкладки и нижняя панель навигации. */
+/** Каркас приложения: верхняя панель, содержимое вкладки и нижняя панель навигации. */
 export function Layout() {
   return (
     <>
+      <header className={styles.topbar}>
+        <div className={styles.topbarInner}>
+          <span className={styles.brand}>Фитнес</span>
+          <ThemeToggle />
+        </div>
+      </header>
       <main className={styles.main}>
         <Outlet />
       </main>
@@ -27,7 +34,9 @@ export function Layout() {
                 [styles.tab, isActive && styles.active].filter(Boolean).join(' ')
               }
             >
-              <Icon name={t.icon} />
+              <span className={styles.tabIcon}>
+                <Icon name={t.icon} />
+              </span>
               <span>{t.label}</span>
             </NavLink>
           ))}
