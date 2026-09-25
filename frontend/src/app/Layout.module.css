@@ -1,0 +1,45 @@
+.main {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding-inline: var(--gutter);
+  padding-top: calc(16px + env(safe-area-inset-top, 0px));
+  /* Место под панель вкладок, чтобы она не закрывала последний блок */
+  padding-bottom: calc(var(--tabbar-h) + 24px + env(safe-area-inset-bottom, 0px));
+}
+
+.tabbar {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 20;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  max-width: var(--content-max);
+  margin: 0 auto;
+}
+
+.tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: var(--tabbar-h);
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.active {
+  color: var(--ink);
+}
+
+.active svg {
+  color: var(--accent);
+}

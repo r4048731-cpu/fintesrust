@@ -8,7 +8,7 @@ export default defineConfig({
   // Относительные пути: сборка работает и в корне домена, и в подпапке GitHub Pages
   base: './',
   test: {
-    include: ['tests/**/*.test.ts', 'src/**/*.test.ts'],
+    include: ['tests/**/*.test.{ts,tsx}', 'src/**/*.test.{ts,tsx}'],
     environment: 'node',
     setupFiles: ['tests/setup.ts'],
   },

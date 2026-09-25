@@ -1,0 +1,64 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: var(--tap);
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.secondary {
+  background: var(--surface);
+}
+
+.ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--muted);
+}
+
+.danger {
+  background: var(--surface);
+  color: var(--danger);
+}
+
+.sm {
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: 14px;
+  border-radius: var(--radius-sm);
+}
+
+.block {
+  width: 100%;
+}
+
+/* Кнопка-иконка остаётся квадратной и не меньше цели касания */
+.iconOnly {
+  width: var(--tap);
+  min-width: var(--tap);
+  padding: 0;
+}
+
+.iconOnly.sm {
+  width: 36px;
+  min-width: 36px;
+}
