@@ -6,7 +6,7 @@
 
 ## Этап 0. Подготовка (1 вечер)
 
-- [ ] Утвердить ТЗ и решить открытый вопрос: нужна ли синхронизация устройств уже в MVP (по плану она в v3)
+- [x] Утвердить ТЗ. Решение: синхронизация в MVP не нужна, остаётся в v3
 - [x] `git init`, `.gitignore`, первый коммит
 - [x] Создать проект во `frontend/`: `npm create vite@latest . -- --template react-ts`
 - [x] Подключить линтер (oxlint, идёт в шаблоне Vite вместо ESLint), Prettier, Vitest
@@ -18,12 +18,12 @@
 
 ## Этап 1. Модель данных и хранилище (2 вечера)
 
-- [ ] `src/domain/types.ts`: типы Exercise, Program, ProgramDay, Workout, WorkoutEntry, Set (ТЗ, раздел 3); у всех сущностей поля `id` (UUID), `updatedAt`, `deletedAt`
-- [ ] `src/data/db.ts`: схема Dexie с таблицами exercises, programs, workouts (с индексом `*exerciseIds`) и meta
-- [ ] `src/data/repositories/`: функции чтения и записи для каждой таблицы
-- [ ] `src/data/seed.ts`: стартовый набор из ~30 упражнений, загружается при первом запуске
-- [ ] `src/domain/metrics.ts`: 1ПМ (Эпли), тоннаж, личные рекорды
-- [ ] Тесты для `metrics.ts` и репозиториев (fake-indexeddb)
+- [x] `src/domain/types.ts`: типы Exercise, Program, ProgramDay, Workout, WorkoutEntry, Set (ТЗ, раздел 3); у всех сущностей поля `id` (UUID), `updatedAt`, `deletedAt`
+- [x] `src/data/db.ts`: схема Dexie с таблицами exercises, programs, workouts (с индексом `*exerciseIds`) и meta
+- [x] `src/data/repositories/`: функции чтения и записи для каждой таблицы
+- [x] `src/data/seed.ts`: стартовый набор из ~30 упражнений, загружается при первом запуске
+- [x] `src/domain/metrics.ts`: 1ПМ (Эпли), тоннаж, личные рекорды, тоннаж по неделям
+- [x] Тесты для `metrics.ts` и репозиториев (fake-indexeddb): 28 тестов
 
 **Результат:** данные сохраняются и читаются, расчёты покрыты тестами. Экранов пока нет.
 
