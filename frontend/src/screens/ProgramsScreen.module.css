@@ -29,9 +29,3 @@
   color: var(--muted);
   font-size: 13px;
 }
-
-.group {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}

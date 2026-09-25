@@ -10,8 +10,8 @@ import { Sheet } from '../src/components/Sheet'
 import { Stepper } from '../src/components/Stepper'
 import { setup } from './helpers'
 
-async function renderApp(path = '/') {
-  const repos = await setup()
+async function renderApp(path = '/', existing?: Awaited<ReturnType<typeof setup>>) {
+  const repos = existing ?? (await setup())
   const router = createMemoryRouter(routes, { initialEntries: [path] })
   render(
     <DataProvider repos={repos}>

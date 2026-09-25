@@ -1,3 +1,4 @@
+import { filterExercises, hasDuplicateName, type ExerciseFilter } from '../../domain/exercises'
 import type { Exercise, ExerciseType, ID, MuscleGroup } from '../../domain/types'
 import type { FitnessDB } from '../db'
 import type { Clock } from './clock'
@@ -9,26 +10,25 @@ export interface ExerciseInput {
   note?: string
 }
 
-export interface ExerciseFilter {
-  muscle?: MuscleGroup
-  /** Поиск по подстроке в названии, без учёта регистра. */
-  query?: string
-}
+export type { ExerciseFilter }
 
-const collator = new Intl.Collator('ru')
+/** Ошибка ввода: текст показывается пользователю как есть. */
+export class ExerciseValidationError extends Error {}
 
 export function exercisesRepo(db: FitnessDB, clock: Clock) {
+  async function validateName(name: string, exceptId?: ID): Promise<string> {
+    const clean = name.trim().replace(/\s+/g, ' ')
+    if (!clean) throw new ExerciseValidationError('Введите название упражнения')
+    if (hasDuplicateName(await db.exercises.toArray(), clean, exceptId)) {
+      throw new ExerciseValidationError(`Упражнение «${clean}» уже есть в справочнике`)
+    }
+    return clean
+  }
+
   return {
     /** Неудалённые упражнения по алфавиту. */
     async list(filter: ExerciseFilter = {}): Promise<Exercise[]> {
-      const q = filter.query?.trim().toLocaleLowerCase('ru') ?? ''
-      const rows = filter.muscle
-        ? await db.exercises.where('muscle').equals(filter.muscle).toArray()
-        : await db.exercises.toArray()
-      return rows
-        .filter((e) => e.deletedAt === null)
-        .filter((e) => !q || e.name.toLocaleLowerCase('ru').includes(q))
-        .sort((a, b) => collator.compare(a.name, b.name))
+      return filterExercises(await db.exercises.toArray(), filter)
     },
 
     /** Возвращает и удалённые упражнения: они нужны, чтобы показать старые тренировки. */
@@ -37,11 +37,9 @@ export function exercisesRepo(db: FitnessDB, clock: Clock) {
     },
 
     async create(input: ExerciseInput): Promise<Exercise> {
-      const name = input.name.trim()
-      if (!name) throw new Error('Название упражнения не может быть пустым')
       const exercise: Exercise = {
         id: crypto.randomUUID(),
-        name,
+        name: await validateName(input.name),
         muscle: input.muscle,
         type: input.type,
         note: input.note?.trim() ?? '',
@@ -55,14 +53,13 @@ export function exercisesRepo(db: FitnessDB, clock: Clock) {
 
     async update(id: ID, patch: Partial<ExerciseInput>): Promise<Exercise> {
       const current = await db.exercises.get(id)
-      if (!current || current.deletedAt !== null) throw new Error(`Упражнение ${id} не найдено`)
-      const name = patch.name?.trim()
-      if (patch.name !== undefined && !name)
-        throw new Error('Название упражнения не может быть пустым')
+      if (!current || current.deletedAt !== null) {
+        throw new ExerciseValidationError('Упражнение не найдено: возможно, его уже удалили')
+      }
       const next: Exercise = {
         ...current,
         ...patch,
-        name: name ?? current.name,
+        name: patch.name !== undefined ? await validateName(patch.name, id) : current.name,
         note: patch.note?.trim() ?? current.note,
         updatedAt: clock(),
       }
@@ -70,7 +67,7 @@ export function exercisesRepo(db: FitnessDB, clock: Clock) {
       return next
     },
 
-    /** Мягкое удаление: в истории упражнение остаётся с прежним названием. */
+    /** Мягкое удаление: в истории и программах упражнение остаётся с прежним названием. */
     async remove(id: ID): Promise<void> {
       await db.exercises.update(id, { deletedAt: clock(), updatedAt: clock() })
     },

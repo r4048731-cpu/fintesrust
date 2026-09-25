@@ -6,14 +6,20 @@
 
 .head {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
   min-height: var(--tap);
 }
 
 .titles {
+  flex: 1;
   min-width: 0;
+}
+
+.back {
+  margin-left: -10px;
+  margin-right: -8px;
 }
 
 .eyebrow {

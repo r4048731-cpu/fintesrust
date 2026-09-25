@@ -49,6 +49,8 @@
 }
 
 .body {
+  --controls-bg: var(--surface);
+
   overflow-y: auto;
   padding-inline: var(--gutter);
   padding-block: 4px 16px;

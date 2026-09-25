@@ -1,0 +1,4 @@
+/* Поиск прилипает под верхней панелью приложения */
+.browser {
+  --controls-top: calc(var(--topbar-h) + env(safe-area-inset-top, 0px));
+}
