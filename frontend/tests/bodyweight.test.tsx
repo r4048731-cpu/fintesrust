@@ -8,11 +8,18 @@ import { DataProvider } from '../src/app/DataProvider'
 import { routes } from '../src/app/routes'
 import { createBackup, parseBackup, restoreBackup } from '../src/data/backup'
 import { FitnessDB } from '../src/data/db'
-import { bodyWeightChange } from '../src/data/repositories/bodyWeights'
+import { bodyWeightChange, correctedWeight } from '../src/data/repositories/bodyWeights'
 import { toISODate } from '../src/domain/metrics'
 import { DAY, setup } from './helpers'
 
 describe('вес тела: хранение', () => {
+  it('поправка за взвешивание не утром — всегда 1,5 кг', async () => {
+    const r = await setup()
+    const row = await r.bodyWeights.record(82.3, 'later')
+    expect(row).toMatchObject({ measuredKg: 82.3, weightKg: 80.8, timeOfDay: 'later' })
+    expect(correctedWeight(70, 'morning')).toBe(70)
+  })
+
   it('одна запись на день, повторная заменяет; пределы; удаление', async () => {
     const r = await setup()
     await r.bodyWeights.record(80.44)
@@ -82,29 +89,87 @@ describe('вес тела: хранение', () => {
   })
 })
 
-describe('вес тела: экран', () => {
-  it('запись с экрана «Прогресс» даже без тренировок', async () => {
+describe('раздел «Вес»', () => {
+  async function openWeight() {
     const r = await setup()
     // экран сравнивает с настоящим «сегодня», поэтому и часы базы — настоящие
     r.clock.set(new Date())
-    const router = createMemoryRouter(routes, { initialEntries: ['/progress'] })
+    const router = createMemoryRouter(routes, { initialEntries: ['/'] })
     render(
       <DataProvider repos={r}>
         <RouterProvider router={router} />
       </DataProvider>,
     )
     const user = userEvent.setup()
-    const input = await screen.findByRole('textbox', { name: 'Вес тела, кг' })
+    await user.click(await screen.findByRole('link', { name: 'Вес' }))
+    return { r, user }
+  }
+
+  it('утром записывает вес как есть', async () => {
+    const { r, user } = await openWeight()
+    const input = await screen.findByRole('textbox', { name: 'Вес на весах, кг' })
     expect(input).toHaveValue('70')
     await user.click(input)
     await user.keyboard('{Control>}a{/Control}82,4{Enter}')
+    expect(screen.getByRole('status')).toHaveTextContent('Запишется 82,4 кг')
     await user.click(screen.getByRole('button', { name: 'Записать' }))
     await waitFor(async () =>
       expect((await r.bodyWeights.list()).map((x) => x.weightKg)).toEqual([82.4]),
     )
+    expect((await r.bodyWeights.list())[0]).toMatchObject({
+      measuredKg: 82.4,
+      timeOfDay: 'morning',
+    })
     expect(await screen.findByRole('button', { name: 'Обновить' })).toBeInTheDocument()
-    const list = screen.getByRole('list', { name: 'Последние записи веса' })
+    const list = screen.getByRole('list', { name: 'Вес по дням' })
     expect(within(list).getByText('82,4 кг')).toBeInTheDocument()
+    expect(within(list).getByText('утром')).toBeInTheDocument()
     expect((await r.bodyWeights.list())[0].date).toBe(toISODate(new Date(r.clock())))
+  })
+
+  it('днём или вечером вычитает 1,5 кг и показывает оба значения', async () => {
+    const { r, user } = await openWeight()
+    await user.click(await screen.findByRole('button', { name: 'Днём / вечером' }))
+    const input = screen.getByRole('textbox', { name: 'Вес на весах, кг' })
+    await user.click(input)
+    await user.keyboard('{Control>}a{/Control}82{Enter}')
+    expect(screen.getByRole('status')).toHaveTextContent('Запишется 80,5 кг (−1,5 кг)')
+    await user.click(screen.getByRole('button', { name: 'Записать' }))
+    await waitFor(async () =>
+      expect((await r.bodyWeights.list())[0]).toMatchObject({
+        weightKg: 80.5,
+        measuredKg: 82,
+        timeOfDay: 'later',
+      }),
+    )
+    const list = await screen.findByRole('list', { name: 'Вес по дням' })
+    expect(within(list).getByText('80,5 кг')).toBeInTheDocument()
+    expect(within(list).getByText('весы 82 кг')).toBeInTheDocument()
+  })
+
+  it('по дням — разница с прошлой записью отдельной колонкой, сверху итоги', async () => {
+    const r = await setup()
+    const now = new Date()
+    const at = (daysAgo: number) =>
+      new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysAgo, 8)
+    r.clock.set(at(2))
+    await r.bodyWeights.record(82)
+    r.clock.set(at(1))
+    await r.bodyWeights.record(81.5)
+    r.clock.set(at(0))
+    await r.bodyWeights.record(83.3, 'later') // итог 81,8 — набрал 0,3
+    const router = createMemoryRouter(routes, { initialEntries: ['/weight'] })
+    render(
+      <DataProvider repos={r}>
+        <RouterProvider router={router} />
+      </DataProvider>,
+    )
+    const list = await screen.findByRole('list', { name: 'Вес по дням' })
+    const rows = within(list).getAllByRole('listitem')
+    expect(within(rows[0]).getByLabelText('набрал на 0,3 кг')).toHaveTextContent('+0,3 кг')
+    expect(within(rows[1]).getByLabelText('похудел на 0,5 кг')).toHaveTextContent('−0,5 кг')
+    expect(within(rows[2]).getByLabelText('первая запись')).toHaveTextContent('—')
+    expect(screen.getByText('Сейчас').nextSibling).toHaveTextContent('81,8 кг')
+    expect(screen.getByText('За 30 дней').nextSibling).toHaveTextContent('−0,2 кг')
   })
 })

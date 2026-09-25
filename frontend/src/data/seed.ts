@@ -121,6 +121,17 @@ const ROWS: SeedRow[] = [
   ['stair-climber', 'Степпер', 'cardio', 'time'],
   ['jump-rope', 'Скакалка', 'cardio', 'time'],
   ['burpee', 'Бёрпи', 'cardio', 'bodyweight'],
+
+  // Бокс: раунды — это подходы по времени, удары с гантелями — повторы на каждую руку
+  ['shadow-boxing', 'Бой с тенью', 'boxing', 'time'],
+  ['db-shadow-boxing', 'Бой с тенью с гантелями', 'boxing', 'time'],
+  ['db-straight-punch', 'Прямые удары с гантелями', 'boxing'],
+  ['db-hook', 'Боковые удары с гантелями', 'boxing'],
+  ['db-uppercut', 'Апперкоты с гантелями', 'boxing'],
+  ['heavy-bag', 'Работа на мешке', 'boxing', 'time'],
+  ['mitts', 'Работа на лапах', 'boxing', 'time'],
+  ['slip-drill', 'Уклоны и нырки', 'boxing', 'time'],
+  ['med-ball-throw', 'Броски медбола от груди', 'boxing'],
 ]
 
 export function builtinExercises(now: number): Exercise[] {
@@ -140,7 +151,7 @@ export function builtinExercises(now: number): Exercise[] {
  * Версия стартового набора. Когда в ROWS появляются новые упражнения — поднять,
  * и у тех, кто уже пользуется приложением, недостающие упражнения добавятся при запуске.
  */
-export const SEED_VERSION = 2
+export const SEED_VERSION = 3
 
 /**
  * Первый запуск — загружает весь стартовый набор. Дальше, если набор пополнился,

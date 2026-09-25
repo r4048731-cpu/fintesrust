@@ -28,7 +28,9 @@ export function WorkoutReport({ data }: { data: WorkoutReportData }) {
       <div className={styles.stats}>
         <div className={styles.stat}>
           <span className={styles.statLabel}>Время</span>
-          <span className={styles.statValue}>{formatDuration(duration)}</span>
+          <span className={styles.statValue}>
+            {workout.manual ? '—' : formatDuration(duration)}
+          </span>
         </div>
         <div className={styles.stat}>
           <span className={styles.statLabel}>Подходы</span>

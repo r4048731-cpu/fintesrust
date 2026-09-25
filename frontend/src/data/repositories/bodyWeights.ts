@@ -1,10 +1,19 @@
 import { toISODate } from '../../domain/metrics'
 import { newId } from '../../domain/id'
-import type { BodyWeight, ID, ISODate } from '../../domain/types'
+import type { BodyWeight, ID, ISODate, WeighTime } from '../../domain/types'
 import type { FitnessDB } from '../db'
 import type { Clock } from './clock'
 
 export const BODY_WEIGHT_LIMITS = { min: 20, max: 400 } as const
+
+/** Поправка за взвешивание днём, вечером или после тренировки (ТЗ 9.7: всегда 1,5 кг). */
+export const LATER_CORRECTION_KG = 1.5
+
+/** Итоговый вес: утром — как на весах, позже — минус поправка. */
+export function correctedWeight(measuredKg: number, timeOfDay: WeighTime): number {
+  const kg = timeOfDay === 'later' ? measuredKg - LATER_CORRECTION_KG : measuredKg
+  return Math.round(kg * 10) / 10
+}
 
 export function bodyWeightsRepo(db: FitnessDB, clock: Clock) {
   async function alive(): Promise<BodyWeight[]> {
@@ -17,15 +26,16 @@ export function bodyWeightsRepo(db: FitnessDB, clock: Clock) {
     list: alive,
 
     /**
-     * Записать вес за день (по умолчанию — за сегодня). Повторная запись за тот же день
-     * заменяет прежнюю: в графике одна точка на день.
+     * Записать вес за день (по умолчанию — за сегодня). `timeOfDay` = later вычитает 1,5 кг.
+     * Повторная запись за тот же день заменяет прежнюю: в графике одна точка на день.
      */
     async record(
-      weightKg: number,
+      measuredKg: number,
+      timeOfDay: WeighTime = 'morning',
       date: ISODate = toISODate(new Date(clock())),
     ): Promise<BodyWeight> {
-      const value = Math.round(weightKg * 10) / 10
-      if (!(value >= BODY_WEIGHT_LIMITS.min && value <= BODY_WEIGHT_LIMITS.max)) {
+      const measured = Math.round(measuredKg * 10) / 10
+      if (!(measured >= BODY_WEIGHT_LIMITS.min && measured <= BODY_WEIGHT_LIMITS.max)) {
         throw new Error(
           `Вес тела должен быть от ${BODY_WEIGHT_LIMITS.min} до ${BODY_WEIGHT_LIMITS.max} кг`,
         )
@@ -36,7 +46,9 @@ export function bodyWeightsRepo(db: FitnessDB, clock: Clock) {
       const row: BodyWeight = {
         id: existing?.id ?? newId(),
         date,
-        weightKg: value,
+        weightKg: correctedWeight(measured, timeOfDay),
+        measuredKg: measured,
+        timeOfDay,
         updatedAt: clock(),
         deletedAt: null,
       }
@@ -58,4 +70,20 @@ export function bodyWeightChange(rows: BodyWeight[], days: number, today: ISODat
   const window = rows.filter((r) => r.date >= from)
   if (window.length < 2) return null
   return Math.round((window[window.length - 1].weightKg - window[0].weightKg) * 10) / 10
+}
+
+export interface WeightDay {
+  row: BodyWeight
+  /** Разница с предыдущей записью, кг: минус — похудел, плюс — набрал. У первой записи — null. */
+  diffKg: number | null
+}
+
+/** Записи от новых к старым, у каждой — разница с предыдущей по времени записью. */
+export function weightDays(rows: BodyWeight[]): WeightDay[] {
+  return rows
+    .map((row, i) => ({
+      row,
+      diffKg: i === 0 ? null : Math.round((row.weightKg - rows[i - 1].weightKg) * 10) / 10,
+    }))
+    .reverse()
 }

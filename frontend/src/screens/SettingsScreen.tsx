@@ -112,8 +112,7 @@ export function SettingsScreen() {
       <SectionLabel>Резервная копия</SectionLabel>
       <Card>
         <p className={styles.text}>
-          Все данные хранятся только на этом телефоне. Сохраняйте копию в файл хотя бы раз в неделю:
-          с ней данные можно вернуть после очистки браузера или перенести на новый телефон.
+          Данные хранятся только на этом телефоне. Сохраняйте копию раз в неделю.
         </p>
         <p className={styles.muted}>
           {lastExportAt
@@ -158,12 +157,12 @@ export function SettingsScreen() {
         ) : (
           <p className={styles.text}>
             {isIOS()
-              ? 'Чтобы установить на главный экран: кнопка «Поделиться» в Safari → «На экран «Домой»».'
-              : 'Чтобы установить на главный экран: меню браузера ⋮ → «Установить приложение» или «Добавить на главный экран».'}
+              ? 'Установка: «Поделиться» → «На экран «Домой»».'
+              : 'Установка: меню ⋮ → «Установить приложение».'}
           </p>
         )}
         <p className={styles.muted}>
-          Защита данных от очистки браузером:{' '}
+          Защита от очистки:{' '}
           {persisted === true
             ? 'включена'
             : persisted === false
@@ -185,10 +184,7 @@ export function SettingsScreen() {
             role="alertdialog"
             aria-label="Подтверждение удаления всех данных"
           >
-            <p>
-              Удалить все программы, тренировки, свои упражнения и настройки на этом телефоне?
-              Вернуть их можно будет только из файла копии.
-            </p>
+            <p>Удалить всё на этом телефоне? Вернуть можно только из копии.</p>
             <div className={styles.actions}>
               <Button variant="danger" onClick={wipe}>
                 Удалить всё
@@ -216,9 +212,7 @@ export function SettingsScreen() {
               Копия от {formatLongDateInline(new Date(pending.exportedAt))}:{' '}
               {counts(countBackup(pending))}.
             </p>
-            <p className={styles.text}>
-              Все текущие данные на этом телефоне заменятся данными из копии.
-            </p>
+            <p className={styles.text}>Текущие данные заменятся копией.</p>
             <Button variant="primary" block onClick={restore}>
               Восстановить
             </Button>

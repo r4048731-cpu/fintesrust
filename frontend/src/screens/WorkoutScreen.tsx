@@ -98,7 +98,9 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
     const load = editing
       ? repos.workouts
           .get(workoutId)
-          .then((w) => (w && w.status === 'done' && w.deletedAt === null ? w : null))
+          .then((w) =>
+            w && (w.status === 'done' || w.status === 'planned') && w.deletedAt === null ? w : null,
+          )
       : repos.workouts.getActive()
     load.then((w) => !cancelled && setWorkout(w))
     return () => {
@@ -171,8 +173,27 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
     navigate(`/workout/${w.id}/summary`, { replace: true })
   }
 
-  /** «Готово» в правке: остаются только отмеченные подходы. */
+  /** Запланированная тренировка (ТЗ 9.3): подходы — это план, отмечать нечего. */
+  const planned = w.status === 'planned'
+
+  /** «Назад» из правки. Внесённая вручную тренировка без единого подхода не сохраняется. */
+  async function leaveEdit() {
+    await flush()
+    if (w.manual && !planned && keepDone(w).entries.length === 0) {
+      await repos.workouts.remove(w.id)
+      navigate('/history', { replace: true })
+      return
+    }
+    navigate(planned ? '/history' : `/history/${w.id}`)
+  }
+
+  /** «Готово» в правке: у выполненной остаются только отмеченные подходы. */
   async function saveEdit() {
+    if (planned) {
+      await flush()
+      navigate('/history', { replace: true })
+      return
+    }
     const cleaned = keepDone(w)
     if (cleaned.entries.length === 0) {
       setConfirm('empty')
@@ -203,17 +224,12 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
       <header className={styles.topbar}>
         {editing ? (
           <div className={styles.topbarInner}>
-            <IconButton
-              icon="back"
-              label="Назад к тренировке"
-              onClick={async () => {
-                await flush()
-                navigate(`/history/${w.id}`)
-              }}
-            />
+            <IconButton icon="back" label="Назад" onClick={leaveEdit} />
             <div className={styles.status}>
-              <span className={styles.editTitle}>Правка тренировки</span>
-              <span className={styles.progress}>Изменения сохраняются сразу</span>
+              <span className={styles.editTitle}>
+                {planned ? 'Запланированная' : w.manual ? 'Своя тренировка' : 'Правка тренировки'}
+              </span>
+              <span className={styles.progress}>Сохраняется сразу</span>
             </div>
             <Button variant="primary" size="sm" onClick={saveEdit}>
               Готово
@@ -260,7 +276,7 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
 
         {confirm === 'empty' && (
           <div className={styles.confirm} role="alertdialog" aria-label="Нет подходов">
-            <p>В тренировке не осталось отмеченных подходов. Удалить её из истории?</p>
+            <p>Нет отмеченных подходов. Удалить тренировку?</p>
             <div className={styles.confirmActions}>
               <Button variant="danger" onClick={removeWorkout}>
                 Удалить тренировку
@@ -272,9 +288,7 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
           </div>
         )}
 
-        {w.entries.length === 0 && (
-          <p className={styles.muted}>Добавьте первое упражнение — кнопка ниже.</p>
-        )}
+        {w.entries.length === 0 && <p className={styles.muted}>Добавьте упражнение.</p>}
 
         {w.entries.map((entry, ei) => {
           const ex = exerciseOf(entry.exerciseId)
@@ -420,29 +434,39 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
                         />
                       </>
                     )}
-                    <button
-                      type="button"
-                      className={styles.doneBtn}
-                      aria-pressed={set.done}
-                      aria-label={`Подход ${si + 1} выполнен`}
-                      onClick={() => {
-                        if (editing) {
-                          change(toggleSetOnly(w, ei, si))
-                          return
-                        }
-                        unlockAudio()
-                        if (!set.done) tapFeedback()
-                        change(toggleDone(w, ei, si, Date.now()))
-                      }}
-                    >
-                      {set.done ? <Icon name="check" size={22} /> : si + 1}
-                    </button>
+                    {planned ? (
+                      <span className={styles.setNum} aria-hidden="true">
+                        {si + 1}
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        className={styles.doneBtn}
+                        aria-pressed={set.done}
+                        aria-label={`Подход ${si + 1} выполнен`}
+                        onClick={() => {
+                          if (editing) {
+                            change(toggleSetOnly(w, ei, si))
+                            return
+                          }
+                          unlockAudio()
+                          if (!set.done) tapFeedback()
+                          change(toggleDone(w, ei, si, Date.now()))
+                        }}
+                      >
+                        {set.done ? <Icon name="check" size={22} /> : si + 1}
+                      </button>
+                    )}
                   </li>
                 ))}
               </ol>
 
               <div className={styles.entryActions}>
-                <Button size="sm" icon="plus" onClick={() => change(addSet(w, ei, editing))}>
+                <Button
+                  size="sm"
+                  icon="plus"
+                  onClick={() => change(addSet(w, ei, editing && !planned))}
+                >
                   Подход
                 </Button>
                 <Button
@@ -475,9 +499,32 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
           />
         </label>
 
+        {planned &&
+          (confirm === 'removePlanned' ? (
+            <div className={styles.confirm} role="alertdialog" aria-label="Удаление из плана">
+              <p>Удалить запланированную тренировку?</p>
+              <div className={styles.confirmActions}>
+                <Button variant="danger" onClick={removeWorkout}>
+                  Удалить
+                </Button>
+                <Button variant="ghost" onClick={() => setConfirm(null)}>
+                  Отмена
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button
+              variant="ghost"
+              className={styles.dangerText}
+              onClick={() => setConfirm('removePlanned')}
+            >
+              Удалить из плана
+            </Button>
+          ))}
+
         {editing ? null : confirm === 'discard' ? (
           <div className={styles.confirm} role="alertdialog" aria-label="Подтверждение отмены">
-            <p>Отменить тренировку? Все отметки этой тренировки удалятся.</p>
+            <p>Отменить тренировку? Отметки не сохранятся.</p>
             <div className={styles.confirmActions}>
               <Button variant="danger" onClick={discard}>
                 Отменить тренировку
@@ -551,10 +598,7 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
       <Sheet open={finishOpen} onClose={() => setFinishOpen(false)} title="Завершить тренировку?">
         {sets.done === 0 ? (
           <>
-            <p className={styles.muted}>
-              Ни один подход не отмечен. Отметьте выполненные подходы галочкой или отмените
-              тренировку.
-            </p>
+            <p className={styles.muted}>Ни один подход не отмечен.</p>
             <Button block onClick={() => setFinishOpen(false)}>
               Вернуться к тренировке
             </Button>

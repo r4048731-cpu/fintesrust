@@ -9,6 +9,7 @@ const TABS: { to: string; label: string; icon: IconName }[] = [
   { to: '/programs', label: 'Программы', icon: 'programs' },
   { to: '/history', label: 'История', icon: 'history' },
   { to: '/progress', label: 'Прогресс', icon: 'progress' },
+  { to: '/weight', label: 'Вес', icon: 'scale' },
 ]
 
 /** Каркас приложения: верхняя панель, содержимое вкладки и нижняя панель навигации. */

@@ -74,7 +74,7 @@ export function HistoryDetailScreen() {
 
       {confirmDelete ? (
         <div className={styles.confirm} role="alertdialog" aria-label="Подтверждение удаления">
-          <p>Удалить тренировку? Графики и рекорды пересчитаются без неё.</p>
+          <p>Удалить тренировку?</p>
           <div className={styles.actions}>
             <Button
               variant="danger"

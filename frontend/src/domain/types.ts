@@ -26,6 +26,7 @@ export const MUSCLE_GROUPS = [
   'arms',
   'core',
   'cardio',
+  'boxing',
 ] as const
 export type MuscleGroup = (typeof MUSCLE_GROUPS)[number]
 
@@ -37,6 +38,7 @@ export const MUSCLE_LABELS: Record<MuscleGroup, string> = {
   arms: 'Руки',
   core: 'Пресс',
   cardio: 'Кардио',
+  boxing: 'Бокс',
 }
 
 /**
@@ -79,7 +81,7 @@ export interface ProgramDay {
 }
 
 /** Тип программы: как распределены группы мышц по дням. */
-export type ProgramKind = 'fullbody' | 'upperlower' | 'ppl' | 'split' | 'custom'
+export type ProgramKind = 'fullbody' | 'upperlower' | 'ppl' | 'split' | 'boxing' | 'custom'
 
 export interface Program extends Syncable {
   name: string
@@ -107,8 +109,9 @@ export interface WorkoutEntry {
 /**
  * `status` вместо проверки `finishedAt === null`: IndexedDB не индексирует null,
  * а активную тренировку нужно находить по индексу.
+ * `planned` — тренировка на будущую дату (ТЗ 9.3): в свой день её предлагает «Сегодня».
  */
-export type WorkoutStatus = 'active' | 'done'
+export type WorkoutStatus = 'planned' | 'active' | 'done'
 
 export interface Workout extends Syncable {
   date: ISODate
@@ -130,12 +133,25 @@ export interface Workout extends Syncable {
   restEndsAt?: Timestamp | null
   /** Полная длительность текущего отдыха, для полосы прогресса. */
   restTotalSec?: number
+  /** Внесена вручную из «Истории»: реальной длительности у неё нет. */
+  manual?: boolean
 }
 
-/** Вес тела за день (ТЗ 2.5, п. 4). Одна запись на дату. */
+/**
+ * Когда взвешивались (ТЗ 9.2): утром вес записывается как есть,
+ * днём, вечером или после тренировки — с поправкой −1,5 кг.
+ */
+export type WeighTime = 'morning' | 'later'
+
+/** Вес тела за день (ТЗ 2.5, п. 4; 9.2). Одна запись на дату. */
 export interface BodyWeight extends Syncable {
   date: ISODate
+  /** Итоговый вес — его показывают график и изменения. */
   weightKg: number
+  /** Что показали весы. В записях до версии 1.1 поля нет: там итоговый = введённому. */
+  measuredKg?: number
+  /** Нет в записях до версии 1.1 — считаются утренними. */
+  timeOfDay?: WeighTime
 }
 
 /** Записи таблицы meta: настройки и служебные указатели. */

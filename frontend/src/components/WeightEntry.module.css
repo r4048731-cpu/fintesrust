@@ -1,0 +1,47 @@
+.entry {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.title {
+  font: 600 16px/1.2 var(--title-font);
+}
+
+.saved {
+  color: var(--good);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.result,
+.error {
+  margin: 0;
+  font-size: 13px;
+}
+
+.result {
+  color: var(--muted);
+}
+
+.error {
+  color: var(--danger);
+}

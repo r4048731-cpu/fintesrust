@@ -14,6 +14,8 @@ export interface LineSeries {
 export interface LinePoint {
   label: string
   values: Record<string, number>
+  /** Строка под значениями в подсказке, например «3 подхода: 8, 8, 7». */
+  detail?: string
 }
 
 interface Props {
@@ -209,6 +211,7 @@ export function LineChart({ points, series, format, ariaLabel, xLabels }: Props)
               {s.name}: {format(points[active].values[s.key])}
             </span>
           ))}
+          {points[active].detail && <span>{points[active].detail}</span>}
         </div>
       )}
     </div>

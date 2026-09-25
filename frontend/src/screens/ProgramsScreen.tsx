@@ -45,10 +45,7 @@ export function ProgramsScreen() {
             </Button>
           }
         >
-          <p>
-            Программа состоит из дней, например «Верх» и «Низ». В каждом дне — упражнения с
-            подходами, повторениями, весом и отдыхом.
-          </p>
+          <p>Выберите готовую программу или соберите свою.</p>
         </EmptyState>
       )}
       {programs && programs.length > 0 && (
@@ -93,9 +90,7 @@ export function ProgramsScreen() {
         </>
       )}
       <Sheet open={chooseOpen} onClose={() => setChooseOpen(false)} title="Тип программы">
-        <p className={styles.sheetHint}>
-          Программа заполнится днями и упражнениями. Вес, подходы и упражнения потом можно поменять.
-        </p>
+        <p className={styles.sheetHint}>Дни и упражнения потом можно поменять.</p>
         <ul className={styles.templates}>
           {PROGRAM_TEMPLATES.map((t) => (
             <li key={t.kind}>

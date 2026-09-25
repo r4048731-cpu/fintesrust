@@ -100,3 +100,8 @@
   flex: none;
   color: var(--muted);
 }
+
+.plannedDate {
+  background: transparent;
+  border: 1.5px dashed var(--accent);
+}

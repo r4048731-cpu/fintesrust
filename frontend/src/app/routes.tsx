@@ -7,6 +7,7 @@ import { ProgramsScreen } from '../screens/ProgramsScreen'
 import { ProgressScreen } from '../screens/ProgressScreen'
 import { SettingsScreen } from '../screens/SettingsScreen'
 import { TodayScreen } from '../screens/TodayScreen'
+import { WeightScreen } from '../screens/WeightScreen'
 import { WorkoutScreen } from '../screens/WorkoutScreen'
 import { WorkoutSummaryScreen } from '../screens/WorkoutSummaryScreen'
 import { Layout } from './Layout'
@@ -25,6 +26,7 @@ export const routes: RouteObject[] = [
       { path: 'history', element: <HistoryScreen /> },
       { path: 'history/:workoutId', element: <HistoryDetailScreen /> },
       { path: 'progress', element: <ProgressScreen /> },
+      { path: 'weight', element: <WeightScreen /> },
       { path: 'settings', element: <SettingsScreen /> },
       { path: 'workout/:workoutId/summary', element: <WorkoutSummaryScreen /> },
       { path: '*', element: <Navigate to="/" replace /> },

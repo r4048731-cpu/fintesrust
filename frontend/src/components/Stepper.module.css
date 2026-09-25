@@ -35,14 +35,16 @@
 }
 
 .compact {
-  grid-template-columns: 34px minmax(0, 1fr) 34px;
+  grid-template-columns: 36px minmax(0, 1fr) 36px;
+  min-height: 40px;
 }
 
 .compact .btn {
-  font-size: 20px;
+  height: 38px;
+  font-size: 18px;
 }
 
 .compact .input {
-  font: 600 18px/1 var(--font-body);
+  font: 600 16px/1 var(--font-body);
   font-variant-numeric: tabular-nums;
 }

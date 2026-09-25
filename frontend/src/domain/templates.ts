@@ -1,4 +1,4 @@
-// Готовые программы по типу тренировок: фулбади, верх/низ, тяни-толкай-ноги, сплит.
+// Готовые программы по типу тренировок: фулбади, верх/низ, тяни-толкай-ноги, сплит, бокс.
 // Упражнения — из стартового набора (id вида builtin-…). Созданную программу можно править как любую.
 
 import type { PlanItem, ProgramKind } from './types'
@@ -23,6 +23,10 @@ const BASE = (id: string): Row => [id, 4, 6, 8, 150]
 const ACC = (id: string): Row => [id, 3, 10, 12, 90]
 const CORE_TIME = (id: string): Row => [id, 3, 30, 60, 60]
 const CORE_REPS = (id: string): Row => [id, 3, 10, 15, 60]
+/** Раунд по времени: `sets` раундов по `sec` секунд, отдых `rest` между раундами. */
+const ROUND = (id: string, sets: number, sec: number, rest = 60): Row => [id, sets, sec, sec, rest]
+/** Удары с лёгкими гантелями: 3 × 20–30 на каждую руку. */
+const PUNCH = (id: string): Row => [id, 3, 20, 30, 60]
 
 const day = (name: string, rows: Row[]): TemplateDay => ({
   name,
@@ -140,6 +144,34 @@ export const PROGRAM_TEMPLATES: ProgramTemplate[] = [
       ]),
     ],
   },
+  {
+    kind: 'boxing',
+    name: 'Бокс',
+    summary: 'Раунды по времени и удары с гантелями, 3 раза в неделю.',
+    days: [
+      day('Техника и удары', [
+        ROUND('shadow-boxing', 3, 180),
+        ROUND('heavy-bag', 4, 180),
+        ROUND('mitts', 3, 180),
+        ROUND('slip-drill', 3, 120),
+        ROUND('jump-rope', 3, 180),
+      ]),
+      day('Сила для бокса', [
+        PUNCH('db-straight-punch'),
+        PUNCH('db-hook'),
+        PUNCH('db-uppercut'),
+        ROUND('db-shadow-boxing', 3, 120),
+        ACC('med-ball-throw'),
+        CORE_TIME('plank'),
+      ]),
+      day('Выносливость', [
+        ROUND('jump-rope', 5, 180),
+        ROUND('heavy-bag', 6, 120),
+        CORE_REPS('burpee'),
+        ROUND('db-shadow-boxing', 3, 120),
+      ]),
+    ],
+  },
 ]
 
 export const PROGRAM_KIND_LABELS: Record<ProgramKind, string> = {
@@ -147,5 +179,6 @@ export const PROGRAM_KIND_LABELS: Record<ProgramKind, string> = {
   upperlower: 'Верх / Низ',
   ppl: 'Тяни / Толкай / Ноги',
   split: 'Сплит',
+  boxing: 'Бокс',
   custom: 'Своя',
 }

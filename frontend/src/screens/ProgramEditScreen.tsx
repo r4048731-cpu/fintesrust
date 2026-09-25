@@ -340,10 +340,7 @@ export function ProgramEditScreen() {
               role="alertdialog"
               aria-label="Подтверждение удаления дня"
             >
-              <p>
-                Удалить «{day.name}» и {day.items.length} упр. из плана? Прошлые тренировки не
-                изменятся.
-              </p>
+              <p>Удалить «{day.name}»?</p>
               <div className={styles.confirmActions}>
                 <Button
                   variant="danger"
@@ -395,7 +392,7 @@ export function ProgramEditScreen() {
             role="alertdialog"
             aria-label="Подтверждение удаления программы"
           >
-            <p>Удалить программу «{program.name}»? История тренировок останется.</p>
+            <p>Удалить «{program.name}»? История останется.</p>
             <div className={styles.confirmActions}>
               <Button variant="danger" onClick={remove}>
                 Удалить

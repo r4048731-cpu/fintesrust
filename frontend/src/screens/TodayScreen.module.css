@@ -2,37 +2,10 @@
   font: 600 22px/1.15 var(--title-font);
 }
 
-.plan {
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.plan li {
-  display: flex;
-  flex-direction: column;
-  padding: 8px 0;
-  border-top: 1px solid var(--line);
-}
-
 .planText {
   color: var(--muted);
   font-size: 13px;
   font-variant-numeric: tabular-nums;
-}
-
-.planEmpty {
-  margin: 0;
-  color: var(--muted);
-}
-
-.row {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 8px;
 }
 
 .error {
@@ -118,45 +91,6 @@
   font-weight: 600;
 }
 
-/* Короткая статистика, ведёт на экран «Прогресс» */
-.stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  padding: 0;
-  border: 0;
-  background: none;
-  text-align: left;
-}
-
-.stat {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 12px;
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  box-shadow: var(--shadow);
-}
-
-.statLabel {
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.statValue {
-  font: 600 20px/1.1 var(--num-font);
-  font-variant-numeric: tabular-nums;
-}
-
-.statValue small {
-  color: var(--muted);
-  font: 500 12px var(--font-body);
-}
-
 .reminder {
   display: flex;
   flex-direction: column;
@@ -175,4 +109,135 @@
 .reminderText {
   color: var(--muted);
   font-size: 13px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.weekButton {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+}
+
+.listHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.listSource {
+  display: block;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.listTitle {
+  font: 600 22px/1.15 var(--title-font);
+}
+
+.listMeta {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.listPlan {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.listPlan li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  border-top: 1px solid var(--line);
+}
+
+.listNum {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font: 600 11px/1 var(--num-font);
+}
+
+.listText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-size: 14.5px;
+}
+
+.chips {
+  display: flex;
+  gap: 8px;
+  margin-inline: calc(-1 * var(--gutter));
+  padding-inline: var(--gutter);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.chips::-webkit-scrollbar {
+  display: none;
+}
+
+.chip {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  background: var(--surface);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.chip svg {
+  color: var(--accent);
+}
+
+/* Кнопка «Начать» закреплена над нижней панелью вкладок */
+.startBar {
+  position: fixed;
+  right: 0;
+  bottom: calc(var(--tabbar-h) + 2 * var(--tabbar-inset) + env(safe-area-inset-bottom, 0px));
+  left: 0;
+  z-index: 15;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 0 var(--gutter) 8px;
+}
+
+.startBar button {
+  min-height: 52px;
+  font-size: 16px;
+}
+
+.startBarSpace {
+  height: 56px;
 }

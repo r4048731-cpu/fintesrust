@@ -86,8 +86,8 @@
 .entry {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px;
+  gap: 6px;
+  padding: 10px 10px 8px;
   border-radius: var(--radius);
   background: var(--surface);
   box-shadow: var(--shadow);
@@ -119,7 +119,7 @@
 .setHead,
 .set {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 48px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 40px;
   gap: 8px;
   align-items: center;
 }
@@ -140,7 +140,7 @@
 .sets {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -149,8 +149,8 @@
 .doneBtn {
   display: grid;
   place-items: center;
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   border: 1.5px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--surface);
@@ -318,4 +318,14 @@
   flex: 1;
   font-size: 13.5px;
   line-height: 1.35;
+}
+
+/* Номер подхода в запланированной тренировке: отмечать нечего, это только план */
+.setNum {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  color: var(--muted);
+  font: 600 15px/1 var(--num-font);
 }

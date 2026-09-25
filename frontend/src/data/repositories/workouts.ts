@@ -8,6 +8,7 @@ import {
 import type {
   ExerciseType,
   ID,
+  ISODate,
   PlanItem,
   Workout,
   WorkoutEntry,
@@ -221,6 +222,92 @@ export function workoutsRepo(db: FitnessDB, clock: Clock) {
         entries.push(await buildEntry(e.exerciseId, item))
       }
       return createActive(source.name, null, null, entries)
+    },
+
+    /**
+     * Внести тренировку вручную из «Истории» (ТЗ 9.3). Сегодня или раньше — сразу выполненная
+     * (подходы отмечены, их можно поправить); позже сегодняшнего дня — запланированная.
+     * С днём программы — упражнения и подходы из плана, иначе пустая.
+     */
+    async createManual(input: {
+      date: ISODate
+      from: { programId: ID; dayId: ID } | null
+      today: ISODate
+    }): Promise<Workout> {
+      const program = input.from ? await programs.get(input.from.programId) : undefined
+      const day = program?.days.find((d) => d.id === input.from?.dayId)
+      if (input.from && !day) throw new Error('День программы не найден')
+      const planned = input.date > input.today
+      const entries: WorkoutEntry[] = []
+      for (const item of day?.items ?? []) {
+        const e = await buildEntry(item.exerciseId, item)
+        entries.push({ ...e, sets: e.sets.map((s) => ({ ...s, done: !planned })) })
+      }
+      const [y, m, d] = input.date.split('-').map(Number)
+      const now = clock()
+      const startedAt = input.date === input.today ? now : new Date(y, m - 1, d, 12).getTime()
+      const workout = withIndex(
+        {
+          id: newId(),
+          date: input.date,
+          name: day?.name ?? (planned ? 'Запланированная тренировка' : 'Тренировка'),
+          programId: program?.id ?? null,
+          dayId: day?.id ?? null,
+          status: planned ? 'planned' : 'done',
+          startedAt,
+          finishedAt: planned ? null : startedAt,
+          note: '',
+          entries,
+          exerciseIds: [],
+          updatedAt: now,
+          deletedAt: null,
+          manual: true,
+        },
+        now,
+      )
+      await db.workouts.add(workout)
+      return workout
+    },
+
+    /** Запланированные тренировки по дате. */
+    async listPlanned(): Promise<Workout[]> {
+      const rows = await db.workouts.where('status').equals('planned').toArray()
+      return rows
+        .filter((w) => w.deletedAt === null)
+        .sort((a, b) => a.date.localeCompare(b.date) || a.startedAt - b.startedAt)
+    },
+
+    /** Запланированная на дату — её «Сегодня» показывает вместо следующего дня программы. */
+    async plannedFor(date: ISODate): Promise<Workout | null> {
+      const rows = await db.workouts.where('status').equals('planned').toArray()
+      return rows.find((w) => w.deletedAt === null && w.date === date) ?? null
+    },
+
+    /** Начать запланированную тренировку: она становится активной на сегодня. */
+    async startPlanned(id: ID): Promise<Workout> {
+      if (await getActive()) throw new ActiveWorkoutExistsError()
+      const w = await db.workouts.get(id)
+      if (!w || w.status !== 'planned' || w.deletedAt !== null) {
+        throw new Error('Запланированная тренировка не найдена')
+      }
+      const now = clock()
+      const started = withIndex(
+        {
+          ...w,
+          status: 'active',
+          date: toISODate(new Date(now)),
+          startedAt: now,
+          finishedAt: null,
+          manual: false,
+          entries: w.entries.map((e) => ({
+            ...e,
+            sets: e.sets.map((s) => ({ ...s, done: false })),
+          })),
+        },
+        now,
+      )
+      await db.workouts.put(started)
+      return started
     },
 
     /** Сохранить изменения: вызывается после каждого действия в активной тренировке и при правке истории. */

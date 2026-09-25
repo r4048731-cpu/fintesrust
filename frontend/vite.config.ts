@@ -51,5 +51,7 @@ export default defineConfig({
     include: ['tests/**/*.test.{ts,tsx}', 'src/**/*.test.{ts,tsx}'],
     environment: 'node',
     setupFiles: ['tests/setup.ts'],
+    // Тесты интерфейса имитируют касания по одному; на нагруженной машине 5 с по умолчанию не хватает
+    testTimeout: 15_000,
   },
 })

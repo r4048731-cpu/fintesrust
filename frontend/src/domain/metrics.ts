@@ -37,6 +37,24 @@ export function countable(workouts: Workout[]): Workout[] {
   return workouts.filter((w) => w.status === 'done' && w.deletedAt === null)
 }
 
+/**
+ * Рабочий вес тренировки (ТЗ 9.7): вес, с которым сделано больше всего подходов;
+ * если таких весов несколько — больший. Разминочные подходы с малым весом так не мешают.
+ */
+export function workingWeight(sets: WorkoutSet[]): number {
+  const counts = new Map<number, number>()
+  for (const s of sets) counts.set(s.weightKg, (counts.get(s.weightKg) ?? 0) + 1)
+  let best = 0
+  let bestCount = 0
+  for (const [w, c] of counts) {
+    if (c > bestCount || (c === bestCount && w > best)) {
+      best = w
+      bestCount = c
+    }
+  }
+  return best
+}
+
 /** Лучшие показатели упражнения в одной тренировке. */
 export interface SessionStats {
   workoutId: ID
@@ -47,6 +65,10 @@ export interface SessionStats {
   bestSetVolume: number
   maxReps: number
   maxTimeSec: number
+  workingWeightKg: number
+  /** Сумма повторов (для упражнений на время — секунд) по выполненным подходам. */
+  totalReps: number
+  totalTimeSec: number
   sets: WorkoutSet[]
 }
 
@@ -64,6 +86,9 @@ export function sessionStats(workout: Workout, exerciseId: ID): SessionStats | n
     bestSetVolume: Math.max(...sets.map(setVolume)),
     maxReps: Math.max(...sets.map((s) => s.reps)),
     maxTimeSec: Math.max(...sets.map((s) => s.timeSec ?? 0)),
+    workingWeightKg: workingWeight(sets),
+    totalReps: sets.reduce((n, s) => n + s.reps, 0),
+    totalTimeSec: sets.reduce((n, s) => n + (s.timeSec ?? 0), 0),
     sets,
   }
 }

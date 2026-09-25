@@ -116,7 +116,7 @@ function ExerciseForm({ exercise, defaults, onClose, onSaved }: Props) {
       {exercise &&
         (confirmDelete ? (
           <div className={styles.confirm} role="alertdialog" aria-label="Подтверждение удаления">
-            <p>Удалить «{exercise.name}»? В сохранённых тренировках и программах оно останется.</p>
+            <p>Удалить «{exercise.name}»? В прошлых тренировках оно останется.</p>
             <div className={styles.confirmActions}>
               <Button variant="danger" onClick={remove}>
                 Удалить
