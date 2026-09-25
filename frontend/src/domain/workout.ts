@@ -155,7 +155,7 @@ export function formatClock(totalSec: number): string {
 export function formatDuration(ms: number): string {
   const min = Math.max(0, Math.round(ms / 60000))
   if (min < 60) return `${min} мин`
-  return `${Math.floor(min / 60)} ч ${min % 60} мин`
+  return min % 60 ? `${Math.floor(min / 60)} ч ${min % 60} мин` : `${min / 60} ч`
 }
 
 /** Оставляет только выполненные подходы и упражнения, в которых они есть. */
@@ -183,4 +183,46 @@ export function changeDate(w: Workout, date: string): Workout {
     startedAt: w.startedAt + shift,
     finishedAt: w.finishedAt === null ? null : w.finishedAt + shift,
   }
+}
+
+export interface ProgressionHint {
+  /** Вес, который стоит попробовать сегодня. */
+  weightKg: number
+  /** Сколько невыполненных подходов ещё не на этом весе. */
+  setsToChange: number
+}
+
+/**
+ * Подсказка «пора прибавить вес» (ТЗ, v2): в прошлый раз сделаны все подходы плана
+ * на верхней границе повторов или выше — предлагаем прибавить один шаг веса.
+ * Только для упражнений с весом и планом; если все подходы уже на новом весе — подсказки нет.
+ */
+export function progressionHint(
+  entry: WorkoutEntry,
+  previous: WorkoutSet[] | null,
+  type: ExerciseType,
+  stepKg: number,
+): ProgressionHint | null {
+  const plan = entry.plan
+  if (type !== 'weight' || !plan || !previous?.length || stepKg <= 0) return null
+  if (previous.length < plan.sets || !previous.every((s) => s.reps >= plan.repsMax)) return null
+  const lastWeight = Math.max(...previous.map((s) => s.weightKg))
+  if (lastWeight <= 0) return null
+  const weightKg = Math.round((lastWeight + stepKg) * 100) / 100
+  const setsToChange = entry.sets.filter((s) => !s.done && s.weightKg < weightKg).length
+  return setsToChange > 0 ? { weightKg, setsToChange } : null
+}
+
+/** Ставит вес всем невыполненным подходам упражнения. */
+export function applyWeightToOpenSets(w: Workout, ei: number, weightKg: number): Workout {
+  return mapEntry(w, ei, (e) => mapSets(e, (s) => (s.done ? s : { ...s, weightKg })))
+}
+
+/** Первый невыполненный подход тренировки — его подсвечиваем как следующий. */
+export function nextOpenSet(w: Workout): { ei: number; si: number } | null {
+  for (let ei = 0; ei < w.entries.length; ei++) {
+    const si = w.entries[ei].sets.findIndex((s) => !s.done)
+    if (si >= 0) return { ei, si }
+  }
+  return null
 }

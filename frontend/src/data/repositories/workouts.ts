@@ -127,6 +127,35 @@ export function workoutsRepo(db: FitnessDB, clock: Clock) {
     return rows.filter((w) => w.deletedAt === null).sort(newestFirst)[0] ?? null
   }
 
+  async function createActive(
+    name: string,
+    programId: ID | null,
+    dayId: ID | null,
+    entries: WorkoutEntry[],
+  ): Promise<Workout> {
+    const now = clock()
+    const workout = withIndex(
+      {
+        id: newId(),
+        date: toISODate(new Date(now)),
+        name,
+        programId,
+        dayId,
+        status: 'active',
+        startedAt: now,
+        finishedAt: null,
+        note: '',
+        entries,
+        exerciseIds: [],
+        updatedAt: now,
+        deletedAt: null,
+      },
+      now,
+    )
+    await db.workouts.add(workout)
+    return workout
+  }
+
   return {
     getActive,
     forExercise,
@@ -152,29 +181,46 @@ export function workoutsRepo(db: FitnessDB, clock: Clock) {
       const program = from ? await programs.get(from.programId) : undefined
       const day = program?.days.find((d) => d.id === from?.dayId)
       if (from && !day) throw new Error('День программы не найден')
-      const now = clock()
       const entries: WorkoutEntry[] = []
       for (const item of day?.items ?? []) entries.push(await buildEntry(item.exerciseId, item))
-      const workout = withIndex(
-        {
-          id: newId(),
-          date: toISODate(new Date(now)),
-          name: day?.name ?? 'Свободная тренировка',
-          programId: program?.id ?? null,
-          dayId: day?.id ?? null,
-          status: 'active',
-          startedAt: now,
-          finishedAt: null,
-          note: '',
-          entries,
-          exerciseIds: [],
-          updatedAt: now,
-          deletedAt: null,
-        },
-        now,
+      return createActive(
+        day?.name ?? 'Свободная тренировка',
+        program?.id ?? null,
+        day?.id ?? null,
+        entries,
       )
-      await db.workouts.add(workout)
-      return workout
+    },
+
+    /**
+     * Повторить прошедшую тренировку: те же упражнения и число подходов, а вес и повторы —
+     * из последнего раза, как при обычном старте. С программой не связывается,
+     * чтобы повтор не сдвигал её следующий день.
+     */
+    async repeat(sourceId: ID): Promise<Workout> {
+      if (await getActive()) throw new ActiveWorkoutExistsError()
+      const source = await db.workouts.get(sourceId)
+      if (!source || source.status !== 'done' || source.deletedAt !== null) {
+        throw new Error('Тренировка для повтора не найдена')
+      }
+      const entries: WorkoutEntry[] = []
+      for (const e of source.entries) {
+        const timed = (await typeOf(e.exerciseId)) === 'time'
+        const values = e.sets.map((s) => (timed ? (s.timeSec ?? 0) : s.reps))
+        const plan = e.plan ?? {
+          sets: e.sets.length,
+          repsMin: Math.min(...values),
+          repsMax: Math.max(...values),
+          weightKg: Math.max(...e.sets.map((s) => s.weightKg)),
+        }
+        const item: PlanItem = {
+          exerciseId: e.exerciseId,
+          restSec: e.restSec,
+          ...plan,
+          sets: e.sets.length,
+        }
+        entries.push(await buildEntry(e.exerciseId, item))
+      }
+      return createActive(source.name, null, null, entries)
     },
 
     /** Сохранить изменения: вызывается после каждого действия в активной тренировке и при правке истории. */

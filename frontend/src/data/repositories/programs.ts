@@ -1,5 +1,6 @@
 import { newDay } from '../../domain/programs'
-import type { ID, Program, ProgramDay } from '../../domain/types'
+import { PROGRAM_TEMPLATES } from '../../domain/templates'
+import type { ID, Program, ProgramDay, ProgramKind } from '../../domain/types'
 import type { FitnessDB } from '../db'
 import type { Clock } from './clock'
 import { metaRepo } from './meta'
@@ -32,12 +33,24 @@ export function programsRepo(db: FitnessDB, clock: Clock) {
     get: getAlive,
     save,
 
-    /** Новая программа с одним пустым днём. Первая созданная программа становится активной. */
-    async create(name = 'Новая программа'): Promise<Program> {
+    /**
+     * Новая программа. Тип `custom` — один пустой день, остальные типы — готовые дни
+     * с упражнениями из шаблона. Первая созданная программа становится активной.
+     */
+    async create(name = 'Новая программа', kind: ProgramKind = 'custom'): Promise<Program> {
+      const template = PROGRAM_TEMPLATES.find((t) => t.kind === kind)
+      const days: ProgramDay[] = template
+        ? template.days.map((d) => ({
+            id: newId(),
+            name: d.name,
+            items: d.items.map((i) => ({ ...i })),
+          }))
+        : [newDay(0)]
       const program: Program = {
         id: newId(),
         name,
-        days: [newDay(0)],
+        kind,
+        days,
         updatedAt: clock(),
         deletedAt: null,
       }

@@ -19,7 +19,8 @@ import {
   removeDay,
   updatePlanItem,
 } from '../domain/programs'
-import type { Exercise, PlanItem, Program, ProgramDay } from '../domain/types'
+import { PROGRAM_KIND_LABELS } from '../domain/templates'
+import type { Exercise, PlanItem, Program, ProgramDay, ProgramKind } from '../domain/types'
 import styles from './ProgramEditScreen.module.css'
 
 const SAVE_DELAY_MS = 400
@@ -134,6 +135,21 @@ export function ProgramEditScreen() {
           placeholder="Например, Верх/Низ"
           autoComplete="off"
         />
+      </label>
+
+      <label className={styles.nameField}>
+        <span className={styles.label}>Тип программы</span>
+        <select
+          className={styles.nameInput}
+          value={program.kind ?? 'custom'}
+          onChange={(e) => change({ ...program, kind: e.target.value as ProgramKind })}
+        >
+          {(Object.keys(PROGRAM_KIND_LABELS) as ProgramKind[]).map((k) => (
+            <option key={k} value={k}>
+              {PROGRAM_KIND_LABELS[k]}
+            </option>
+          ))}
+        </select>
       </label>
 
       {activeId === program.id ? (

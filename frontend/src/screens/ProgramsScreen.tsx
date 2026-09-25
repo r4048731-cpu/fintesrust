@@ -1,11 +1,15 @@
 import { useLiveQuery } from 'dexie-react-hooks'
+import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useRepos } from '../app/dataContext'
 import { Button } from '../components/Button'
 import { EmptyState } from '../components/EmptyState'
 import { Icon } from '../components/Icon'
 import { Screen } from '../components/Screen'
+import { Sheet } from '../components/Sheet'
 import { plural } from '../domain/plural'
+import { PROGRAM_KIND_LABELS, PROGRAM_TEMPLATES } from '../domain/templates'
+import type { ProgramKind } from '../domain/types'
 import styles from './ProgramsScreen.module.css'
 
 export function ProgramsScreen() {
@@ -14,8 +18,12 @@ export function ProgramsScreen() {
   const programs = useLiveQuery(() => repos.programs.list(), [repos])
   const activeId = useLiveQuery(async () => (await repos.programs.getActive())?.id ?? null, [repos])
 
-  async function create() {
-    const program = await repos.programs.create()
+  const [chooseOpen, setChooseOpen] = useState(false)
+  const create = () => setChooseOpen(true)
+
+  async function createOf(kind: ProgramKind, name: string) {
+    setChooseOpen(false)
+    const program = await repos.programs.create(name, kind)
     navigate(`/programs/${program.id}`)
   }
 
@@ -59,6 +67,11 @@ export function ProgramsScreen() {
                       <span className={styles.name}>
                         {p.name}
                         {p.id === activeId && <span className={styles.active}>активная</span>}
+                        {p.kind &&
+                          p.kind !== 'custom' &&
+                          PROGRAM_KIND_LABELS[p.kind] !== p.name && (
+                            <span className={styles.kind}>{PROGRAM_KIND_LABELS[p.kind]}</span>
+                          )}
                       </span>
                       <span className={styles.meta}>
                         {p.days.length} {plural(p.days.length, 'день', 'дня', 'дней')} · {exercises}{' '}
@@ -79,6 +92,40 @@ export function ProgramsScreen() {
           </Button>
         </>
       )}
+      <Sheet open={chooseOpen} onClose={() => setChooseOpen(false)} title="Тип программы">
+        <p className={styles.sheetHint}>
+          Программа заполнится днями и упражнениями. Вес, подходы и упражнения потом можно поменять.
+        </p>
+        <ul className={styles.templates}>
+          {PROGRAM_TEMPLATES.map((t) => (
+            <li key={t.kind}>
+              <button
+                type="button"
+                className={styles.template}
+                onClick={() => createOf(t.kind, t.name)}
+              >
+                <span className={styles.templateName}>{t.name}</span>
+                <span className={styles.summary}>{t.summary}</span>
+                <span className={styles.templateDays}>
+                  {t.days.map((d) => `${d.name} (${d.items.length})`).join(', ')}
+                </span>
+              </button>
+            </li>
+          ))}
+          <li>
+            <button
+              type="button"
+              className={styles.template}
+              onClick={() => createOf('custom', 'Новая программа')}
+            >
+              <span className={styles.templateName}>Своя программа</span>
+              <span className={styles.summary}>
+                Один пустой день — дни и упражнения добавите сами.
+              </span>
+            </button>
+          </li>
+        </ul>
+      </Sheet>
     </Screen>
   )
 }

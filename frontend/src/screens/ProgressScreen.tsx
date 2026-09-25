@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router'
 import { useRepos } from '../app/dataContext'
 import { BarChart } from '../components/charts/BarChart'
 import { ChartLegend, LineChart, type LineSeries } from '../components/charts/LineChart'
+import { BodyWeightCard } from '../components/BodyWeightCard'
 import { EmptyState } from '../components/EmptyState'
 import { Card, Screen, SectionLabel } from '../components/Screen'
 import {
@@ -97,6 +98,7 @@ export function ProgressScreen() {
             упражнению, личные рекорды и тоннаж по неделям.
           </p>
         </EmptyState>
+        <BodyWeightCard />
       </Screen>
     )
   }
@@ -170,7 +172,7 @@ export function ProgressScreen() {
             <h2 className={styles.cardTitle}>
               {exercise.type === 'weight' ? 'Вес по тренировкам, кг' : series[0].name}
             </h2>
-            {series.length > 1 && <ChartLegend series={series} />}
+            {series.length > 1 && points.length >= 2 && <ChartLegend series={series} />}
             {points.length >= 2 ? (
               <LineChart
                 points={points}
@@ -219,6 +221,8 @@ export function ProgressScreen() {
           </Card>
         </>
       )}
+
+      <BodyWeightCard />
 
       <SectionLabel>Все тренировки</SectionLabel>
       <div className={styles.tiles}>

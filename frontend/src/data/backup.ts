@@ -1,7 +1,7 @@
 // Резервная копия всех данных в одном JSON-файле (ТЗ, раздел 5; архитектура, решение 6).
 // Копия содержит всё, включая удалённые записи: так её можно восстановить без потерь.
 
-import type { Exercise, MetaRecord, Program, Workout } from '../domain/types'
+import type { BodyWeight, Exercise, MetaRecord, Program, Workout } from '../domain/types'
 import { SCHEMA_VERSION, type FitnessDB } from './db'
 
 export const BACKUP_APP = 'fitnes'
@@ -16,6 +16,8 @@ export interface Backup {
   exercises: Exercise[]
   programs: Program[]
   workouts: Workout[]
+  /** Появилось в схеме 2; в копиях, сделанных раньше, его нет. */
+  bodyWeights: BodyWeight[]
   meta: MetaRecord[]
 }
 
@@ -29,17 +31,22 @@ export interface BackupCounts {
 export class BackupError extends Error {}
 
 export async function createBackup(db: FitnessDB, now: number): Promise<Backup> {
-  return db.transaction('r', db.exercises, db.programs, db.workouts, db.meta, async () => ({
-    app: BACKUP_APP,
-    version: BACKUP_VERSION,
-    schemaVersion: SCHEMA_VERSION,
-    exportedAt: new Date(now).toISOString(),
-    exercises: await db.exercises.toArray(),
-    programs: await db.programs.toArray(),
-    workouts: await db.workouts.toArray(),
-    // Время последней копии — свойство устройства, а не данных: в файл не попадает
-    meta: (await db.meta.toArray()).filter((m) => m.key !== 'lastExportAt'),
-  }))
+  return db.transaction(
+    'r',
+    [db.exercises, db.programs, db.workouts, db.bodyWeights, db.meta],
+    async () => ({
+      app: BACKUP_APP,
+      version: BACKUP_VERSION,
+      schemaVersion: SCHEMA_VERSION,
+      exportedAt: new Date(now).toISOString(),
+      exercises: await db.exercises.toArray(),
+      programs: await db.programs.toArray(),
+      workouts: await db.workouts.toArray(),
+      bodyWeights: await db.bodyWeights.toArray(),
+      // Время последней копии — свойство устройства, а не данных: в файл не попадает
+      meta: (await db.meta.toArray()).filter((m) => m.key !== 'lastExportAt'),
+    }),
+  )
 }
 
 /** Сколько живых (неудалённых) записей в копии — для подтверждения перед восстановлением. */
@@ -72,7 +79,7 @@ export function parseBackup(text: string): Backup {
     throw new BackupError('Копия сделана более новой версией приложения. Обновите приложение.')
   }
   const b = migrate(data)
-  for (const key of ['exercises', 'programs', 'workouts'] as const) {
+  for (const key of ['exercises', 'programs', 'workouts', 'bodyWeights'] as const) {
     const list = b[key] as unknown
     if (!Array.isArray(list) || !list.every(hasId)) {
       throw new BackupError('В копии повреждены данные. Восстановить её нельзя.')
@@ -88,9 +95,10 @@ export function parseBackup(text: string): Backup {
   return b
 }
 
-/** Перевод старых форматов в текущий. Пока формат один. */
+/** Перевод старых копий в текущий формат: в копиях до веса тела нет списка bodyWeights. */
 function migrate(data: Record<string, unknown>): Backup {
-  return data as unknown as Backup
+  const bodyWeights = Array.isArray(data.bodyWeights) ? data.bodyWeights : []
+  return { ...data, bodyWeights } as unknown as Backup
 }
 
 /**
@@ -98,35 +106,46 @@ function migrate(data: Record<string, unknown>): Backup {
  * Незавершённая тренировка на этом устройстве пропадает вместе с остальными данными.
  */
 export async function restoreBackup(db: FitnessDB, b: Backup): Promise<BackupCounts> {
-  await db.transaction('rw', db.exercises, db.programs, db.workouts, db.meta, async () => {
-    const lastExportAt = await db.meta.get('lastExportAt')
-    await Promise.all([
-      db.exercises.clear(),
-      db.programs.clear(),
-      db.workouts.clear(),
-      db.meta.clear(),
-    ])
-    await db.exercises.bulkPut(b.exercises)
-    await db.programs.bulkPut(b.programs)
-    await db.workouts.bulkPut(b.workouts)
-    await db.meta.bulkPut(b.meta.filter((m) => m.key !== 'lastExportAt'))
-    if (lastExportAt) await db.meta.put(lastExportAt)
-    // Копия без отметки о стартовом наборе иначе получила бы его второй раз при запуске
-    await db.meta.put({ key: 'seeded', value: true })
-  })
+  await db.transaction(
+    'rw',
+    [db.exercises, db.programs, db.workouts, db.bodyWeights, db.meta],
+    async () => {
+      const lastExportAt = await db.meta.get('lastExportAt')
+      await Promise.all([
+        db.exercises.clear(),
+        db.programs.clear(),
+        db.workouts.clear(),
+        db.bodyWeights.clear(),
+        db.meta.clear(),
+      ])
+      await db.exercises.bulkPut(b.exercises)
+      await db.programs.bulkPut(b.programs)
+      await db.workouts.bulkPut(b.workouts)
+      await db.bodyWeights.bulkPut(b.bodyWeights)
+      await db.meta.bulkPut(b.meta.filter((m) => m.key !== 'lastExportAt'))
+      if (lastExportAt) await db.meta.put(lastExportAt)
+      // Копия без отметки о стартовом наборе иначе получила бы его второй раз при запуске
+      await db.meta.put({ key: 'seeded', value: true })
+    },
+  )
   return countBackup(b)
 }
 
 /** Удаляет все данные. При следующем запуске загрузится стартовый набор упражнений. */
 export async function wipeAll(db: FitnessDB): Promise<void> {
-  await db.transaction('rw', db.exercises, db.programs, db.workouts, db.meta, async () => {
-    await Promise.all([
-      db.exercises.clear(),
-      db.programs.clear(),
-      db.workouts.clear(),
-      db.meta.clear(),
-    ])
-  })
+  await db.transaction(
+    'rw',
+    [db.exercises, db.programs, db.workouts, db.bodyWeights, db.meta],
+    async () => {
+      await Promise.all([
+        db.exercises.clear(),
+        db.programs.clear(),
+        db.workouts.clear(),
+        db.bodyWeights.clear(),
+        db.meta.clear(),
+      ])
+    },
+  )
 }
 
 /** «fitnes-2026-09-25.json» */

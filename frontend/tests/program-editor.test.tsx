@@ -26,6 +26,8 @@ describe('программы', () => {
   it('создание с пустого экрана открывает редактор, первая программа активная', async () => {
     const { user, router, repos } = await renderAt('/programs')
     await user.click(await screen.findByRole('button', { name: 'Создать программу' }))
+    const sheet = screen.getByRole('dialog', { name: 'Тип программы' })
+    await user.click(within(sheet).getByRole('button', { name: /Своя программа/ }))
     await screen.findByRole('textbox', { name: 'Название дня' })
     expect(router.state.location.pathname).toMatch(/^\/programs\/.+/)
     expect(await screen.findByText('Активная')).toBeInTheDocument()
@@ -182,6 +184,41 @@ describe('программы', () => {
     expect(await screen.findByRole('heading', { name: 'Верх' })).toBeInTheDocument()
     expect(screen.getByText('Жим штанги лёжа')).toBeInTheDocument()
     expect(screen.getByText('3 × 8–10 · 60 кг · отдых 1:30')).toBeInTheDocument()
+  })
+
+  it('тип программы: «Тяни / Толкай / Ноги» создаётся с готовыми днями и упражнениями', async () => {
+    const { user, router, repos } = await renderAt('/programs')
+    await user.click(await screen.findByRole('button', { name: 'Создать программу' }))
+    const sheet = screen.getByRole('dialog', { name: 'Тип программы' })
+    expect(
+      within(sheet)
+        .getAllByRole('listitem')
+        .map((li) => li.querySelector('button > span')?.textContent),
+    ).toEqual([
+      'Фулбади',
+      'Верх / Низ',
+      'Тяни / Толкай / Ноги',
+      'Сплит по группам мышц',
+      'Своя программа',
+    ])
+    await user.click(within(sheet).getByRole('button', { name: /Тяни \/ Толкай \/ Ноги/ }))
+    await waitFor(() => expect(router.state.location.pathname).toMatch(/^\/programs\/.+/))
+    const names = await screen.findAllByRole('textbox', { name: 'Название дня' })
+    expect(names.map((i) => (i as HTMLInputElement).value)).toEqual(['Толкай', 'Тяни', 'Ноги'])
+    expect(screen.getByRole('combobox', { name: 'Тип программы' })).toHaveValue('ppl')
+    const [p] = await repos.programs.list()
+    expect(p).toMatchObject({ name: 'Тяни / Толкай / Ноги', kind: 'ppl' })
+    expect(p.days[0].items[0]).toMatchObject({
+      exerciseId: 'builtin-bench-press',
+      sets: 4,
+      repsMin: 6,
+      repsMax: 8,
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Назад' }))
+    expect(
+      await screen.findByText('Тяни / Толкай / Ноги', { selector: 'span span' }),
+    ).toBeInTheDocument()
   })
 
   it('несуществующая программа', async () => {

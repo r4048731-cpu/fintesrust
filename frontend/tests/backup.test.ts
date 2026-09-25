@@ -9,10 +9,13 @@ import {
   restoreBackup,
   wipeAll,
 } from '../src/data/backup'
+import { builtinExercises } from '../src/data/seed'
 import { newPlanItem } from '../src/domain/programs'
 import { DAY, setup } from './helpers'
 
 type Repos = Awaited<ReturnType<typeof setup>>
+/** Упражнений в стартовом наборе; в тестах ниже к ним добавляется одно своё. */
+const BUILTIN = builtinExercises(0).length
 
 /** Программа, своё упражнение, завершённая и удалённая тренировки, настройки. */
 async function fill(r: Repos) {
@@ -60,7 +63,7 @@ describe('резервная копия', () => {
     expect(await r.db.workouts.count()).toBe(0)
 
     const counts = await restoreBackup(r.db, parseBackup(file))
-    expect(counts).toEqual({ exercises: 32, programs: 1, workouts: 1 })
+    expect(counts).toEqual({ exercises: BUILTIN + 1, programs: 1, workouts: 1 })
     expect(await snapshot(r)).toEqual(before)
     // после восстановления стартовый набор не добавляется второй раз
     expect(await r.init()).toBe(false)
@@ -119,7 +122,7 @@ describe('резервная копия', () => {
     const r = await setup()
     await fill(r)
     expect(countBackup(await createBackup(r.db, 0))).toEqual({
-      exercises: 32,
+      exercises: BUILTIN + 1,
       programs: 1,
       workouts: 1,
     })

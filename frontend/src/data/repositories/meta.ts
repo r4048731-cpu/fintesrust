@@ -4,6 +4,7 @@ import type { FitnessDB } from '../db'
 export const META_DEFAULTS: MetaValues = {
   schemaVersion: 0,
   seeded: false,
+  seedVersion: 0,
   weightStepKg: 2.5,
   activeProgramId: null,
   nextDayIndex: {},

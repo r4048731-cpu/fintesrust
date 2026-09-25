@@ -8,7 +8,10 @@ import { DataProvider } from '../src/app/DataProvider'
 import { routes } from '../src/app/routes'
 import { ExercisePicker } from '../src/components/ExercisePicker'
 import type { Exercise } from '../src/domain/types'
+import { builtinExercises } from '../src/data/seed'
 import { setup } from './helpers'
+
+const BUILTIN = builtinExercises(0)
 
 async function openLibrary() {
   const repos = await setup()
@@ -34,7 +37,7 @@ describe('справочник упражнений', () => {
     )
     const user = userEvent.setup()
     await user.click(await screen.findByRole('button', { name: 'Упражнения' }))
-    expect(await screen.findByText('В справочнике: 31')).toBeInTheDocument()
+    expect(await screen.findByText(`В справочнике: ${BUILTIN.length}`)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Назад' }))
     expect(router.state.location.pathname).toBe('/programs')
   })
@@ -42,24 +45,23 @@ describe('справочник упражнений', () => {
   it('без фильтров показывает группы мышц, поиск находит без учёта ё', async () => {
     const { user } = await openLibrary()
     expect(screen.getByRole('region', { name: 'Грудь' })).toBeInTheDocument()
-    await user.type(screen.getByRole('searchbox', { name: 'Поиск по названию' }), 'лежа')
+    await user.type(screen.getByRole('searchbox', { name: 'Поиск по названию' }), 'штанги лежа')
     const found = screen.getByRole('list', { name: 'Найденные упражнения' })
     expect(
       within(found)
         .getAllByRole('button')
         .map((b) => b.textContent),
-    ).toEqual([
-      expect.stringContaining('Жим гантелей лёжа'),
-      expect.stringContaining('Жим штанги лёжа'),
-    ])
+    ).toEqual([expect.stringContaining('Жим штанги лёжа')])
   })
 
   it('фильтр по группе мышц', async () => {
     const { user } = await openLibrary()
     await user.click(screen.getByRole('button', { name: 'Кардио' }))
     const found = screen.getByRole('list', { name: 'Найденные упражнения' })
-    expect(within(found).getAllByRole('button')).toHaveLength(1)
+    const cardio = BUILTIN.filter((e) => e.muscle === 'cardio')
+    expect(within(found).getAllByRole('button')).toHaveLength(cardio.length)
     expect(found).toHaveTextContent('Велотренажёр')
+    expect(found).not.toHaveTextContent('Жим')
   })
 
   it('создаёт своё упражнение из пустого поиска', async () => {
@@ -94,7 +96,7 @@ describe('справочник упражнений', () => {
   it('правит и удаляет упражнение с подтверждением', async () => {
     const { user, repos } = await openLibrary()
     await user.type(screen.getByRole('searchbox'), 'планка')
-    await user.click(screen.getByRole('button', { name: /Планка/ }))
+    await user.click(screen.getByRole('button', { name: /^Планка/ }))
     let dialog = screen.getByRole('dialog', { name: 'Упражнение' })
     const name = within(dialog).getByLabelText('Название')
     await user.clear(name)
@@ -108,7 +110,11 @@ describe('справочник упражнений', () => {
     dialog = screen.getByRole('dialog', { name: 'Упражнение' })
     await user.click(within(dialog).getByRole('button', { name: 'Удалить упражнение' }))
     await user.click(within(dialog).getByRole('button', { name: 'Удалить' }))
-    expect(await screen.findByText('Ничего не найдено.')).toBeInTheDocument()
+    // в поиске «планка» остаётся «Боковая планка», а удалённой больше нет
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: /Планка на локтях/ })).not.toBeInTheDocument(),
+    )
+    expect(screen.getByRole('button', { name: /Боковая планка/ })).toBeInTheDocument()
     expect((await repos.exercises.get('builtin-plank'))?.deletedAt).not.toBeNull()
   })
 })
@@ -137,9 +143,9 @@ describe('выбор упражнения', () => {
       </DataProvider>,
     )
     const user = userEvent.setup()
-    await user.type(await screen.findByRole('searchbox'), 'становая')
-    await user.click(screen.getByRole('button', { name: /Становая тяга/ }))
-    expect(picked.map((e) => e.id)).toEqual(['builtin-deadlift'])
+    await user.type(await screen.findByRole('searchbox'), 'сумо')
+    await user.click(screen.getByRole('button', { name: /Становая тяга сумо/ }))
+    expect(picked.map((e) => e.id)).toEqual(['builtin-sumo-deadlift'])
   })
 
   it('новое упражнение из выбора сразу выбирается', async () => {
@@ -151,13 +157,13 @@ describe('выбор упражнения', () => {
       </DataProvider>,
     )
     const user = userEvent.setup()
-    await user.type(await screen.findByRole('searchbox'), 'Тяга Т-грифа')
-    await user.click(screen.getByRole('button', { name: 'Создать «Тяга Т-грифа»' }))
+    await user.type(await screen.findByRole('searchbox'), 'Тяга лёжа на скамье')
+    await user.click(screen.getByRole('button', { name: 'Создать «Тяга лёжа на скамье»' }))
     const form = screen.getByRole('dialog', { name: 'Новое упражнение' })
     await user.selectOptions(within(form).getByLabelText('Группа мышц'), 'back')
     await user.click(within(form).getByRole('button', { name: 'Добавить в справочник' }))
     await expect
       .poll(() => picked.map((e) => [e.name, e.muscle]))
-      .toEqual([['Тяга Т-грифа', 'back']])
+      .toEqual([['Тяга лёжа на скамье', 'back']])
   })
 })

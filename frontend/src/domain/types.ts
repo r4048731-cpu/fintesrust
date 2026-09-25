@@ -78,9 +78,14 @@ export interface ProgramDay {
   items: PlanItem[]
 }
 
+/** Тип программы: как распределены группы мышц по дням. */
+export type ProgramKind = 'fullbody' | 'upperlower' | 'ppl' | 'split' | 'custom'
+
 export interface Program extends Syncable {
   name: string
   days: ProgramDay[]
+  /** Необязательное: у программ, созданных до появления типов, его нет — считаются «своими». */
+  kind?: ProgramKind
 }
 
 export interface WorkoutSet {
@@ -127,10 +132,18 @@ export interface Workout extends Syncable {
   restTotalSec?: number
 }
 
+/** Вес тела за день (ТЗ 2.5, п. 4). Одна запись на дату. */
+export interface BodyWeight extends Syncable {
+  date: ISODate
+  weightKg: number
+}
+
 /** Записи таблицы meta: настройки и служебные указатели. */
 export interface MetaValues {
   schemaVersion: number
   seeded: boolean
+  /** Какая версия стартового набора упражнений уже загружена. */
+  seedVersion: number
   weightStepKg: number
   activeProgramId: ID | null
   /** Индекс следующего дня для каждой программы. */

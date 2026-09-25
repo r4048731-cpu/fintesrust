@@ -6,9 +6,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { DataProvider } from '../src/app/DataProvider'
 import { routes } from '../src/app/routes'
 import { createBackup } from '../src/data/backup'
+import { builtinExercises } from '../src/data/seed'
+import { plural } from '../src/domain/plural'
 import { setup } from './helpers'
 
 type Repos = Awaited<ReturnType<typeof setup>>
+const N = builtinExercises(0).length
+const exercisesText = `${N} ${plural(N, 'упражнение', 'упражнения', 'упражнений')}`
 
 function renderAt(path: string, repos: Repos) {
   const router = createMemoryRouter(routes, { initialEntries: [path] })
@@ -53,7 +57,7 @@ describe('настройки', () => {
     await user.click(await screen.findByRole('button', { name: /Сохраните резервную копию/ }))
     await user.click(await screen.findByRole('button', { name: 'Сохранить копию в файл' }))
     expect(await screen.findByRole('status')).toHaveTextContent(
-      'Копия сохранена: 0 программ, 1 тренировка, 31 упражнение.',
+      `Копия сохранена: 0 программ, 1 тренировка, ${exercisesText}.`,
     )
     expect(await r.meta.get('lastExportAt')).not.toBeNull()
     expect(JSON.parse(await saved[0].text()).app).toBe('fitnes')
@@ -80,7 +84,7 @@ describe('настройки', () => {
     const { user } = renderAt('/settings', target)
     await user.upload(await screen.findByLabelText('Файл резервной копии'), file)
     const sheet = await screen.findByRole('dialog', { name: 'Восстановить копию?' })
-    expect(sheet).toHaveTextContent('1 программа, 1 тренировка, 31 упражнение')
+    expect(sheet).toHaveTextContent(`1 программа, 1 тренировка, ${exercisesText}`)
     await user.click(within(sheet).getByRole('button', { name: 'Восстановить' }))
     expect(await screen.findByRole('status')).toHaveTextContent('Восстановлено')
     expect((await target.programs.list()).map((p) => p.name)).toEqual(['Из копии'])
@@ -106,6 +110,6 @@ describe('настройки', () => {
     await user.click(screen.getByRole('button', { name: 'Удалить всё' }))
     expect(await screen.findByRole('status')).toHaveTextContent('Все данные удалены')
     expect(await r.workouts.listDone()).toEqual([])
-    expect((await r.exercises.list()).length).toBe(31)
+    expect((await r.exercises.list()).length).toBe(N)
   })
 })

@@ -1,3 +1,4 @@
+import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { useRepos } from '../app/dataContext'
@@ -17,6 +18,8 @@ export function HistoryDetailScreen() {
   const navigate = useNavigate()
   const data = useWorkoutReport(repos, workoutId)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [repeatError, setRepeatError] = useState<string | null>(null)
+  const hasActive = useLiveQuery(async () => (await repos.workouts.getActive()) !== null, [repos])
 
   if (data === undefined) return null
   if (data === null) {
@@ -44,6 +47,30 @@ export function HistoryDetailScreen() {
       }
     >
       <WorkoutReport data={data} />
+
+      <Button
+        variant="primary"
+        block
+        disabled={hasActive !== false}
+        onClick={async () => {
+          try {
+            await repos.workouts.repeat(workout.id)
+            navigate('/workout')
+          } catch {
+            setRepeatError('Не удалось начать тренировку. Попробуйте ещё раз.')
+          }
+        }}
+      >
+        Повторить тренировку
+      </Button>
+      {hasActive && (
+        <p className={styles.note}>Сейчас идёт другая тренировка — сначала завершите её.</p>
+      )}
+      {repeatError && (
+        <p role="alert" className={styles.note}>
+          {repeatError}
+        </p>
+      )}
 
       {confirmDelete ? (
         <div className={styles.confirm} role="alertdialog" aria-label="Подтверждение удаления">

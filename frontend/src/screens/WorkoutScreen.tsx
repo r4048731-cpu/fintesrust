@@ -10,6 +10,7 @@ import { ExercisePicker } from '../components/ExercisePicker'
 import { Icon } from '../components/Icon'
 import { Sheet } from '../components/Sheet'
 import { Stepper } from '../components/Stepper'
+import { formatDecimal } from '../domain/number'
 import { formatRest } from '../domain/programs'
 import type { Exercise, Workout, WorkoutSet } from '../domain/types'
 import {
@@ -29,6 +30,9 @@ import {
   stopRest,
   toggleDone,
   toggleSetOnly,
+  applyWeightToOpenSets,
+  nextOpenSet,
+  progressionHint,
 } from '../domain/workout'
 import styles from './WorkoutScreen.module.css'
 
@@ -157,6 +161,7 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
   const w = workout
   const exerciseOf = (id: string) => exercises.get(id) ?? missingExercise(id)
   const sets = countSets(w)
+  const next = editing ? null : nextOpenSet(w)
   const restLeft = restEndsAt && !editing ? (restEndsAt - now) / 1000 : null
   const showRest = restLeft !== null && restLeft > -REST_OVERTIME_HIDE_SEC
 
@@ -276,6 +281,7 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
           const prev = previous?.get(entry.exerciseId)
           const timed = ex.type === 'time'
           const plan = entry.plan
+          const hint = editing ? null : progressionHint(entry, prev ?? null, ex.type, weightStep)
           return (
             <section
               key={`${entry.exerciseId}-${ei}`}
@@ -317,6 +323,22 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
                 />
               </div>
 
+              {hint && (
+                <div className={styles.hint}>
+                  <span className={styles.hintText}>
+                    В прошлый раз все повторы сделаны — попробуйте{' '}
+                    <b>{formatDecimal(hint.weightKg)} кг</b>
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    onClick={() => change(applyWeightToOpenSets(w, ei, hint.weightKg))}
+                  >
+                    Поставить
+                  </Button>
+                </div>
+              )}
+
               {confirm === `entry:${ei}` && (
                 <div className={styles.confirm} role="alertdialog" aria-label="Подтверждение">
                   <p>Убрать «{ex.name}» из этой тренировки?</p>
@@ -351,7 +373,17 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
 
               <ol className={styles.sets}>
                 {entry.sets.map((set, si) => (
-                  <li key={si} className={`${styles.set} ${set.done ? styles.done : ''}`}>
+                  <li
+                    key={si}
+                    className={[
+                      styles.set,
+                      set.done && styles.done,
+                      next?.ei === ei && next.si === si && styles.next,
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                    aria-current={next?.ei === ei && next.si === si ? 'step' : undefined}
+                  >
                     {timed ? (
                       <div className={styles.span2}>
                         <Stepper

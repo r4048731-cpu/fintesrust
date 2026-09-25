@@ -139,6 +139,7 @@ describe('подписи', () => {
     expect(formatClock(3725)).toBe('1:02:05')
     expect(formatDuration(48 * 60000)).toBe('48 мин')
     expect(formatDuration(72 * 60000)).toBe('1 ч 12 мин')
+    expect(formatDuration(120 * 60000)).toBe('2 ч')
   })
 })
 

@@ -6,6 +6,7 @@ import {
   NothingDoneError,
 } from '../src/data'
 import { newPlanItem } from '../src/domain/programs'
+import { SCHEMA_VERSION } from '../src/data/db'
 import { seedIfEmpty } from '../src/data/seed'
 import { DAY, setup } from './helpers'
 
@@ -41,7 +42,7 @@ describe('стартовые данные', () => {
     expect(count).toBeGreaterThanOrEqual(30)
     expect(await seedIfEmpty(r.db)).toBe(false)
     expect((await r.exercises.list()).length).toBe(count)
-    expect(await r.meta.get('schemaVersion')).toBe(1)
+    expect(await r.meta.get('schemaVersion')).toBe(SCHEMA_VERSION)
     expect(await r.meta.get('weightStepKg')).toBe(2.5)
   })
 })
@@ -221,5 +222,30 @@ describe('тренировки', () => {
     const w = await r.workouts.start(null)
     await r.workouts.discard(w.id)
     expect(await r.workouts.get(w.id)).toBeUndefined()
+  })
+})
+
+describe('дозагрузка новых упражнений у тех, кто уже пользуется приложением', () => {
+  it('добавляет недостающие, не возвращает удалённые и не дублирует свои', async () => {
+    const r = await setup()
+    // Имитация справочника из прошлой версии: новых упражнений ещё нет, seedVersion не записан
+    await r.db.exercises.bulkDelete([
+      'builtin-arnold-press',
+      'builtin-hip-thrust',
+      'builtin-treadmill',
+    ])
+    await r.db.meta.delete('seedVersion')
+    await r.exercises.remove('builtin-bench-press') // удалено пользователем
+    await r.exercises.create({ name: 'Ягодичный мост со штангой', muscle: 'legs', type: 'weight' }) // своё
+
+    expect(await r.init()).toBe(true)
+    const names = (await r.exercises.list()).map((e) => e.name)
+    expect(names).toContain('Жим Арнольда')
+    expect(names).toContain('Беговая дорожка')
+    expect(names.filter((n) => n === 'Ягодичный мост со штангой')).toHaveLength(1)
+    expect(names).not.toContain('Жим штанги лёжа')
+    expect(await r.db.exercises.get('builtin-hip-thrust')).toBeUndefined()
+    // второй запуск ничего не меняет
+    expect(await r.init()).toBe(false)
   })
 })

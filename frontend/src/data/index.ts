@@ -2,6 +2,7 @@
 // и не обращаются к базе напрямую (архитектура, раздел 7.2).
 
 import { FitnessDB } from './db'
+import { bodyWeightsRepo } from './repositories/bodyWeights'
 import { systemClock, type Clock } from './repositories/clock'
 import { exercisesRepo } from './repositories/exercises'
 import { metaRepo } from './repositories/meta'
@@ -16,6 +17,7 @@ export function createRepositories(db: FitnessDB, clock: Clock = systemClock) {
     programs: programsRepo(db, clock),
     workouts: workoutsRepo(db, clock),
     meta: metaRepo(db),
+    bodyWeights: bodyWeightsRepo(db, clock),
     /** Вызвать один раз при запуске приложения. */
     init: () => seedIfEmpty(db, clock()),
   }
