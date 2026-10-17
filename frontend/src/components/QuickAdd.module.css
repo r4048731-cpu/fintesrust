@@ -1,0 +1,80 @@
+/* Плавающая «+» справа над панелью вкладок */
+.fab {
+  position: fixed;
+  right: max(var(--gutter), calc((100vw - var(--content-max)) / 2 + var(--gutter)));
+  bottom: calc(var(--tabbar-h) + 2 * var(--tabbar-inset) + 12px + env(safe-area-inset-bottom, 0px));
+  z-index: 18;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--gradient);
+  color: var(--accent-ink);
+  box-shadow: 0 8px 24px rgb(124 58 237 / 35%);
+}
+
+/* На «Сегодня» внизу закреплена кнопка «Начать» — поднимаемся над ней */
+:global(body:has([data-start-bar])) .fab {
+  bottom: calc(var(--tabbar-h) + 2 * var(--tabbar-inset) + 72px + env(safe-area-inset-bottom, 0px));
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.action {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 64px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--ink);
+  text-align: left;
+}
+
+.icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.text b {
+  font-size: 15px;
+}
+
+.text span {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 13px;
+}

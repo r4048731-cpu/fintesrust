@@ -8,7 +8,7 @@ import {
 } from '../data/repositories/bodyWeights'
 import { toISODate } from '../domain/metrics'
 import { formatDecimal } from '../domain/number'
-import type { WeighTime } from '../domain/types'
+import type { BodyWeight, WeighTime } from '../domain/types'
 import { Button } from './Button'
 import { Segmented } from './Segmented'
 import { Stepper } from './Stepper'
@@ -23,28 +23,39 @@ const TIME_OPTIONS: { value: WeighTime; label: string }[] = [
 
 /**
  * Запись сегодняшнего веса (ТЗ 9.2): время взвешивания, вес на весах и итог с поправкой.
- * Одна и та же на экране «Сегодня» и во вкладке «Вес».
+ * Одна и та же на экране «Сегодня» и в «Прогресс» → «Вес тела».
+ * С `row` правит уже сохранённую запись за её день.
  */
-export function WeightEntry({ title }: { title?: string }) {
+export function WeightEntry({
+  title,
+  onSaved,
+  row,
+}: {
+  title?: string
+  onSaved?: () => void
+  row?: BodyWeight
+}) {
   const repos = useRepos()
   const last = useLiveQuery(async () => {
     const rows = await repos.bodyWeights.list()
     return rows[rows.length - 1] ?? null
   }, [repos])
   const [measured, setMeasured] = useState<number | null>(null)
-  const [time, setTime] = useState<WeighTime>('morning')
+  const [time, setTime] = useState<WeighTime>(row?.timeOfDay ?? 'morning')
   const [error, setError] = useState<string | null>(null)
   if (last === undefined) return null
 
-  const todays = last?.date === toISODate(new Date()) ? last : null
-  const value = measured ?? last?.measuredKg ?? last?.weightKg ?? DEFAULT_KG
+  const todays = !row && last?.date === toISODate(new Date()) ? last : null
+  const base = row ?? last
+  const value = measured ?? base?.measuredKg ?? base?.weightKg ?? DEFAULT_KG
   const result = correctedWeight(value, time)
 
   async function save() {
     setError(null)
     try {
-      await repos.bodyWeights.record(value, time)
+      await repos.bodyWeights.record(value, time, row?.date)
       setMeasured(null)
+      onSaved?.()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Не удалось сохранить')
     }
@@ -75,7 +86,7 @@ export function WeightEntry({ title }: { title?: string }) {
           onChange={setMeasured}
         />
         <Button variant="primary" onClick={save}>
-          {todays ? 'Обновить' : 'Записать'}
+          {row ? 'Сохранить' : todays ? 'Обновить' : 'Записать'}
         </Button>
       </div>
       <p className={styles.result} role="status">

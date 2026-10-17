@@ -101,7 +101,8 @@ describe('раздел «Вес»', () => {
       </DataProvider>,
     )
     const user = userEvent.setup()
-    await user.click(await screen.findByRole('link', { name: 'Вес' }))
+    await user.click(await screen.findByRole('link', { name: 'Прогресс' }))
+    await user.click(await screen.findByRole('button', { name: 'Вес тела' }))
     return { r, user }
   }
 

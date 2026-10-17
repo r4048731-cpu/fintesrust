@@ -12,6 +12,7 @@ import {
   requestPersistentStorage,
   saveFile,
 } from '../app/device'
+import { BotLinks } from '../components/BotLinks'
 import { Button } from '../components/Button'
 import { Card, Screen, SectionLabel } from '../components/Screen'
 import { Sheet } from '../components/Sheet'
@@ -148,6 +149,9 @@ export function SettingsScreen() {
 
       <SectionLabel>Приложение</SectionLabel>
       <Card>
+        <Button block icon="help" onClick={() => navigate('/help')}>
+          Как пользоваться
+        </Button>
         {isInstalled() ? (
           <p className={styles.text}>Приложение установлено на главный экран.</p>
         ) : installable ? (
@@ -175,6 +179,12 @@ export function SettingsScreen() {
           </Button>
         )}
       </Card>
+
+      <SectionLabel>Боты</SectionLabel>
+      <BotLinks
+        title="Telegram и MAX"
+        text="Записывать еду и вес из мессенджера, получать напоминания о тренировках."
+      />
 
       <SectionLabel>Опасная зона</SectionLabel>
       <Card>

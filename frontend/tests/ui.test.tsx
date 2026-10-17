@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
@@ -31,13 +31,29 @@ describe('навигация', () => {
       'page',
     )
 
-    await user.click(within(nav).getByRole('link', { name: 'История' }))
-    expect(await screen.findByRole('heading', { level: 1, name: 'История' })).toBeInTheDocument()
-    expect(router.state.location.pathname).toBe('/history')
-    expect(within(nav).getByRole('link', { name: 'История' })).toHaveAttribute(
+    // «История» — раздел вкладки «Прогресс», открывается по умолчанию
+    await user.click(within(nav).getByRole('link', { name: 'Прогресс' }))
+    expect(await screen.findByRole('heading', { level: 1, name: 'Прогресс' })).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/progress')
+    expect(screen.getByRole('button', { name: 'История' })).toHaveAttribute('aria-pressed', 'true')
+    expect(within(nav).getByRole('link', { name: 'Прогресс' })).toHaveAttribute(
       'aria-current',
       'page',
     )
+
+    // старый адрес истории ведёт туда же
+    await router.navigate('/history')
+    await waitFor(() => expect(router.state.location.pathname).toBe('/progress'))
+    expect(router.state.location.search).toBe('?view=history')
+
+    // ИИ по центру панели открывает шторку
+    const links = within(nav)
+      .getAllByRole('link')
+      .map((l) => l.textContent)
+    expect(links).toEqual(['Сегодня', 'Программы', 'Прогресс', 'Питание'])
+    await user.click(within(nav).getByRole('button', { name: 'ИИ-помощник' }))
+    // пока заглушка «скоро»
+    expect(screen.getByRole('dialog', { name: 'ИИ-помощник' })).toHaveTextContent('Скоро')
   })
 
   it('неизвестный адрес ведёт на «Сегодня»', async () => {

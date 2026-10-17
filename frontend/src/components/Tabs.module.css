@@ -1,0 +1,51 @@
+/* Ширина вкладки — по названию, остаток делится поровну; счётчик под названием */
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--line);
+}
+
+.tab {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 44px;
+  margin-bottom: -1px;
+  padding: 6px 2px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--muted);
+  font: 600 13px/1.15 var(--font-body);
+  text-align: center;
+}
+
+.name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tab[aria-selected='true'] {
+  border-bottom-color: var(--accent);
+  color: var(--ink);
+}
+
+.count {
+  min-width: 20px;
+  padding: 3px 6px;
+  border-radius: 99px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font: 600 11px/1 var(--num-font);
+  text-align: center;
+}
+
+.tab[aria-selected='true'] .count {
+  background: var(--accent-soft);
+  color: var(--accent);
+}

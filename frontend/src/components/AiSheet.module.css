@@ -1,0 +1,43 @@
+.soon {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 16px;
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+}
+
+.soon p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.badge {
+  padding: 3px 10px;
+  border-radius: 99px;
+  background: var(--gradient);
+  color: var(--accent-ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.title {
+  margin: 4px 0 -4px;
+  font: 600 15px/1.2 var(--title-font);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+  line-height: 1.4;
+}
+
+.muted {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}

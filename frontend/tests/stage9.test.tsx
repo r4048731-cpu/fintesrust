@@ -75,11 +75,13 @@ describe('«История» → «Добавить тренировку»', () 
 
     await waitFor(() => expect(router.state.location.pathname).toMatch(/\/history\/.+\/edit$/))
     expect(await screen.findByText('Своя тренировка')).toBeInTheDocument()
-    const bench = await screen.findByRole('region', { name: 'Жим штанги лёжа' })
+    await user.click(await screen.findByRole('button', { name: /^Жим штанги лёжа —/ }))
+    const bench = await screen.findByRole('dialog', { name: 'Жим штанги лёжа' })
     expect(within(bench).getAllByRole('button', { name: /выполнен/ })[0]).toHaveAttribute(
       'aria-pressed',
       'true',
     )
+    await user.click(within(bench).getByRole('button', { name: 'Закрыть' }))
     await user.click(screen.getByRole('button', { name: 'Готово' }))
 
     const done = await r.workouts.listDone()
@@ -96,7 +98,7 @@ describe('«История» → «Добавить тренировку»', () 
     await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Добавить' }))
     await screen.findByText('Своя тренировка')
     await user.click(screen.getByRole('button', { name: 'Назад' }))
-    await waitFor(() => expect(router.state.location.pathname).toBe('/history'))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/progress'))
     expect(await r.workouts.listDone()).toEqual([])
   })
 
@@ -117,7 +119,7 @@ describe('«История» → «Добавить тренировку»', () 
     const card = await screen.findByRole('region', { name: 'Запланировано на сегодня' })
     expect(within(card).getByRole('heading', { name: 'Низ' })).toBeInTheDocument()
     // кнопка «Начать» закреплена внизу экрана, вне карточки
-    await user.click(screen.getByRole('button', { name: 'Начать тренировку' }))
+    await user.click(screen.getByRole('button', { name: /^Начать:/ }))
     await waitFor(() => expect(router.state.location.pathname).toBe('/workout'))
     const active = await r.workouts.getActive()
     expect(active).toMatchObject({ id: planned.id, status: 'active', date: day(0) })
@@ -150,7 +152,7 @@ describe('экран «Сегодня»', () => {
     const plan = await screen.findByRole('region', { name: 'Верх / Низ' })
     expect(within(plan).getByRole('heading', { name: 'Верх' })).toBeInTheDocument()
     expect(within(plan).getAllByRole('listitem')).toHaveLength(6)
-    expect(screen.getByRole('button', { name: 'Начать тренировку' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^Начать:/ })).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: 'Свободная тренировка без плана' }),
     ).toBeInTheDocument()
@@ -167,7 +169,7 @@ describe('экран «Сегодня»', () => {
     )
     expect(await within(weight).findByText('записано: 80 кг')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('link', { name: 'Вес' }))
-    await waitFor(() => expect(router.state.location.pathname).toBe('/weight'))
+    await user.click(screen.getByRole('link', { name: 'Питание' }))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/food'))
   })
 })

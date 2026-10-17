@@ -16,8 +16,12 @@ export interface TodayPlan {
   items: { name: string; item: PlanItem | null; exercise?: Exercise; sets: number }[]
   /** Примерная длительность, мин: подходы × (работа 45 с + отдых). */
   minutes: number
-  start: () => Promise<void>
+  /** `light` берётся в момент нажатия, а не из пересчитанного плана — он обновляется с задержкой. */
+  start: (options?: { light?: boolean }) => Promise<void>
   programId?: string
+  /** Дни активной программы — чтобы начать не следующий по кругу, а любой. */
+  days?: { id: string; name: string }[]
+  dayId?: string
 }
 
 export interface WeekDay {
@@ -25,6 +29,10 @@ export interface WeekDay {
   label: string
   done: boolean
   today: boolean
+  /** Завершённые тренировки этого дня — для шторки по нажатию на день. */
+  workouts: Workout[]
+  /** Запланированные на этот день. */
+  planned: Workout[]
 }
 
 const WEEK_LABELS = ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс']
@@ -40,6 +48,10 @@ export function useToday() {
   const repos = useRepos()
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
+  /** Выбранный на экране день программы; null — следующий по кругу. */
+  const [pickedDayId, setPickedDayId] = useState<string | null>(null)
+  /** Лёгкий день: веса на 20 % ниже. */
+  const [light, setLight] = useState(false)
   const today = toISODate(new Date())
 
   const run = async (fn: () => Promise<unknown>) => {
@@ -79,31 +91,46 @@ export function useToday() {
     if (!program) return null
     const next = await repos.programs.nextDay(program.id)
     if (!next) return null
+    const day = program.days.find((d) => d.id === pickedDayId) ?? next.day
     const items = await Promise.all(
-      next.day.items.map(async (item) => {
+      day.items.map(async (item) => {
         const exercise = await repos.exercises.get(item.exerciseId)
         return { name: exercise?.name ?? 'Упражнение', item, exercise, sets: item.sets }
       }),
     )
     return {
       kind: 'program',
-      title: next.day.name,
+      title: day.name,
       source: program.name,
       items,
-      minutes: estimateMinutes(next.day.items),
-      start: () => run(() => repos.workouts.start({ programId: program.id, dayId: next.day.id })),
+      minutes: estimateMinutes(day.items),
+      start: (options) =>
+        run(() =>
+          repos.workouts.start({ programId: program.id, dayId: day.id }, { light: options?.light }),
+        ),
       programId: program.id,
+      days: program.days.map((d) => ({ id: d.id, name: d.name })),
+      dayId: day.id,
     }
-  }, [repos, today])
+  }, [repos, today, pickedDayId])
 
   const week = useLiveQuery(async () => {
     const done = await repos.workouts.listDone()
+    const planned = await repos.workouts.listPlanned()
     const monday = weekStart(new Date())
     const days: WeekDay[] = WEEK_LABELS.map((label, i) => {
       const date = toISODate(
         new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i),
       )
-      return { date, label, done: done.some((w) => w.date === date), today: date === today }
+      const workouts = done.filter((w) => w.date === date)
+      return {
+        date,
+        label,
+        done: workouts.length > 0,
+        today: date === today,
+        workouts,
+        planned: planned.filter((w) => w.date === date),
+      }
     })
     const thisWeek = done.filter((w) => w.date >= days[0].date && w.date <= days[6].date)
     return {
@@ -121,6 +148,9 @@ export function useToday() {
     plan,
     week,
     error,
+    light,
+    setLight,
+    pickDay: setPickedDayId,
     startFree: () => run(() => repos.workouts.start(null)),
     repeatLast: (id: string) => run(() => repos.workouts.repeat(id)),
   }

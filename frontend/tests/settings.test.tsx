@@ -41,7 +41,8 @@ describe('настройки', () => {
 
   it('открываются кнопкой в верхней панели', async () => {
     const { user, router } = renderAt('/', await setup())
-    await user.click(await screen.findByRole('button', { name: 'Настройки' }))
+    await user.click(await screen.findByRole('button', { name: 'Ещё' }))
+    await user.click(await screen.findByRole('button', { name: /^Настройки/ }))
     await waitFor(() => expect(router.state.location.pathname).toBe('/settings'))
     expect(await screen.findByText('Резервная копия')).toBeInTheDocument()
   })

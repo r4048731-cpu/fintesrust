@@ -71,10 +71,14 @@ export function WorkoutReport({ data }: { data: WorkoutReportData }) {
           const ex = exercises.get(e.exerciseId)
           return (
             <div key={i} className={styles.entry}>
-              <span className={styles.entryName}>{ex?.name ?? 'Упражнение не найдено'}</span>
+              <span className={styles.entryName}>
+                {ex?.name ?? 'Упражнение не найдено'}
+                {e.superset && <span className={styles.entryTag}> · суперсет</span>}
+              </span>
               <span className={styles.entrySets}>
                 {e.sets.map((s) => formatSet(s, ex?.type ?? 'weight')).join(' · ')}
               </span>
+              {e.note && <span className={styles.entryNote}>{e.note}</span>}
             </div>
           )
         })}

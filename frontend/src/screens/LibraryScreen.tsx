@@ -5,18 +5,21 @@ import { useRepos } from '../app/dataContext'
 import { Button } from '../components/Button'
 import { ExerciseBrowser } from '../components/ExerciseBrowser'
 import { ExerciseFormSheet } from '../components/ExerciseFormSheet'
+import { ExerciseInfoSheet } from '../components/ExerciseInfoSheet'
 import { Screen } from '../components/Screen'
 import type { Exercise } from '../domain/types'
 import styles from './LibraryScreen.module.css'
 
-type Editing = { kind: 'edit'; exercise: Exercise } | { kind: 'new'; name: string } | null
+type Tab = 'technique' | 'history'
 
 /** Справочник упражнений (ТЗ 2.1): поиск, фильтр, свои упражнения. */
 export function LibraryScreen() {
   const repos = useRepos()
   const navigate = useNavigate()
   const exercises = useLiveQuery(() => repos.exercises.list(), [repos])
-  const [editing, setEditing] = useState<Editing>(null)
+  /** Имя нового упражнения: шторка создания открыта, когда не null. */
+  const [creating, setCreating] = useState<string | null>(null)
+  const [card, setCard] = useState<{ exercise: Exercise; tab: Tab } | null>(null)
 
   return (
     <Screen
@@ -24,12 +27,7 @@ export function LibraryScreen() {
       eyebrow={exercises ? `В справочнике: ${exercises.length}` : undefined}
       onBack={() => navigate('/programs')}
       action={
-        <Button
-          variant="primary"
-          size="sm"
-          icon="plus"
-          onClick={() => setEditing({ kind: 'new', name: '' })}
-        >
+        <Button variant="primary" size="sm" icon="plus" onClick={() => setCreating('')}>
           Своё
         </Button>
       }
@@ -39,20 +37,25 @@ export function LibraryScreen() {
           <ExerciseBrowser
             exercises={exercises}
             mode="edit"
-            onSelect={(exercise) => setEditing({ kind: 'edit', exercise })}
+            onSelect={(exercise) => setCard({ exercise, tab: 'technique' })}
             renderEmpty={(query) => (
-              <Button variant="primary" onClick={() => setEditing({ kind: 'new', name: query })}>
+              <Button variant="primary" onClick={() => setCreating(query)}>
                 {query ? `Создать «${query}»` : 'Создать упражнение'}
               </Button>
             )}
           />
         )}
       </div>
+      <ExerciseInfoSheet
+        exercise={card?.exercise ?? null}
+        tab={card?.tab ?? 'technique'}
+        onTab={(tab) => card && setCard({ ...card, tab })}
+        onClose={() => setCard(null)}
+      />
       <ExerciseFormSheet
-        open={editing !== null}
-        onClose={() => setEditing(null)}
-        exercise={editing?.kind === 'edit' ? editing.exercise : null}
-        defaults={editing?.kind === 'new' ? { name: editing.name } : undefined}
+        open={creating !== null}
+        onClose={() => setCreating(null)}
+        defaults={{ name: creating ?? '' }}
       />
     </Screen>
   )

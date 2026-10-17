@@ -28,14 +28,15 @@ export function ProgramsScreen() {
   }
 
   return (
-    <Screen
-      title="Программы"
-      action={
-        <Button size="sm" onClick={() => navigate('/programs/exercises')}>
+    <Screen title="Программы">
+      <div className={styles.links}>
+        <Button icon="programs" onClick={() => navigate('/programs/exercises')}>
           Упражнения
         </Button>
-      }
-    >
+        <Button icon="note" onClick={() => navigate('/notes')}>
+          Заметки
+        </Button>
+      </div>
       {programs?.length === 0 && (
         <EmptyState
           title="Программ пока нет"

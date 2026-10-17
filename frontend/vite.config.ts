@@ -35,7 +35,8 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,woff,woff2}'],
+        // Кадры техники (webp, ~2,5 МБ) тоже кэшируются: в зале они нужны и без интернета
+        globPatterns: ['**/*.{js,css,html,svg,png,webp,woff,woff2}'],
         navigateFallback: 'index.html',
       },
     }),
@@ -43,9 +44,9 @@ export default defineConfig({
   // Относительные пути: сборка работает и в корне домена, и в подпапке GitHub Pages
   base: './',
   build: {
-    // Всё приложение — один файл ~500 КБ (~160 КБ в сжатом виде), после первого открытия
+    // Всё приложение — один файл ~630 КБ (~190 КБ в сжатом виде), после первого открытия
     // он лежит в кэше телефона. Делить на части ради скорости первой загрузки незачем.
-    chunkSizeWarningLimit: 600,
+    chunkSizeWarningLimit: 800,
   },
   test: {
     include: ['tests/**/*.test.{ts,tsx}', 'src/**/*.test.{ts,tsx}'],

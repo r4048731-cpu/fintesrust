@@ -1,5 +1,7 @@
 // Модель данных приложения (ТЗ, раздел 3; архитектура, раздел 7.3).
 
+import type { AiMessage } from './ai'
+
 export type ID = string
 
 /** Дата без времени в локальной зоне: `YYYY-MM-DD`. */
@@ -72,6 +74,8 @@ export interface PlanItem {
   repsMax: number
   weightKg: number
   restSec: number
+  /** Суперсет: соседние упражнения с одной меткой — по кругу без отдыха между ними. */
+  superset?: string | null
 }
 
 export interface ProgramDay {
@@ -102,8 +106,12 @@ export interface WorkoutSet {
 export interface WorkoutEntry {
   exerciseId: ID
   restSec: number
-  plan: Omit<PlanItem, 'exerciseId' | 'restSec'> | null
+  plan: Omit<PlanItem, 'exerciseId' | 'restSec' | 'superset'> | null
   sets: WorkoutSet[]
+  /** Суперсет — как в дне программы. Нет в записях до версии 1.3. */
+  superset?: string | null
+  /** Заметка к упражнению: настройка тренажёра, хват, ощущения. */
+  note?: string
 }
 
 /**
@@ -154,6 +162,38 @@ export interface BodyWeight extends Syncable {
   timeOfDay?: WeighTime
 }
 
+/** Калории и белки, жиры, углеводы. Калории в ккал, остальное в граммах. */
+export interface Nutrients {
+  calories: number
+  protein: number
+  fat: number
+  carbs: number
+}
+
+/** Приём пищи (вкладка «Тело» → «Питание»). Значения — на всю порцию, а не на 100 г. */
+export interface Meal extends Syncable, Nutrients {
+  date: ISODate
+  name: string
+  /** Вес порции; null — не указан. По нему пересчитываются значения при повторе. */
+  grams: number | null
+  /** Когда добавлен: порядок внутри дня. */
+  createdAt: Timestamp
+}
+
+export type Sex = 'male' | 'female'
+/** Пять уровней активности, от сидячего образа жизни до тяжёлой работы и тренировок каждый день. */
+export type Activity = 'none' | 'light' | 'moderate' | 'high' | 'extreme'
+export type NutritionGoal = 'lose' | 'maintain' | 'gain'
+
+/** Параметры для расчёта плана питания. Вес берётся из записей веса, здесь не хранится. */
+export interface BodyProfile {
+  sex: Sex
+  age: number
+  heightCm: number
+  activity: Activity
+  goal: NutritionGoal
+}
+
 /** Записи таблицы meta: настройки и служебные указатели. */
 export interface MetaValues {
   schemaVersion: number
@@ -166,6 +206,18 @@ export interface MetaValues {
   nextDayIndex: Record<ID, number>
   /** Когда последний раз сохранялась резервная копия; null — ни разу. */
   lastExportAt: Timestamp | null
+  /** Дневной план питания; null — не задан. */
+  nutritionPlan: Nutrients | null
+  /** Пол, возраст, рост, активность и цель для расчёта плана; null — не вводились. */
+  bodyProfile: BodyProfile | null
+  /** Любимые рецепты — id встроенных и своих, в порядке добавления. */
+  favoriteRecipes: ID[]
+  /** Переписка с помощником, последние сообщения. */
+  aiChat: AiMessage[]
+  /** Отправлять ли помощнику сводку своих данных: тренировки, вес, питание. */
+  aiUseContext: boolean
+  /** Голосом на каждом километре пробежки: «1 километр, темп 5:30». */
+  runVoice: boolean
 }
 
 export type MetaKey = keyof MetaValues
@@ -173,4 +225,27 @@ export type MetaKey = keyof MetaValues
 export interface MetaRecord<K extends MetaKey = MetaKey> {
   key: K
   value: MetaValues[K]
+}
+
+/** Заметка: свободный текст пользователя. Заголовок необязателен — без него показывается первая строка. */
+export interface Note extends Syncable {
+  title: string
+  text: string
+  createdAt: Timestamp
+}
+
+/** Ингредиент своего блюда. КБЖУ на 100 г хранятся в нём: продукт мог быть своим, не из справочника. */
+export interface RecipeIngredient {
+  name: string
+  grams: number
+  per100: Nutrients
+}
+
+/** Своё блюдо пользователя. Все значения — на одну порцию, как у встроенных рецептов. */
+export interface CustomRecipe extends Syncable {
+  title: string
+  minutes: number
+  ingredients: RecipeIngredient[]
+  steps: string[]
+  createdAt: Timestamp
 }

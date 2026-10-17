@@ -9,6 +9,12 @@ export const META_DEFAULTS: MetaValues = {
   activeProgramId: null,
   nextDayIndex: {},
   lastExportAt: null,
+  nutritionPlan: null,
+  bodyProfile: null,
+  favoriteRecipes: [],
+  aiChat: [],
+  aiUseContext: true,
+  runVoice: true,
 }
 
 export function metaRepo(db: FitnessDB) {

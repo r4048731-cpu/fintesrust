@@ -80,12 +80,16 @@ describe('история', () => {
     await user.click(await screen.findByRole('button', { name: 'Изменить' }))
     await screen.findByText('Правка тренировки')
 
-    const region = screen.getByRole('region', { name: 'Жим штанги лёжа' })
-    const rows = within(region).getAllByRole('listitem')
+    await user.click(screen.getByRole('button', { name: /^Жим штанги лёжа —/ }))
+    const region = await screen.findByRole('dialog', { name: 'Жим штанги лёжа' })
+    const rows = within(within(region).getByRole('list', { name: 'Подходы' })).getAllByRole(
+      'listitem',
+    )
     await user.click(within(rows[0]).getByRole('button', { name: /вес, кг: увеличить/ }))
     // снять отметку со второго подхода — при «Готово» он уйдёт
     await user.click(within(rows[1]).getByRole('button', { name: 'Подход 2 выполнен' }))
     // поле даты в jsdom не принимает ввод с клавиатуры — меняем значение напрямую, как это делает календарь
+    await user.click(within(region).getByRole('button', { name: 'Закрыть' }))
     fireEvent.change(screen.getByLabelText('Дата'), { target: { value: '2026-09-20' } })
     await user.click(screen.getByRole('button', { name: 'Готово' }))
 
@@ -101,11 +105,13 @@ describe('история', () => {
     const r = await setup()
     const w = await logWorkout(r, 'Верх', 'builtin-bench-press', [done(60, 10)])
     const { user, router } = renderAt(`/history/${w.id}/edit`, r)
+    await user.click(await screen.findByRole('button', { name: /^Жим штанги лёжа —/ }))
     await user.click(await screen.findByRole('button', { name: 'Подход 1 выполнен' }))
+    await user.click(screen.getByRole('button', { name: 'Закрыть' }))
     await user.click(screen.getByRole('button', { name: 'Готово' }))
     const confirm = screen.getByRole('alertdialog', { name: 'Нет подходов' })
     await user.click(within(confirm).getByRole('button', { name: 'Удалить тренировку' }))
-    await waitFor(() => expect(router.state.location.pathname).toBe('/history'))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/progress'))
     expect(await r.workouts.listDone()).toEqual([])
   })
 
@@ -115,7 +121,7 @@ describe('история', () => {
     const { user, router } = renderAt(`/history/${w.id}`, r)
     await user.click(await screen.findByRole('button', { name: 'Удалить тренировку' }))
     await user.click(screen.getByRole('button', { name: 'Удалить' }))
-    await waitFor(() => expect(router.state.location.pathname).toBe('/history'))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/progress'))
     expect(await screen.findByText('Тренировок пока нет')).toBeInTheDocument()
     expect((await r.workouts.get(w.id))?.deletedAt).not.toBeNull()
   })

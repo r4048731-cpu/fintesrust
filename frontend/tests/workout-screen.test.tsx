@@ -40,19 +40,34 @@ async function withProgram() {
   return { repos, program: p }
 }
 
+/** Кнопка упражнения в списке тренировки. */
+const exerciseRow = (name: string) =>
+  screen.findByRole('button', { name: new RegExp(`^${name} —`) })
+
+/** Открыть шторку упражнения из списка тренировки. */
+async function openExercise(user: ReturnType<typeof userEvent.setup>, name: string) {
+  await user.click(await exerciseRow(name))
+  return screen.findByRole('dialog', { name })
+}
+
 const setRow = (exercise: string, n: number) =>
-  within(screen.getByRole('region', { name: exercise })).getAllByRole('listitem')[n - 1]
+  within(
+    within(screen.getByRole('dialog', { name: exercise })).getByRole('list', { name: 'Подходы' }),
+  ).getAllByRole('listitem')[n - 1]
 
 describe('тренировка', () => {
   it('полный цикл: старт дня, подходы, отдых, завершение, сводка и следующий день', async () => {
     const { repos, program } = await withProgram()
     const { user, router } = renderAt('/', repos)
 
-    await user.click(await screen.findByRole('button', { name: 'Начать тренировку' }))
+    await user.click(await screen.findByRole('button', { name: /^Начать:/ }))
     await waitFor(() => expect(router.state.location.pathname).toBe('/workout'))
-    expect(await screen.findByRole('region', { name: 'Жим штанги лёжа' })).toBeInTheDocument()
-    expect(screen.getByText(/План: 2 × 8–10/)).toBeInTheDocument()
-    expect(screen.getAllByText(/Первый раз/)).toHaveLength(2)
+    // список упражнений, подходы — в шторке
+    expect(await exerciseRow('Жим штанги лёжа')).toHaveTextContent('0 из 2 подходов · 60 кг')
+    expect(await exerciseRow('Подтягивания')).toHaveTextContent('0 из 1 подходов')
+    const bench = await openExercise(user, 'Жим штанги лёжа')
+    expect(within(bench).getByText(/План: 2 × 8–10/)).toBeInTheDocument()
+    expect(within(bench).getByText(/Первый раз/)).toBeInTheDocument()
     expect(within(setRow('Жим штанги лёжа', 1)).getByRole('textbox', { name: /вес/ })).toHaveValue(
       '60',
     )
@@ -71,16 +86,24 @@ describe('тренировка', () => {
     expect(
       within(setRow('Жим штанги лёжа', 1)).getByRole('button', { name: 'Подход 1 выполнен' }),
     ).toHaveAttribute('aria-pressed', 'true')
-    const rest = screen.getByRole('timer', { name: 'Отдых' })
+    // отдых виден прямо в шторке
+    const rest = within(bench).getByRole('timer', { name: 'Отдых' })
     // около полутора минут: часы экрана обновляются четыре раза в секунду
     expect(rest).toHaveTextContent(/1:[23]\d/)
     await user.click(within(rest).getByRole('button', { name: 'Готов' }))
     expect(screen.queryByRole('timer')).not.toBeInTheDocument()
 
+    // «Далее» листает к следующему упражнению, не закрывая шторку
+    await user.click(within(bench).getByRole('button', { name: 'Далее: Подтягивания' }))
     await user.click(
       within(setRow('Подтягивания', 1)).getByRole('button', { name: 'Подход 1 выполнен' }),
     )
     expect(screen.getByText('2 из 3 подходов')).toBeInTheDocument()
+    // последнее упражнение: шторка закрывается к списку, где оно отмечено сделанным
+    await user.click(screen.getByRole('button', { name: 'К списку упражнений' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    expect(await exerciseRow('Подтягивания')).toHaveTextContent('1 из 1 подходов')
+    expect(screen.getByRole('timer', { name: 'Отдых' })).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Завершить' }))
     const sheet = screen.getByRole('dialog', { name: 'Завершить тренировку?' })
@@ -103,8 +126,8 @@ describe('тренировка', () => {
   it('незавершённая тренировка переживает перезапуск и видна на «Сегодня»', async () => {
     const { repos } = await withProgram()
     const first = renderAt('/', repos)
-    await first.user.click(await screen.findByRole('button', { name: 'Начать тренировку' }))
-    await screen.findByRole('region', { name: 'Жим штанги лёжа' })
+    await first.user.click(await screen.findByRole('button', { name: /^Начать:/ }))
+    await openExercise(first.user, 'Жим штанги лёжа')
     await first.user.click(
       within(setRow('Жим штанги лёжа', 1)).getByRole('button', { name: 'Подход 1 выполнен' }),
     )
@@ -114,9 +137,9 @@ describe('тренировка', () => {
     const second = renderAt('/', repos)
     const banner = await screen.findByRole('button', { name: /Тренировка идёт/ })
     expect(banner).toHaveTextContent('1 из 3 подходов')
-    expect(screen.queryByRole('button', { name: 'Начать тренировку' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Начать:/ })).not.toBeInTheDocument()
     await second.user.click(banner)
-    await screen.findByRole('region', { name: 'Жим штанги лёжа' })
+    await openExercise(second.user, 'Жим штанги лёжа')
     expect(
       within(setRow('Жим штанги лёжа', 1)).getByRole('button', { name: 'Подход 1 выполнен' }),
     ).toHaveAttribute('aria-pressed', 'true')
@@ -127,8 +150,8 @@ describe('тренировка', () => {
   it('без отмеченных подходов завершить нельзя, можно отменить', async () => {
     const { repos } = await withProgram()
     const { user, router } = renderAt('/', repos)
-    await user.click(await screen.findByRole('button', { name: 'Начать тренировку' }))
-    await screen.findByRole('region', { name: 'Жим штанги лёжа' })
+    await user.click(await screen.findByRole('button', { name: /^Начать:/ }))
+    await exerciseRow('Жим штанги лёжа')
     await user.click(screen.getByRole('button', { name: 'Завершить' }))
     const sheet = screen.getByRole('dialog', { name: 'Завершить тренировку?' })
     expect(within(sheet).getByText(/Ни один подход не отмечен/)).toBeInTheDocument()
@@ -156,7 +179,7 @@ describe('тренировка', () => {
     await user.type(within(picker).getByRole('searchbox'), 'присед')
     await user.click(within(picker).getByRole('button', { name: /Приседания со штангой/ }))
 
-    const region = await screen.findByRole('region', { name: 'Приседания со штангой' })
+    const region = await openExercise(user, 'Приседания со штангой')
     // «прошлый раз» подгружается из базы чуть позже самой карточки
     await waitFor(() => expect(region).toHaveTextContent('Прошлый раз: 100 × 5'))
     expect(within(region).getByRole('textbox', { name: /вес/ })).toHaveValue('100')

@@ -1,0 +1,155 @@
+.chat {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+
+.messages {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  /* Переписка прокручивается сама — поле ввода всегда на месте внизу */
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.user,
+.assistant {
+  max-width: 88%;
+  padding: 10px 14px;
+  border-radius: 16px;
+  font-size: 15px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.user {
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+  background: var(--gradient);
+  color: var(--accent-ink);
+  white-space: pre-wrap;
+}
+
+.assistant {
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+  background: var(--surface-2);
+}
+
+.assistant p,
+.assistant ul,
+.assistant ol {
+  margin: 0 0 8px;
+}
+
+.assistant > :last-child {
+  margin-bottom: 0;
+}
+
+.assistant ul,
+.assistant ol {
+  padding-left: 20px;
+}
+
+.model {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.typing {
+  color: var(--muted);
+}
+
+.quick {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chip {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 14.5px;
+  text-align: left;
+}
+
+.chip:disabled {
+  opacity: 0.5;
+}
+
+.context {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.context input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
+.composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.input {
+  width: 100%;
+  min-height: 48px;
+  max-height: 140px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+  resize: vertical;
+}
+
+.error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 14px;
+  white-space: pre-wrap;
+}
+
+.muted {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.tableWrap {
+  margin: 0 0 8px;
+  overflow-x: auto;
+}
+
+.assistant table {
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.assistant th,
+.assistant td {
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}

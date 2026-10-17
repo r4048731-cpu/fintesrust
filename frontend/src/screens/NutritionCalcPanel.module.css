@@ -1,0 +1,148 @@
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.heading {
+  margin: 0;
+  font: 600 16px/1.2 var(--title-font);
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+/* Шкала активности: пять точек на дорожке, пройденная часть залита градиентом */
+.scale {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.track {
+  position: absolute;
+  top: 21px;
+  right: 10%;
+  left: 10%;
+  height: 6px;
+  border-radius: 99px;
+  background: var(--surface-2);
+}
+
+.track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--gradient);
+  transition: width 0.2s ease;
+}
+
+.step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--tap);
+  padding: 12px 0 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+}
+
+.dot {
+  width: 18px;
+  height: 18px;
+  border: 3px solid var(--surface);
+  border-radius: 50%;
+  background: var(--line);
+  box-shadow: 0 0 0 1px var(--line);
+  transition: transform 0.15s ease;
+}
+
+.num {
+  font: 600 13px var(--num-font);
+}
+
+.step[aria-checked='true'] {
+  color: var(--accent);
+}
+
+.step[aria-checked='true'] .dot {
+  background: var(--gradient);
+  box-shadow: 0 3px 10px rgb(124 58 237 / 35%);
+  transform: scale(1.35);
+}
+
+.levelTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.levelText {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.label {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.big {
+  margin: -6px 0 0;
+  font: 600 34px/1.1 var(--num-font);
+  font-variant-numeric: tabular-nums;
+}
+
+.big span,
+.macro b span {
+  color: var(--muted);
+  font: 500 14px var(--font-body);
+}
+
+.macros {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.macro {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.macro b {
+  font: 600 20px var(--num-font);
+}

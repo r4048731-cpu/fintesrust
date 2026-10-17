@@ -1,0 +1,280 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.muted {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.label {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.cues {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding-left: 20px;
+  font-size: 14.5px;
+  line-height: 1.45;
+}
+
+.cues li::marker {
+  color: var(--accent);
+}
+
+.note {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.note p {
+  margin: 0;
+  font-size: 14px;
+  white-space: pre-wrap;
+}
+
+.video {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap);
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.history {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.history li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+}
+
+.date {
+  font-weight: 600;
+}
+
+/* Видео техники 16:9; пока видео нет — та же рамка с заглушкой */
+/* Техника: два положения рядом, как в справочниках упражнений */
+.frames {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+}
+
+.drawings,
+.photos,
+.boxing {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: #ffffff;
+}
+
+.frame img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+}
+
+.drawings .frame img {
+  padding: 6px;
+}
+
+.photos .frame img {
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+}
+
+/* Бокс: вертикальные кадры целиком, без обрезки */
+.boxing .frame img {
+  aspect-ratio: 3 / 4;
+  object-fit: contain;
+}
+
+/* Один кадр — на всю ширину, целиком */
+.single {
+  grid-template-columns: 1fr;
+}
+
+.single .frame img {
+  aspect-ratio: auto;
+  max-height: 360px;
+  object-fit: contain;
+}
+
+.step {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: rgb(0 0 0 / 55%);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.credit {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.added {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Рекорды над списком прошлых тренировок */
+.records {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 8px;
+}
+
+.record {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.record b {
+  font: 600 17px/1.1 var(--num-font);
+}
+
+/* Выбор дня программы */
+.pickGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pickList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.pickList li + li {
+  border-top: 1px solid var(--line);
+}
+
+.pickRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 52px;
+  padding: 10px 14px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  text-align: left;
+}
+
+/* Схема мышц: тело спереди и сзади, работающие мышцы залиты */
+.muscles {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  background: #ffffff;
+  color: #1f1d29;
+}
+
+.bodies {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  max-width: 320px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.body {
+  aspect-ratio: 400 / 738;
+  background-repeat: no-repeat;
+  background-position: top center;
+  background-size: 100% auto;
+}
+
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.legend .credit {
+  color: #6b6680;
+}
+
+.dotMain,
+.dotSecondary {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 4px;
+  border-radius: 50%;
+  vertical-align: -1px;
+}
+
+.dotMain {
+  background: #fc0000;
+}
+
+.dotSecondary {
+  background: #f57900;
+}
+
+.howTo {
+  margin: 4px 0 -4px;
+  font: 600 15px/1.2 var(--title-font);
+}

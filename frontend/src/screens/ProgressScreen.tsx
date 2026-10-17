@@ -15,8 +15,11 @@ import {
 } from '../domain/metrics'
 import { formatDecimal } from '../domain/number'
 import { plural } from '../domain/plural'
-import type { BodyWeight, Exercise, ExerciseType } from '../domain/types'
+import type { Exercise, ExerciseType } from '../domain/types'
 import { formatSet } from '../domain/workout'
+import { RunHistory } from '../components/run/RunHistory'
+import { HistoryPanel } from './HistoryPanel'
+import { WeightPanel } from './WeightPanel'
 import styles from './ProgressScreen.module.css'
 
 const MONTHS_SHORT = [
@@ -40,8 +43,25 @@ const shortDate = (iso: string) => {
 const kg = (v: number) => `${formatDecimal(Math.round(v * 2) / 2)} кг`
 const TABLE_ROWS = 12
 
-/** Какой график показан (ТЗ 9.6). Хранится в адресе: ?chart=working|sets|body. */
-type ChartKind = 'working' | 'sets' | 'body'
+/** Какой график показан (ТЗ 9.6). Хранится в адресе: ?chart=working|sets. */
+type ChartKind = 'working' | 'sets'
+
+/** Раздел вкладки. Хранится в адресе: ?view=history|charts|weight|runs. */
+type View = 'history' | 'charts' | 'weight' | 'runs'
+
+const VIEWS: { value: View; label: string }[] = [
+  { value: 'history', label: 'История' },
+  { value: 'charts', label: 'Графики' },
+  { value: 'weight', label: 'Вес тела' },
+  { value: 'runs', label: 'Бег' },
+]
+
+/** Адрес раздела; старое ?view=workouts — это нынешние «Графики». */
+function viewOf(requested: string | null, hasWorkouts: boolean, hasWeights: boolean): View {
+  if (requested === 'workouts' || requested === 'charts') return 'charts'
+  if (requested === 'history' || requested === 'weight' || requested === 'runs') return requested
+  return !hasWorkouts && hasWeights ? 'weight' : 'history'
+}
 
 interface ChartSpec {
   title: string
@@ -91,18 +111,49 @@ function exerciseChart(
   }
 }
 
-function bodyChart(rows: BodyWeight[]): ChartSpec {
-  return {
-    title: 'Вес тела, кг',
-    series: { key: 'v', name: 'Вес', color: 'var(--chart-1)' },
-    format: (v) => formatDecimal(Math.round(v * 10) / 10),
-    points: rows.map((r) => ({ label: shortDate(r.date), values: { v: r.weightKg } })),
-    empty: 'Запишите вес хотя бы два дня — во вкладке «Вес».',
-  }
+/**
+ * Прогресс (ТЗ 2.5, 9.6): два раздела — тренировки (графики, рекорды) и вес тела.
+ * Без тренировок, но с записями веса сразу открывается вес.
+ */
+export function ProgressScreen() {
+  const repos = useRepos()
+  const [params, setParams] = useSearchParams()
+  const hasWorkouts = useLiveQuery(
+    async () => (await repos.workouts.listDone()).length > 0,
+    [repos],
+  )
+  const hasWeights = useLiveQuery(async () => (await repos.bodyWeights.list()).length > 0, [repos])
+  if (hasWorkouts === undefined || hasWeights === undefined) return null
+
+  const view = viewOf(params.get('view'), hasWorkouts, hasWeights)
+
+  return (
+    <Screen title="Прогресс">
+      <Segmented
+        label="Раздел"
+        options={VIEWS}
+        value={view}
+        onChange={(v) => {
+          const next = new URLSearchParams(params)
+          next.set('view', v)
+          setParams(next, { replace: true })
+        }}
+      />
+      {view === 'history' ? (
+        <HistoryPanel />
+      ) : view === 'weight' ? (
+        <WeightPanel />
+      ) : view === 'runs' ? (
+        <RunHistory />
+      ) : (
+        <WorkoutProgress />
+      )}
+    </Screen>
+  )
 }
 
-/** Прогресс (ТЗ 2.5, 9.6): графики с переключателем, рекорды, последние тренировки. */
-export function ProgressScreen() {
+/** Графики по упражнениям с переключателем, рекорды, последние тренировки. */
+function WorkoutProgress() {
   const repos = useRepos()
   const [params, setParams] = useSearchParams()
 
@@ -114,19 +165,17 @@ export function ProgressScreen() {
       const e = await repos.exercises.get(id)
       if (e) exercises.set(id, e)
     }
-    return { workouts, usage, exercises, body: await repos.bodyWeights.list() }
+    return { workouts, usage, exercises }
   }, [repos])
 
   if (!data) return null
-  const { workouts, usage, exercises, body } = data
+  const { workouts, usage, exercises } = data
 
-  if (workouts.length === 0 && body.length === 0) {
+  if (workouts.length === 0) {
     return (
-      <Screen title="Прогресс">
-        <EmptyState title="Графиков пока нет">
-          <p>Графики и рекорды появятся после первых тренировок.</p>
-        </EmptyState>
-      </Screen>
+      <EmptyState title="Графиков пока нет">
+        <p>Графики и рекорды появятся после первых тренировок.</p>
+      </EmptyState>
     )
   }
 
@@ -142,20 +191,16 @@ export function ProgressScreen() {
   const history = exId ? exerciseHistory(workouts, exId) : []
   const records = personalRecords(history)
 
-  // «Рабочий вес» есть только у упражнений с весом; без тренировок остаётся только вес тела
+  // «Рабочий вес» есть только у упражнений с весом
   const chartOptions: { value: ChartKind; label: string }[] = [
     ...(exercise?.type === 'weight' ? [{ value: 'working' as const, label: 'Рабочий вес' }] : []),
-    ...(exercise ? [{ value: 'sets' as const, label: 'Подходы' }] : []),
-    { value: 'body', label: 'Вес тела' },
+    { value: 'sets', label: 'Подходы' },
   ]
   const requestedChart = params.get('chart') as ChartKind | null
   const chartKind = chartOptions.some((o) => o.value === requestedChart)
     ? requestedChart!
     : chartOptions[0].value
-  const chart =
-    chartKind === 'body' || !exercise
-      ? bodyChart(body)
-      : exerciseChart(chartKind, history, exercise.type)
+  const chart = exerciseChart(chartKind, history, exercise?.type ?? 'weight')
 
   const setParam = (key: string, value: string) => {
     const next = new URLSearchParams(params)
@@ -172,7 +217,7 @@ export function ProgressScreen() {
   const summary = activitySummary(workouts, new Date())
 
   return (
-    <Screen title="Прогресс">
+    <>
       {exercise && (
         <label className={styles.pickerField}>
           <span className={styles.label}>Упражнение</span>
@@ -229,7 +274,7 @@ export function ProgressScreen() {
             points={chart.points}
             series={[chart.series]}
             format={chart.format}
-            ariaLabel={`${chart.title}${chartKind === 'body' ? '' : `, ${exercise?.name}`}: ${chart.points.length} ${plural(chart.points.length, 'точка', 'точки', 'точек')}`}
+            ariaLabel={`${chart.title}, ${exercise?.name}: ${chart.points.length} ${plural(chart.points.length, 'точка', 'точки', 'точек')}`}
           />
         ) : (
           <p className={styles.muted}>{chart.empty}</p>
@@ -277,7 +322,7 @@ export function ProgressScreen() {
         <Tile label="За 30 дней" value={`${summary.last30}`} />
         <Tile label="Всего" value={`${summary.total}`} />
       </div>
-    </Screen>
+    </>
   )
 }
 

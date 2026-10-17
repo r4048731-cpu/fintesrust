@@ -122,7 +122,7 @@ describe('программы', () => {
     await repos.programs.save(p)
     const { user } = await renderAt(`/programs/${p.id}`, repos)
 
-    await user.click(await screen.findByRole('button', { name: /Жим ногами/ }))
+    await user.click(await screen.findByRole('button', { name: /^\d+ ?Жим ногами/ }))
     await user.click(screen.getByRole('button', { name: 'Выше' }))
     await waitFor(async () =>
       expect((await saved(repos, p.id)).days[0].items.map((i) => i.exerciseId)).toEqual([

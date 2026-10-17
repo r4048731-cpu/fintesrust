@@ -121,14 +121,6 @@
   box-shadow: var(--shadow);
 }
 
-.weekButton {
-  width: 100%;
-  padding: 0;
-  border: 0;
-  background: none;
-  text-align: left;
-}
-
 .listHead {
   display: flex;
   align-items: flex-start;
@@ -240,4 +232,100 @@
 
 .startBarSpace {
   height: 56px;
+}
+
+/* Дни программы чипами: можно начать любой, а не только следующий по кругу */
+.days {
+  display: flex;
+  gap: 6px;
+  margin: 0 calc(-1 * 14px);
+  padding: 0 14px 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.days::-webkit-scrollbar {
+  display: none;
+}
+
+.day {
+  flex: none;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.day[aria-pressed='true'] {
+  border-color: transparent;
+  background: var(--gradient);
+  color: var(--accent-ink);
+}
+
+.dayMeta {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.dayEmpty {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* Карточка «Бег и ходьба» */
+.runCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+}
+
+.runActive {
+  border-color: transparent;
+  background: var(--gradient);
+  color: var(--accent-ink);
+}
+
+.runIcon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.runActive .runIcon {
+  background: rgb(255 255 255 / 20%);
+  color: inherit;
+}
+
+.runText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.runText span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.runActive .runText span {
+  color: inherit;
+  opacity: 0.9;
 }

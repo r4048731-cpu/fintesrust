@@ -1,0 +1,120 @@
+.month {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.monthTitle {
+  color: var(--muted);
+  font: 600 11.5px/1.2 var(--font-body);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.count {
+  color: var(--accent);
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.list li + li {
+  border-top: 1px solid var(--line);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 64px;
+  padding: 10px 10px 10px 12px;
+  border: 0;
+  background: none;
+  text-align: left;
+}
+
+.date {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  line-height: 1;
+}
+
+.day {
+  font: 600 17px/1 var(--num-font);
+}
+
+.weekday {
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.name {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.tonnage {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.tonnageValue {
+  font: 600 15px/1.1 var(--num-font);
+  font-variant-numeric: tabular-nums;
+}
+
+.chevron {
+  flex: none;
+  color: var(--muted);
+}
+
+.plannedDate {
+  background: transparent;
+  border: 1.5px dashed var(--accent);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.total {
+  color: var(--muted);
+  font-size: 13.5px;
+  font-weight: 600;
+}

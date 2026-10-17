@@ -16,7 +16,9 @@ import type {
 } from '../../domain/types'
 import type { FitnessDB } from '../db'
 import type { Clock } from './clock'
+import { metaRepo } from './meta'
 import { programsRepo } from './programs'
+import { lightenEntries } from '../../domain/workout'
 import { newId } from '../../domain/id'
 
 export class ActiveWorkoutExistsError extends Error {
@@ -85,6 +87,7 @@ export function prefillSets(
 
 export function workoutsRepo(db: FitnessDB, clock: Clock) {
   const programs = programsRepo(db, clock)
+  const meta = metaRepo(db)
 
   async function typeOf(exerciseId: ID): Promise<ExerciseType> {
     return (await db.exercises.get(exerciseId))?.type ?? 'weight'
@@ -107,6 +110,16 @@ export function workoutsRepo(db: FitnessDB, clock: Clock) {
     return null
   }
 
+  /** Заметка к упражнению с прошлого раза — например, настройка тренажёра. */
+  async function lastNote(exerciseId: ID, excludeId?: ID): Promise<string | null> {
+    for (const w of await forExercise(exerciseId)) {
+      if (w.id === excludeId) continue
+      const note = w.entries.find((e) => e.exerciseId === exerciseId && e.note?.trim())?.note
+      if (note) return note.trim()
+    }
+    return null
+  }
+
   async function buildEntry(
     exerciseId: ID,
     item: PlanItem | null,
@@ -120,6 +133,7 @@ export function workoutsRepo(db: FitnessDB, clock: Clock) {
       restSec: item?.restSec ?? DEFAULT_REST_SEC,
       plan,
       sets: prefillSets(await typeOf(exerciseId), plan, await lastSets(exerciseId, excludeId)),
+      ...(item?.superset ? { superset: item.superset } : {}),
     }
   }
 
@@ -161,6 +175,7 @@ export function workoutsRepo(db: FitnessDB, clock: Clock) {
     getActive,
     forExercise,
     lastSets,
+    lastNote,
     buildEntry,
 
     get(id: ID): Promise<Workout | undefined> {
@@ -177,15 +192,21 @@ export function workoutsRepo(db: FitnessDB, clock: Clock) {
      * Начать тренировку по дню программы или без плана (`from` = null).
      * План дня копируется в тренировку, чтобы правка программы не меняла историю.
      */
-    async start(from: { programId: ID; dayId: ID } | null): Promise<Workout> {
+    /** `light` — лёгкий день: веса на 20 % ниже, см. lightenEntries. */
+    async start(
+      from: { programId: ID; dayId: ID } | null,
+      options: { light?: boolean } = {},
+    ): Promise<Workout> {
       if (await getActive()) throw new ActiveWorkoutExistsError()
       const program = from ? await programs.get(from.programId) : undefined
       const day = program?.days.find((d) => d.id === from?.dayId)
       if (from && !day) throw new Error('День программы не найден')
-      const entries: WorkoutEntry[] = []
+      let entries: WorkoutEntry[] = []
       for (const item of day?.items ?? []) entries.push(await buildEntry(item.exerciseId, item))
+      const light = options.light && day
+      if (light) entries = lightenEntries(entries, await meta.get('weightStepKg'))
       return createActive(
-        day?.name ?? 'Свободная тренировка',
+        day ? `${day.name}${light ? ' · лёгкий' : ''}` : 'Свободная тренировка',
         program?.id ?? null,
         day?.id ?? null,
         entries,
@@ -218,6 +239,7 @@ export function workoutsRepo(db: FitnessDB, clock: Clock) {
           restSec: e.restSec,
           ...plan,
           sets: e.sets.length,
+          superset: e.superset ?? null,
         }
         entries.push(await buildEntry(e.exerciseId, item))
       }

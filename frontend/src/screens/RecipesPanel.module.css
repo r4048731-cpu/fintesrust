@@ -1,0 +1,289 @@
+.collection {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.title {
+  margin: 0;
+  font: 700 15px/1.2 var(--title-font);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.count {
+  color: var(--muted);
+  font: 600 13px var(--num-font);
+}
+
+.sub {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Лента карточек, прокручивается вбок */
+.row {
+  display: flex;
+  gap: 10px;
+  margin: 8px calc(-1 * var(--gutter)) 0;
+  padding: 0 var(--gutter) 4px;
+  overflow-x: auto;
+  list-style: none;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.row::-webkit-scrollbar {
+  display: none;
+}
+
+.row li {
+  flex: none;
+  scroll-snap-align: start;
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 6px;
+  width: 168px;
+  height: 176px;
+  padding: 14px;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius);
+  color: #ffffff;
+  text-align: left;
+}
+
+/* Вместо фото — цвет подборки из нашей палитры */
+.breakfast {
+  background: linear-gradient(150deg, #7c3aed 0%, #db2777 100%);
+}
+
+.snack {
+  background: linear-gradient(150deg, #3563e9 0%, #7c3aed 100%);
+}
+
+.meal {
+  background: linear-gradient(150deg, #db2777 0%, #f97316 100%);
+}
+
+.nooven {
+  background: linear-gradient(150deg, #0e9f6e 0%, #3563e9 100%);
+}
+
+.kcal {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 4px 10px;
+  border-radius: 99px;
+  background: rgb(0 0 0 / 28%);
+  font: 600 12px var(--num-font);
+  backdrop-filter: blur(4px);
+}
+
+.cardTitle {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.cardMeta {
+  opacity: 0.85;
+  font-size: 11.5px;
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.tile b {
+  font: 600 18px var(--num-font);
+}
+
+.tile b span {
+  color: var(--muted);
+  font: 500 12px var(--font-body);
+}
+
+.label {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.section {
+  margin: 4px 0 0;
+  font: 600 15px var(--title-font);
+}
+
+.ingredients {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ingredients li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+}
+
+.grams {
+  flex: none;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.mine {
+  background: linear-gradient(150deg, #3563e9 0%, #db2777 100%);
+}
+
+/* Сердечко поверх карточки: пустое — не в любимых, залитое — в любимых */
+.cardWrap {
+  position: relative;
+}
+
+.heart {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 28%);
+  color: #ffffff;
+  backdrop-filter: blur(4px);
+}
+
+.heart[aria-pressed='true'] svg {
+  fill: currentColor;
+}
+
+/* «+ в дневник» — под сердечком */
+.quick {
+  top: 50px;
+}
+
+.ownActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-sm);
+}
+
+.confirm p {
+  margin: 0;
+}
+
+.confirmActions {
+  display: flex;
+  gap: 8px;
+}
+
+.confirmActions > * {
+  flex: 1;
+}
+
+/* «В любимых» — сердечко залито */
+.details [aria-pressed='true'] svg {
+  fill: currentColor;
+}
+
+/* «Мои блюда» и «Любимые» — сетка в две колонки вместо ленты */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.grid .card {
+  width: 100%;
+}
+
+.search {
+  width: 100%;
+  min-height: var(--tap);
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-size: 16px;
+}
+
+.undo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 6px 6px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  font-weight: 600;
+}
+
+.undo span {
+  min-width: 0;
+  line-height: 1.3;
+}

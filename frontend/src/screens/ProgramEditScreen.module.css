@@ -90,8 +90,16 @@
   overflow: hidden;
 }
 
+.itemRow {
+  display: flex;
+  align-items: center;
+  padding-right: 4px;
+}
+
 .itemHead {
   display: flex;
+  flex: 1;
+  min-width: 0;
   align-items: center;
   gap: 10px;
   width: 100%;
@@ -203,4 +211,24 @@
   flex-direction: column;
   gap: 8px;
   margin-top: 8px;
+}
+
+/* Суперсет: полоса слева у всех упражнений группы, связанные стоят вплотную */
+.superset {
+  border-left: 4px solid var(--accent);
+}
+
+.linkedNext {
+  margin-bottom: -9px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.linkedNext + .superset {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.item [aria-pressed='true'] {
+  color: var(--accent);
 }

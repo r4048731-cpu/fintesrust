@@ -37,6 +37,9 @@ async function fill(r: Repos) {
   }
   const removed = (await r.workouts.listDone())[0]
   await r.workouts.remove(removed.id)
+  await r.notes.add({ title: 'Тренажёр', text: 'Сиденье на 4' })
+  const gone = await r.notes.add({ title: '', text: 'Удалённая' })
+  await r.notes.remove(gone.id)
 }
 
 /** Снимок всех таблиц, чтобы сравнить «до» и «после». */
@@ -46,6 +49,7 @@ async function snapshot(r: Repos) {
     exercises: byId(await r.db.exercises.toArray()),
     programs: byId(await r.db.programs.toArray()),
     workouts: byId(await r.db.workouts.toArray()),
+    notes: byId(await r.db.notes.toArray()),
     meta: (await r.db.meta.toArray())
       .filter((m) => m.key !== 'lastExportAt')
       .sort((a, b) => a.key.localeCompare(b.key)),

@@ -1,6 +1,7 @@
 // Правка активной тренировки без побочных эффектов: каждая функция возвращает новую тренировку.
 // Экран тренировки применяет их к своему состоянию и сохраняет результат (автосохранение).
 
+import { normalizeSupersets, supersetSpan, toggleLink } from './superset'
 import type { ExerciseType, Timestamp, Workout, WorkoutEntry, WorkoutSet } from './types'
 import { formatDecimal } from './number'
 
@@ -63,8 +64,14 @@ export function toggleDone(w: Workout, ei: number, si: number, now: Timestamp): 
   const entry = w.entries[ei]
   const done = !entry.sets[si].done
   const next = mapEntry(w, ei, (e) => mapSets(e, (s, i) => (i === si ? { ...s, done } : s)))
-  if (!done || entry.restSec <= 0 || allDone(next)) return done ? stopRest(next) : next
-  return startRest(next, entry.restSec, now)
+  if (!done) return next
+  // Суперсет: отдых только когда отмечен весь круг — этот подход у всех упражнений группы
+  const [a, b] = supersetSpan(next.entries, ei)
+  const group = next.entries.slice(a, b + 1)
+  if (a !== b && !group.every((e) => !e.sets[si] || e.sets[si].done)) return stopRest(next)
+  const restSec = a !== b ? next.entries[b].restSec : entry.restSec
+  if (restSec <= 0 || allDone(next)) return stopRest(next)
+  return startRest(next, restSec, now)
 }
 
 /** Отметка подхода без запуска отдыха — для правки прошлой тренировки. */
@@ -109,11 +116,49 @@ export function removeLastSet(w: Workout, ei: number): Workout {
 }
 
 export function addEntry(w: Workout, entry: WorkoutEntry): Workout {
-  return { ...w, entries: [...w.entries, entry] }
+  return { ...w, entries: normalizeSupersets([...w.entries, entry]) }
+}
+
+/** Объединить упражнение со следующим в суперсет или разъединить. */
+export function toggleSuperset(w: Workout, ei: number): Workout {
+  return { ...w, entries: toggleLink(w.entries, ei) }
+}
+
+/** Доля рабочего веса в лёгкий день. */
+export const LIGHT_DAY_FACTOR = 0.8
+
+/**
+ * Лёгкий день: веса снижаются на 20 % и округляются вниз до шага блинов.
+ * Повторы и число подходов те же — нагрузка падает, а техника и ритм остаются.
+ */
+export function lightenEntries(entries: WorkoutEntry[], step: number): WorkoutEntry[] {
+  const down = (kg: number) => Math.floor((kg * LIGHT_DAY_FACTOR) / step + 1e-9) * step
+  return entries.map((e) => ({
+    ...e,
+    sets: e.sets.map((s) => (s.weightKg > 0 ? { ...s, weightKg: down(s.weightKg) } : s)),
+  }))
+}
+
+/**
+ * Замена упражнения (занят тренажёр, болит сустав): план и отдых остаются прежними,
+ * подходы берутся от нового упражнения, а их число — как было.
+ */
+export function replaceEntry(w: Workout, ei: number, entry: WorkoutEntry): Workout {
+  return mapEntry(w, ei, (old) => {
+    const fill = entry.sets[entry.sets.length - 1] ?? { weightKg: 0, reps: 10, done: false }
+    const sets = Array.from({ length: old.sets.length }, (_, i) => ({
+      ...(entry.sets[i] ?? fill),
+      done: false,
+    }))
+    // суперсет остаётся, а заметка была про прежнее упражнение
+    const replaced: WorkoutEntry = { ...old, exerciseId: entry.exerciseId, sets }
+    delete replaced.note
+    return replaced
+  })
 }
 
 export function removeEntry(w: Workout, ei: number): Workout {
-  return { ...w, entries: w.entries.filter((_, i) => i !== ei) }
+  return { ...w, entries: normalizeSupersets(w.entries.filter((_, i) => i !== ei)) }
 }
 
 export function moveEntry(w: Workout, ei: number, direction: -1 | 1): Workout {
@@ -121,7 +166,7 @@ export function moveEntry(w: Workout, ei: number, direction: -1 | 1): Workout {
   if (target < 0 || target >= w.entries.length) return w
   const entries = [...w.entries]
   ;[entries[ei], entries[target]] = [entries[target], entries[ei]]
-  return { ...w, entries }
+  return { ...w, entries: normalizeSupersets(entries) }
 }
 
 export function countSets(w: Workout): { done: number; total: number } {
@@ -219,10 +264,30 @@ export function applyWeightToOpenSets(w: Workout, ei: number, weightKg: number):
 }
 
 /** Первый невыполненный подход тренировки — его подсвечиваем как следующий. */
+/**
+ * Следующий подход. В суперсете — по кругу: 1-й подход каждого упражнения группы,
+ * потом 2-й и так далее; обычное упражнение — это группа из одного.
+ */
 export function nextOpenSet(w: Workout): { ei: number; si: number } | null {
-  for (let ei = 0; ei < w.entries.length; ei++) {
-    const si = w.entries[ei].sets.findIndex((s) => !s.done)
-    if (si >= 0) return { ei, si }
+  for (let ei = 0; ei < w.entries.length;) {
+    const [a, b] = supersetSpan(w.entries, ei)
+    const rounds = Math.max(...w.entries.slice(a, b + 1).map((e) => e.sets.length))
+    for (let si = 0; si < rounds; si++) {
+      for (let k = a; k <= b; k++) {
+        const set = w.entries[k].sets[si]
+        if (set && !set.done) return { ei: k, si }
+      }
+    }
+    ei = b + 1
   }
   return null
+}
+
+/** Заметка к упражнению; пустая не хранится. */
+export function setEntryNote(w: Workout, ei: number, note: string): Workout {
+  return mapEntry(w, ei, (e) => {
+    const next: WorkoutEntry = { ...e, note }
+    if (!note.trim()) delete next.note
+    return next
+  })
 }

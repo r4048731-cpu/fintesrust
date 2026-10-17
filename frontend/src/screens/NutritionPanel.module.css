@@ -1,0 +1,247 @@
+.dayNav {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px;
+}
+
+.day {
+  font: 600 16px/1.2 var(--title-font);
+  text-align: center;
+}
+
+.calHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: -4px -6px -8px 0;
+}
+
+.label {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.big {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: 600 30px/1.1 var(--num-font);
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+}
+
+.big svg {
+  align-self: center;
+  margin-left: auto;
+  color: var(--muted);
+}
+
+.big span {
+  color: var(--muted);
+  font: 500 14px var(--font-body);
+}
+
+/* Полоска «съедено против плана» */
+.bar {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: var(--surface-2);
+}
+
+.bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--gradient);
+}
+
+.bar span.over {
+  background: var(--danger);
+}
+
+.bar.thin {
+  height: 6px;
+}
+
+.bar span.protein {
+  background: var(--blue);
+}
+
+.bar span.fat {
+  background: var(--pink);
+}
+
+.bar span.carbs {
+  background: var(--violet);
+}
+
+.left {
+  margin: -6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.macros {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.macro {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.macro b {
+  font: 600 15px/1.2 var(--num-font);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.macro b span {
+  color: var(--muted);
+  font: 500 12px var(--font-body);
+}
+
+.cardTitle {
+  font: 600 15px/1.2 var(--title-font);
+}
+
+.list {
+  margin: 0;
+  padding: 0 4px 0 0;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 36px;
+  align-items: center;
+}
+
+.list li + li {
+  border-top: 1px solid var(--line);
+}
+
+/* Вся строка — кнопка: нажатие открывает правку */
+.meal {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 56px;
+  padding: 8px 4px 8px 12px;
+  border: 0;
+  background: none;
+  text-align: left;
+}
+
+.mealText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.mealText b,
+.mealText span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mealText span {
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.mealKcal {
+  flex: none;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+/* Шторка «откуда калории» */
+.breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.breakdown + .breakdown {
+  margin-top: 16px;
+}
+
+.share {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.shareHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.shareValue {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.shareValue b {
+  color: var(--ink);
+}
+
+.topList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.topList li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+.topList li + li {
+  border-top: 1px solid var(--line);
+}
+
+.topName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empty {
+  margin: 0;
+  color: var(--muted);
+}

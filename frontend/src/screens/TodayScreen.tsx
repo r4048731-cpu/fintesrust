@@ -7,13 +7,17 @@ import { Button } from '../components/Button'
 import { EmptyState } from '../components/EmptyState'
 import { Icon, type IconName } from '../components/Icon'
 import { Screen, SectionLabel } from '../components/Screen'
+import { Segmented } from '../components/Segmented'
 import { Sheet } from '../components/Sheet'
 import { WeightEntry } from '../components/WeightEntry'
 import { formatLongDate } from '../components/dates'
 import { plural } from '../domain/plural'
+import { doneSetCount, parseISODate, workoutTonnage } from '../domain/metrics'
+import { formatInteger } from '../domain/number'
 import { formatPlan } from '../domain/programs'
+import { formatKm } from '../domain/run'
 import { countSets, formatClock } from '../domain/workout'
-import { useToday, type TodayPlan } from './today/useToday'
+import { useToday, type TodayPlan, type WeekDay } from './today/useToday'
 import { WeekStrip } from './today/WeekStrip'
 import styles from './TodayScreen.module.css'
 
@@ -22,8 +26,10 @@ export function TodayScreen() {
   const navigate = useNavigate()
   const t = useToday()
   const [dayPickerOpen, setDayPickerOpen] = useState(false)
+  const [pickedDate, setPickedDate] = useState<string | null>(null)
   const now = useNow(1000, !!t.active)
   const programs = useLiveQuery(() => repos.programs.list(), [repos])
+  const activeRun = useLiveQuery(() => repos.runs.getActive(), [repos])
 
   if (t.active === undefined || t.plan === undefined || !t.week) return null
 
@@ -81,15 +87,16 @@ export function TodayScreen() {
   )
 
   const week = (
-    <button
-      type="button"
-      className={styles.weekButton}
-      onClick={() => navigate('/progress')}
-      aria-label="Эта неделя — открыть прогресс"
-    >
-      <WeekStrip days={t.week.days} count={t.week.count} tonnageKg={t.week.tonnageKg} />
-    </button>
+    <WeekStrip
+      days={t.week.days}
+      count={t.week.count}
+      tonnageKg={t.week.tonnageKg}
+      onPickDay={(d) => setPickedDate(d.date)}
+      onSummary={() => navigate('/progress')}
+    />
   )
+  /** День берётся из свежих данных недели, чтобы шторка обновлялась вместе с ними. */
+  const pickedDay = t.week.days.find((d) => d.date === pickedDate)
 
   const editPlan = () => t.plan?.programId && navigate(`/programs/${t.plan.programId}`)
 
@@ -115,7 +122,37 @@ export function TodayScreen() {
       {noProgram}
 
       {week}
-      {t.plan && <PlanList plan={t.plan} onEdit={editPlan} />}
+      <button
+        type="button"
+        className={`${styles.runCard} ${activeRun ? styles.runActive : ''}`}
+        onClick={() => navigate(activeRun ? '/run/active' : '/run')}
+      >
+        <span className={styles.runIcon}>
+          <Icon name="run" />
+        </span>
+        <span className={styles.runText}>
+          <b>
+            {activeRun
+              ? `${activeRun.kind === 'run' ? 'Пробежка' : 'Прогулка'} идёт`
+              : 'Бег и ходьба'}
+          </b>
+          <span>
+            {activeRun
+              ? `${formatKm(activeRun.distanceM)} км · вернуться`
+              : 'Маршрут, километры и темп по GPS'}
+          </span>
+        </span>
+        <Icon name="chevron" size={18} />
+      </button>
+      {t.plan && (
+        <PlanList
+          plan={t.plan}
+          onEdit={editPlan}
+          onPickDay={t.active ? undefined : t.pickDay}
+          light={t.light}
+          onLight={t.active ? undefined : t.setLight}
+        />
+      )}
       <div className={styles.chips}>
         {quick.map((q) => (
           <button
@@ -136,13 +173,22 @@ export function TodayScreen() {
         <>
           {/* место под закреплённую кнопку, чтобы она не закрывала низ экрана */}
           <div className={styles.startBarSpace} aria-hidden="true" />
-          <div className={styles.startBar}>
-            <Button variant="primary" block onClick={() => void t.plan!.start()}>
-              Начать тренировку
+          <div className={styles.startBar} data-start-bar>
+            <Button variant="primary" block onClick={() => void t.plan!.start({ light: t.light })}>
+              Начать: {t.plan.title}
+              {t.plan.kind === 'program' && t.light ? ' · лёгкий' : ''}
             </Button>
           </div>
         </>
       )}
+
+      <Sheet
+        open={!!pickedDay}
+        onClose={() => setPickedDate(null)}
+        title={pickedDay ? formatLongDate(parseISODate(pickedDay.date)) : ''}
+      >
+        {pickedDay && <DayWorkouts day={pickedDay} onOpen={(path) => navigate(path)} />}
+      </Sheet>
 
       <Sheet open={dayPickerOpen} onClose={() => setDayPickerOpen(false)} title="Выбрать день">
         {programs?.map((p) => (
@@ -190,8 +236,28 @@ function metaLine(plan: TodayPlan): string {
     : 'Пока без упражнений'
 }
 
-/** Вариант «Список»: компактный план дня, кнопка «Начать» закреплена внизу. */
-function PlanList({ plan, onEdit }: { plan: TodayPlan; onEdit: () => void }) {
+const LOADS: { value: 'heavy' | 'light'; label: string }[] = [
+  { value: 'heavy', label: 'Тяжёлая' },
+  { value: 'light', label: 'Лёгкая −20%' },
+]
+
+/**
+ * План дня списком, кнопка «Начать» закреплена внизу. У программы — выбор дня
+ * и нагрузки: в лёгкий день рабочие веса ниже на 20 %.
+ */
+function PlanList({
+  plan,
+  onEdit,
+  onPickDay,
+  light,
+  onLight,
+}: {
+  plan: TodayPlan
+  onEdit: () => void
+  onPickDay?: (id: string) => void
+  light: boolean
+  onLight?: (light: boolean) => void
+}) {
   return (
     <section className={styles.card} aria-label={plan.source}>
       <div className={styles.listHead}>
@@ -206,6 +272,29 @@ function PlanList({ plan, onEdit }: { plan: TodayPlan; onEdit: () => void }) {
           </Button>
         )}
       </div>
+      {onPickDay && plan.days && plan.days.length > 1 && (
+        <div className={styles.days} role="group" aria-label="День программы">
+          {plan.days.map((d) => (
+            <button
+              key={d.id}
+              type="button"
+              className={styles.day}
+              aria-pressed={d.id === plan.dayId}
+              onClick={() => onPickDay(d.id)}
+            >
+              {d.name}
+            </button>
+          ))}
+        </div>
+      )}
+      {onLight && plan.kind === 'program' && plan.items.length > 0 && (
+        <Segmented
+          label="Нагрузка"
+          options={LOADS}
+          value={light ? 'light' : 'heavy'}
+          onChange={(v) => onLight(v === 'light')}
+        />
+      )}
       {plan.items.length > 0 && (
         <ol className={styles.listPlan}>
           {plan.items.map((i, n) => (
@@ -220,5 +309,49 @@ function PlanList({ plan, onEdit }: { plan: TodayPlan; onEdit: () => void }) {
         </ol>
       )}
     </section>
+  )
+}
+
+/** Шторка дня из полоски недели: что было и что запланировано. */
+function DayWorkouts({ day, onOpen }: { day: WeekDay; onOpen: (path: string) => void }) {
+  if (!day.workouts.length && !day.planned.length)
+    return (
+      <p className={styles.dayEmpty}>
+        {day.today ? 'Сегодня тренировки ещё не было.' : 'В этот день тренировки не было.'}
+      </p>
+    )
+  return (
+    <ul className={styles.pickList}>
+      {day.workouts.map((w) => {
+        const sets = doneSetCount(w)
+        return (
+          <li key={w.id}>
+            <button
+              type="button"
+              className={styles.pickRow}
+              onClick={() => onOpen(`/history/${w.id}`)}
+            >
+              <span className={styles.pickName}>{w.name}</span>
+              <span className={styles.dayMeta}>
+                {sets} {plural(sets, 'подход', 'подхода', 'подходов')} ·{' '}
+                {formatInteger(workoutTonnage(w))} кг
+              </span>
+            </button>
+          </li>
+        )
+      })}
+      {day.planned.map((w) => (
+        <li key={w.id}>
+          <button
+            type="button"
+            className={styles.pickRow}
+            onClick={() => onOpen(`/history/${w.id}/edit`)}
+          >
+            <span className={styles.pickName}>{w.name}</span>
+            <span className={styles.dayMeta}>Запланирована</span>
+          </button>
+        </li>
+      ))}
+    </ul>
   )
 }

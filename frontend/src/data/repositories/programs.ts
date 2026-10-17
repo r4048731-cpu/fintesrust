@@ -1,3 +1,4 @@
+import { normalizeSupersets } from '../../domain/superset'
 import { newDay } from '../../domain/programs'
 import { PROGRAM_TEMPLATES } from '../../domain/templates'
 import type { ID, Program, ProgramDay, ProgramKind } from '../../domain/types'
@@ -23,7 +24,13 @@ export function programsRepo(db: FitnessDB, clock: Clock) {
 
   async function save(program: Program): Promise<Program> {
     if (!program.days.length) throw new Error('В программе должен быть хотя бы один день')
-    const next = { ...program, name: program.name.trim() || 'Без названия', updatedAt: clock() }
+    const next = {
+      ...program,
+      name: program.name.trim() || 'Без названия',
+      // суперсеты — только из соседних упражнений, минимум два
+      days: program.days.map((d) => ({ ...d, items: normalizeSupersets(d.items) })),
+      updatedAt: clock(),
+    }
     await db.programs.put(next)
     return next
   }

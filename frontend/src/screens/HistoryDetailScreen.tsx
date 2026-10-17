@@ -24,7 +24,7 @@ export function HistoryDetailScreen() {
   if (data === undefined) return null
   if (data === null) {
     return (
-      <Screen title="Тренировка" onBack={() => navigate('/history')}>
+      <Screen title="Тренировка" onBack={() => navigate('/progress')}>
         <EmptyState title="Тренировка не найдена">
           <p>Возможно, её удалили.</p>
         </EmptyState>
@@ -39,7 +39,7 @@ export function HistoryDetailScreen() {
     <Screen
       title={workout.name}
       eyebrow={`${formatLongDate(date)} ${date.getFullYear()}`}
-      onBack={() => navigate('/history')}
+      onBack={() => navigate('/progress')}
       action={
         <Button size="sm" onClick={() => navigate(`/history/${workout.id}/edit`)}>
           Изменить
@@ -80,7 +80,7 @@ export function HistoryDetailScreen() {
               variant="danger"
               onClick={async () => {
                 await repos.workouts.remove(workout.id)
-                navigate('/history', { replace: true })
+                navigate('/progress', { replace: true })
               }}
             >
               Удалить

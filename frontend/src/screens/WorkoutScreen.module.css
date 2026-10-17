@@ -169,6 +169,33 @@
   --bg: var(--good-soft);
 }
 
+/* Техника, история, замена — три равные кнопки под названием */
+.tools {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.tool {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 52px;
+  padding: 6px 4px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.tool svg {
+  color: var(--accent);
+}
+
 .entryActions {
   display: flex;
   align-items: center;
@@ -328,4 +355,130 @@
   height: 40px;
   color: var(--muted);
   font: 600 15px/1 var(--num-font);
+}
+
+/* Шторка «План тренировки» */
+.planList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.planRow {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-right: 4px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.planCurrent {
+  border-color: var(--accent);
+}
+
+.planJump {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  min-height: 56px;
+  padding: 8px 12px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  text-align: left;
+}
+
+.planNum {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--muted);
+  font: 600 13px var(--num-font);
+}
+
+.planDone .planNum {
+  background: var(--gradient);
+  color: var(--accent-ink);
+}
+
+.planText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.planText b {
+  overflow: hidden;
+  font-size: 14.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.planText span {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+/* Плавная прокрутка к упражнению не прячет его под шапкой */
+.entry {
+  scroll-margin-top: calc(var(--topbar-h) + 12px);
+}
+
+/* Отдых внутри шторки упражнения: не закреплён, а идёт под подходами */
+.restInline {
+  position: static;
+  z-index: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding-bottom: 0;
+}
+
+/* Низ шторки упражнения: «назад» и «далее» */
+.sheetNav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sheetNav > button:last-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.nextName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Суперсет: полоса слева у упражнений группы, связанные стоят вплотную */
+.planSuperset {
+  border-left: 4px solid var(--accent);
+}
+
+.planLinked {
+  margin-bottom: -6px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.planLinked + .planSuperset {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.planRow [aria-pressed='true'] {
+  color: var(--accent);
 }

@@ -1,9 +1,11 @@
+import { linkedToNext, toggleLink } from '../domain/superset'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { useRepos } from '../app/dataContext'
 import { Button, IconButton } from '../components/Button'
 import { EmptyState } from '../components/EmptyState'
+import { ExerciseInfoSheet } from '../components/ExerciseInfoSheet'
 import { ExercisePicker } from '../components/ExercisePicker'
 import { Screen } from '../components/Screen'
 import { Stepper } from '../components/Stepper'
@@ -34,6 +36,10 @@ export function ProgramEditScreen() {
   const [saving, setSaving] = useState<'idle' | 'pending' | 'saved'>('idle')
   const [expanded, setExpanded] = useState<string | null>(null)
   const [pickerDay, setPickerDay] = useState<string | null>(null)
+  /** Карточка упражнения из дня: техника и история. */
+  const [card, setCard] = useState<{ exercise: Exercise; tab: 'technique' | 'history' } | null>(
+    null,
+  )
   const [confirm, setConfirm] = useState<string | null>(null)
   const pending = useRef<Program | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -204,25 +210,60 @@ export function ProgramEditScreen() {
                   ),
                 }))
               return (
-                <li key={key} className={styles.item}>
-                  <button
-                    type="button"
-                    className={styles.itemHead}
-                    aria-expanded={open}
-                    onClick={() => setExpanded(open ? null : key)}
-                  >
-                    <span className={styles.itemNum}>{ii + 1}</span>
-                    <span className={styles.itemText}>
-                      <span className={styles.itemName}>
-                        {ex.name}
-                        {ex.deletedAt !== null && (
-                          <span className={styles.deleted}> (удалено)</span>
-                        )}
+                <li
+                  key={key}
+                  className={[
+                    styles.item,
+                    item.superset && styles.superset,
+                    linkedToNext(day.items, ii) && styles.linkedNext,
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                >
+                  <div className={styles.itemRow}>
+                    <button
+                      type="button"
+                      className={styles.itemHead}
+                      aria-expanded={open}
+                      onClick={() => setExpanded(open ? null : key)}
+                    >
+                      <span className={styles.itemNum}>{ii + 1}</span>
+                      <span className={styles.itemText}>
+                        <span className={styles.itemName}>
+                          {ex.name}
+                          {ex.deletedAt !== null && (
+                            <span className={styles.deleted}> (удалено)</span>
+                          )}
+                        </span>
+                        <span className={styles.itemPlan}>
+                          {formatPlan(item, ex.type)}
+                          {item.superset ? ' · суперсет' : ''}
+                        </span>
                       </span>
-                      <span className={styles.itemPlan}>{formatPlan(item, ex.type)}</span>
-                    </span>
-                    <span className={styles.itemToggle}>{open ? 'Готово' : 'Изменить'}</span>
-                  </button>
+                      <span className={styles.itemToggle}>{open ? 'Готово' : 'Изменить'}</span>
+                    </button>
+                    {ii < day.items.length - 1 && (
+                      <IconButton
+                        icon="link"
+                        size="sm"
+                        aria-pressed={linkedToNext(day.items, ii)}
+                        label={
+                          linkedToNext(day.items, ii)
+                            ? `Разъединить суперсет после «${ex.name}»`
+                            : `Суперсет: «${ex.name}» и следующее`
+                        }
+                        onClick={() =>
+                          changeDay(day.id, (d) => ({ ...d, items: toggleLink(d.items, ii) }))
+                        }
+                      />
+                    )}
+                    <IconButton
+                      icon="info"
+                      size="sm"
+                      label={`Об упражнении «${ex.name}»`}
+                      onClick={() => setCard({ exercise: ex, tab: 'technique' })}
+                    />
+                  </div>
 
                   {open && (
                     <div className={styles.editor}>
@@ -408,6 +449,14 @@ export function ProgramEditScreen() {
           </Button>
         )}
       </div>
+
+      <ExerciseInfoSheet
+        exercise={card?.exercise ?? null}
+        tab={card?.tab ?? 'technique'}
+        onTab={(tab) => card && setCard({ ...card, tab })}
+        onClose={() => setCard(null)}
+        addToProgram={false}
+      />
 
       <ExercisePicker
         open={pickerDay !== null}

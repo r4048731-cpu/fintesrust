@@ -7,12 +7,14 @@ import { useWakeLock } from '../app/hooks/useWakeLock'
 import { restEndSignal, tapFeedback, unlockAudio } from '../app/signal'
 import { Button, IconButton } from '../components/Button'
 import { ExercisePicker } from '../components/ExercisePicker'
+import { ExerciseInfoSheet } from '../components/ExerciseInfoSheet'
 import { Icon } from '../components/Icon'
 import { Sheet } from '../components/Sheet'
 import { Stepper } from '../components/Stepper'
 import { formatDecimal } from '../domain/number'
+import { plural } from '../domain/plural'
 import { formatRest } from '../domain/programs'
-import type { Exercise, Workout, WorkoutSet } from '../domain/types'
+import type { Exercise, Workout, WorkoutEntry, WorkoutSet } from '../domain/types'
 import {
   addEntry,
   addSet,
@@ -24,6 +26,7 @@ import {
   formatSet,
   moveEntry,
   removeEntry,
+  replaceEntry,
   removeLastSet,
   setValue,
   SET_LIMITS,
@@ -33,7 +36,10 @@ import {
   applyWeightToOpenSets,
   nextOpenSet,
   progressionHint,
+  setEntryNote,
+  toggleSuperset,
 } from '../domain/workout'
+import { linkedToNext, supersetSpan } from '../domain/superset'
 import styles from './WorkoutScreen.module.css'
 
 /** Правки чисел сохраняются через полсекунды после последнего нажатия, отметки — сразу. */
@@ -52,6 +58,13 @@ const missingExercise = (id: string): Exercise => ({
   deletedAt: 0,
 })
 
+interface OpenedEntry {
+  ei: number
+  entry: WorkoutEntry
+  ex: Exercise
+  complete: boolean
+}
+
 interface Props {
   /**
    * `active` — режим «в зале» (ТЗ 2.3): активная тренировка, часы, таймер отдыха.
@@ -69,6 +82,15 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [finishOpen, setFinishOpen] = useState(false)
   const [confirm, setConfirm] = useState<string | null>(null)
+  /** Справка по упражнению: техника или история. */
+  const [info, setInfo] = useState<{ exercise: Exercise; tab: 'technique' | 'history' } | null>(
+    null,
+  )
+  /** Открытое в шторке упражнение — индекс в `entries`. */
+  const [openIndex, setOpenIndex] = useState<number | null>(null)
+  const [shownIndex, setShownIndex] = useState<number | null>(null)
+  /** Индекс упражнения, которое заменяем. */
+  const [swapIndex, setSwapIndex] = useState<number | null>(null)
   const pending = useRef<Workout | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const signaledFor = useRef<number | null>(null)
@@ -90,6 +112,13 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
     const ids = idsKey.split(',')
     const sets = await Promise.all(ids.map((id) => repos.workouts.lastSets(id, workout.id)))
     return new Map(ids.map((id, i) => [id, sets[i]]))
+  }, [repos, idsKey, workout?.id])
+  /** Заметки к упражнениям с прошлого раза — настройка тренажёра и т. п. */
+  const lastNotes = useLiveQuery(async () => {
+    if (!workout || !idsKey) return new Map<string, string | null>()
+    const ids = idsKey.split(',')
+    const notes = await Promise.all(ids.map((id) => repos.workouts.lastNote(id, workout.id)))
+    return new Map(ids.map((id, i) => [id, notes[i]]))
   }, [repos, idsKey, workout?.id])
 
   // Тренировка читается один раз: дальше экран — владелец правок, база только принимает их.
@@ -163,9 +192,32 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
   const w = workout
   const exerciseOf = (id: string) => exercises.get(id) ?? missingExercise(id)
   const sets = countSets(w)
+  /** Запланированная тренировка (ТЗ 9.3): подходы — это план, отмечать нечего. */
+  const planned = w.status === 'planned'
   const next = editing ? null : nextOpenSet(w)
   const restLeft = restEndsAt && !editing ? (restEndsAt - now) / 1000 : null
   const showRest = restLeft !== null && restLeft > -REST_OVERTIME_HIDE_SEC
+
+  function openEntry(ei: number) {
+    setConfirm(null)
+    setOpenIndex(ei)
+    setShownIndex(ei)
+  }
+
+  function entryAt(ei: number | null): OpenedEntry | null {
+    const entry = ei !== null ? w.entries[ei] : undefined
+    if (ei === null || !entry) return null
+    return {
+      ei,
+      entry,
+      ex: exerciseOf(entry.exerciseId),
+      complete: !planned && entry.sets.length > 0 && entry.sets.every((s) => s.done),
+    }
+  }
+
+  const opened = entryAt(openIndex)
+  /** Пока шторка уезжает вниз, на ней остаётся последнее открытое упражнение. */
+  const shown = opened ?? entryAt(shownIndex)
 
   async function finish() {
     await flush()
@@ -173,25 +225,22 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
     navigate(`/workout/${w.id}/summary`, { replace: true })
   }
 
-  /** Запланированная тренировка (ТЗ 9.3): подходы — это план, отмечать нечего. */
-  const planned = w.status === 'planned'
-
   /** «Назад» из правки. Внесённая вручную тренировка без единого подхода не сохраняется. */
   async function leaveEdit() {
     await flush()
     if (w.manual && !planned && keepDone(w).entries.length === 0) {
       await repos.workouts.remove(w.id)
-      navigate('/history', { replace: true })
+      navigate('/progress', { replace: true })
       return
     }
-    navigate(planned ? '/history' : `/history/${w.id}`)
+    navigate(planned ? '/progress' : `/history/${w.id}`)
   }
 
   /** «Готово» в правке: у выполненной остаются только отмеченные подходы. */
   async function saveEdit() {
     if (planned) {
       await flush()
-      navigate('/history', { replace: true })
+      navigate('/progress', { replace: true })
       return
     }
     const cleaned = keepDone(w)
@@ -209,7 +258,7 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
     clearTimeout(timer.current)
     pending.current = null
     await repos.workouts.remove(w.id)
-    navigate('/history', { replace: true })
+    navigate('/progress', { replace: true })
   }
 
   async function discard() {
@@ -217,6 +266,53 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
     pending.current = null
     await repos.workouts.discard(w.id)
     navigate('/', { replace: true })
+  }
+
+  /** Полоса отдыха: под списком закреплена внизу экрана, в шторке упражнения — внутри неё. */
+  function restPanel(inSheet: boolean) {
+    if (!showRest || restLeft === null) return null
+    const left = restLeft
+    return (
+      <div
+        className={[styles.rest, inSheet && styles.restInline, left <= 0 && styles.restOver]
+          .filter(Boolean)
+          .join(' ')}
+        role="timer"
+        aria-label="Отдых"
+      >
+        <div
+          className={styles.restBar}
+          style={{
+            width: `${Math.min(100, Math.max(0, 100 * (1 - left / (w.restTotalSec || 1))))}%`,
+          }}
+        />
+        <div className={styles.restInner}>
+          <div className={styles.restText}>
+            <span className={styles.restLabel}>{left > 0 ? 'Отдых' : 'Отдых окончен'}</span>
+            <span className={styles.restTime}>
+              {left > 0 ? formatClock(Math.ceil(left)) : `+${formatClock(-left)}`}
+            </span>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => change(adjustRest(w, -15, Date.now()))}
+            aria-label="Отдых на 15 секунд меньше"
+          >
+            −15
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => change(adjustRest(w, 15, Date.now()))}
+            aria-label="Отдых на 15 секунд больше"
+          >
+            +15
+          </Button>
+          <Button size="sm" variant="primary" onClick={() => change(stopRest(w))}>
+            Готов
+          </Button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -253,7 +349,7 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
         )}
       </header>
 
-      <main className={`${styles.body} ${showRest ? styles.withRest : ''}`}>
+      <main className={`${styles.body} ${showRest && openIndex === null ? styles.withRest : ''}`}>
         <input
           className={styles.nameInput}
           value={w.name}
@@ -290,200 +386,82 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
 
         {w.entries.length === 0 && <p className={styles.muted}>Добавьте упражнение.</p>}
 
-        {w.entries.map((entry, ei) => {
-          const ex = exerciseOf(entry.exerciseId)
-          const prev = previous?.get(entry.exerciseId)
-          const timed = ex.type === 'time'
-          const plan = entry.plan
-          const hint = editing ? null : progressionHint(entry, prev ?? null, ex.type, weightStep)
-          return (
-            <section
-              key={`${entry.exerciseId}-${ei}`}
-              className={styles.entry}
-              aria-label={ex.name}
-            >
-              <div className={styles.entryHead}>
-                <div className={styles.entryTitle}>
-                  <h2 className={styles.exName}>{ex.name}</h2>
-                  <p className={styles.meta}>
-                    {plan && (
-                      <>
-                        План: {plan.sets} ×{' '}
-                        {plan.repsMin === plan.repsMax
-                          ? plan.repsMax
-                          : `${plan.repsMin}–${plan.repsMax}`}
-                        {timed ? ' с' : ''} ·{' '}
-                      </>
-                    )}
-                    {editing
-                      ? `Отмечено ${entry.sets.filter((s) => s.done).length} из ${entry.sets.length}`
-                      : prev
-                        ? `Прошлый раз: ${prev.map((s) => formatSet(s, ex.type)).join(', ')}`
-                        : 'Первый раз'}
-                  </p>
-                </div>
-                <IconButton
-                  icon="up"
-                  label={`Поднять «${ex.name}» выше`}
-                  size="sm"
-                  disabled={ei === 0}
-                  onClick={() => change(moveEntry(w, ei, -1))}
-                />
-                <IconButton
-                  icon="close"
-                  label={`Убрать «${ex.name}» из тренировки`}
-                  size="sm"
-                  onClick={() => setConfirm(`entry:${ei}`)}
-                />
-              </div>
-
-              {hint && (
-                <div className={styles.hint}>
-                  <span className={styles.hintText}>
-                    В прошлый раз все повторы сделаны — попробуйте{' '}
-                    <b>{formatDecimal(hint.weightKg)} кг</b>
-                  </span>
-                  <Button
-                    size="sm"
-                    variant="primary"
-                    onClick={() => change(applyWeightToOpenSets(w, ei, hint.weightKg))}
+        {w.entries.length > 0 && (
+          <ol className={styles.planList} aria-label="Упражнения тренировки">
+            {w.entries.map((entry, ei) => {
+              const ex = exerciseOf(entry.exerciseId)
+              const done = entry.sets.filter((s) => s.done).length
+              const complete = !planned && done === entry.sets.length && done > 0
+              const current = next?.ei === ei
+              const topKg = Math.max(0, ...entry.sets.map((s) => s.weightKg))
+              const count = planned
+                ? `${entry.sets.length} ${plural(entry.sets.length, 'подход', 'подхода', 'подходов')}`
+                : `${done} из ${entry.sets.length} подходов`
+              return (
+                <li
+                  key={`${entry.exerciseId}-${ei}`}
+                  className={[
+                    styles.planRow,
+                    current && styles.planCurrent,
+                    complete && styles.planDone,
+                    entry.superset && styles.planSuperset,
+                    linkedToNext(w.entries, ei) && styles.planLinked,
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                >
+                  <button
+                    type="button"
+                    className={styles.planJump}
+                    aria-current={current ? 'step' : undefined}
+                    aria-label={`${ex.name} — ${count}`}
+                    onClick={() => openEntry(ei)}
                   >
-                    Поставить
-                  </Button>
-                </div>
-              )}
-
-              {confirm === `entry:${ei}` && (
-                <div className={styles.confirm} role="alertdialog" aria-label="Подтверждение">
-                  <p>Убрать «{ex.name}» из этой тренировки?</p>
-                  <div className={styles.confirmActions}>
-                    <Button
-                      variant="danger"
-                      onClick={() => {
-                        change(removeEntry(w, ei))
-                        setConfirm(null)
-                      }}
-                    >
-                      Убрать
-                    </Button>
-                    <Button variant="ghost" onClick={() => setConfirm(null)}>
-                      Отмена
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              <div className={styles.setHead} aria-hidden="true">
-                {timed ? (
-                  <span className={styles.span2}>Время, с</span>
-                ) : (
-                  <>
-                    <span>{ex.type === 'bodyweight' ? 'Доп. вес, кг' : 'Вес, кг'}</span>
-                    <span>Повторы</span>
-                  </>
-                )}
-                <span />
-              </div>
-
-              <ol className={styles.sets}>
-                {entry.sets.map((set, si) => (
-                  <li
-                    key={si}
-                    className={[
-                      styles.set,
-                      set.done && styles.done,
-                      next?.ei === ei && next.si === si && styles.next,
-                    ]
-                      .filter(Boolean)
-                      .join(' ')}
-                    aria-current={next?.ei === ei && next.si === si ? 'step' : undefined}
-                  >
-                    {timed ? (
-                      <div className={styles.span2}>
-                        <Stepper
-                          compact
-                          label={`Подход ${si + 1}, время, с`}
-                          value={set.timeSec ?? 0}
-                          step={5}
-                          max={SET_LIMITS.timeSec.max}
-                          onChange={(v) =>
-                            change(setValue(w, ei, si, 'timeSec', v), TYPING_SAVE_MS)
-                          }
-                        />
-                      </div>
-                    ) : (
-                      <>
-                        <Stepper
-                          compact
-                          decimal
-                          label={`Подход ${si + 1}, вес, кг`}
-                          value={set.weightKg}
-                          step={weightStep}
-                          max={SET_LIMITS.weightKg.max}
-                          onChange={(v) =>
-                            change(setValue(w, ei, si, 'weightKg', v), TYPING_SAVE_MS)
-                          }
-                        />
-                        <Stepper
-                          compact
-                          label={`Подход ${si + 1}, повторы`}
-                          value={set.reps}
-                          step={1}
-                          max={SET_LIMITS.reps.max}
-                          onChange={(v) => change(setValue(w, ei, si, 'reps', v), TYPING_SAVE_MS)}
-                        />
-                      </>
-                    )}
-                    {planned ? (
-                      <span className={styles.setNum} aria-hidden="true">
-                        {si + 1}
+                    <span className={styles.planNum}>
+                      {complete ? <Icon name="check" size={16} /> : ei + 1}
+                    </span>
+                    <span className={styles.planText}>
+                      <b>{ex.name}</b>
+                      <span>
+                        {count}
+                        {ex.type !== 'time' && topKg > 0 ? ` · ${formatDecimal(topKg)} кг` : ''}
+                        {entry.superset ? ' · суперсет' : ''}
+                        {current ? ' · сейчас' : ''}
                       </span>
-                    ) : (
-                      <button
-                        type="button"
-                        className={styles.doneBtn}
-                        aria-pressed={set.done}
-                        aria-label={`Подход ${si + 1} выполнен`}
-                        onClick={() => {
-                          if (editing) {
-                            change(toggleSetOnly(w, ei, si))
-                            return
-                          }
-                          unlockAudio()
-                          if (!set.done) tapFeedback()
-                          change(toggleDone(w, ei, si, Date.now()))
-                        }}
-                      >
-                        {set.done ? <Icon name="check" size={22} /> : si + 1}
-                      </button>
-                    )}
-                  </li>
-                ))}
-              </ol>
-
-              <div className={styles.entryActions}>
-                <Button
-                  size="sm"
-                  icon="plus"
-                  onClick={() => change(addSet(w, ei, editing && !planned))}
-                >
-                  Подход
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  icon="minus"
-                  aria-label="Убрать последний подход"
-                  disabled={entry.sets.length <= 1}
-                  onClick={() => change(removeLastSet(w, ei))}
-                >
-                  Подход
-                </Button>
-                <span className={styles.restInfo}>отдых {formatRest(entry.restSec)}</span>
-              </div>
-            </section>
-          )
-        })}
+                    </span>
+                  </button>
+                  <IconButton
+                    icon="up"
+                    size="sm"
+                    label={`Поднять «${ex.name}» выше`}
+                    disabled={ei === 0}
+                    onClick={() => change(moveEntry(w, ei, -1))}
+                  />
+                  <IconButton
+                    icon="down"
+                    size="sm"
+                    label={`Опустить «${ex.name}» ниже`}
+                    disabled={ei === w.entries.length - 1}
+                    onClick={() => change(moveEntry(w, ei, 1))}
+                  />
+                  {ei < w.entries.length - 1 && (
+                    <IconButton
+                      icon="link"
+                      size="sm"
+                      aria-pressed={linkedToNext(w.entries, ei)}
+                      label={
+                        linkedToNext(w.entries, ei)
+                          ? `Разъединить суперсет после «${ex.name}»`
+                          : `Суперсет: «${ex.name}» и следующее`
+                      }
+                      onClick={() => change(toggleSuperset(w, ei))}
+                    />
+                  )}
+                </li>
+              )
+            })}
+          </ol>
+        )}
 
         <Button icon="plus" block onClick={() => setPickerOpen(true)}>
           Упражнение
@@ -545,45 +523,7 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
         )}
       </main>
 
-      {showRest && restLeft !== null && (
-        <div
-          className={`${styles.rest} ${restLeft <= 0 ? styles.restOver : ''}`}
-          role="timer"
-          aria-label="Отдых"
-        >
-          <div
-            className={styles.restBar}
-            style={{
-              width: `${Math.min(100, Math.max(0, 100 * (1 - restLeft / (w.restTotalSec || 1))))}%`,
-            }}
-          />
-          <div className={styles.restInner}>
-            <div className={styles.restText}>
-              <span className={styles.restLabel}>{restLeft > 0 ? 'Отдых' : 'Отдых окончен'}</span>
-              <span className={styles.restTime}>
-                {restLeft > 0 ? formatClock(Math.ceil(restLeft)) : `+${formatClock(-restLeft)}`}
-              </span>
-            </div>
-            <Button
-              size="sm"
-              onClick={() => change(adjustRest(w, -15, Date.now()))}
-              aria-label="Отдых на 15 секунд меньше"
-            >
-              −15
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => change(adjustRest(w, 15, Date.now()))}
-              aria-label="Отдых на 15 секунд больше"
-            >
-              +15
-            </Button>
-            <Button size="sm" variant="primary" onClick={() => change(stopRest(w))}>
-              Готов
-            </Button>
-          </div>
-        </div>
-      )}
+      {openIndex === null && restPanel(false)}
 
       <ExercisePicker
         open={pickerOpen}
@@ -593,6 +533,309 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
           const entry = await repos.workouts.buildEntry(ex.id, null, w.id)
           change(addEntry(w, entry))
         }}
+      />
+
+      <ExercisePicker
+        open={swapIndex !== null}
+        title="Заменить на"
+        onClose={() => setSwapIndex(null)}
+        onPick={async (ex) => {
+          const ei = swapIndex
+          setSwapIndex(null)
+          if (ei === null) return
+          const entry = await repos.workouts.buildEntry(ex.id, null, w.id)
+          change(replaceEntry(w, ei, entry))
+        }}
+      />
+
+      {shown && (
+        <Sheet
+          open={opened !== null}
+          tall
+          onClose={() => setOpenIndex(null)}
+          title={shown.ex.name}
+          footer={
+            <div className={styles.sheetNav}>
+              <IconButton
+                icon="back"
+                label="Предыдущее упражнение"
+                disabled={shown.ei === 0}
+                onClick={() => openEntry(shown.ei - 1)}
+              />
+              {shown.ei < w.entries.length - 1 ? (
+                <Button
+                  block
+                  variant={shown.complete ? 'primary' : 'secondary'}
+                  onClick={() => openEntry(shown.ei + 1)}
+                >
+                  <span className={styles.nextName}>
+                    Далее: {exerciseOf(w.entries[shown.ei + 1].exerciseId).name}
+                  </span>
+                  <Icon name="chevron" size={18} />
+                </Button>
+              ) : (
+                <Button
+                  block
+                  variant={shown.complete ? 'primary' : 'secondary'}
+                  onClick={() => setOpenIndex(null)}
+                >
+                  К списку упражнений
+                </Button>
+              )}
+            </div>
+          }
+        >
+          {(() => {
+            const { entry, ei, ex } = shown
+            const prev = previous?.get(entry.exerciseId)
+            const timed = ex.type === 'time'
+            const plan = entry.plan
+            const hint = editing ? null : progressionHint(entry, prev ?? null, ex.type, weightStep)
+            return (
+              <>
+                <p className={styles.meta}>
+                  {plan && (
+                    <>
+                      План: {plan.sets} ×{' '}
+                      {plan.repsMin === plan.repsMax
+                        ? plan.repsMax
+                        : `${plan.repsMin}–${plan.repsMax}`}
+                      {timed ? ' с' : ''} ·{' '}
+                    </>
+                  )}
+                  {editing
+                    ? `Отмечено ${entry.sets.filter((s) => s.done).length} из ${entry.sets.length}`
+                    : prev
+                      ? `Прошлый раз: ${prev.map((s) => formatSet(s, ex.type)).join(', ')}`
+                      : 'Первый раз'}
+                </p>
+                <div className={styles.tools}>
+                  <button
+                    type="button"
+                    className={styles.tool}
+                    onClick={() => setInfo({ exercise: ex, tab: 'technique' })}
+                    aria-label={`Техника: ${ex.name}`}
+                  >
+                    <Icon name="info" size={18} />
+                    Техника
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.tool}
+                    onClick={() => setInfo({ exercise: ex, tab: 'history' })}
+                    aria-label={`История: ${ex.name}`}
+                  >
+                    <Icon name="history" size={18} />
+                    История
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.tool}
+                    onClick={() => setSwapIndex(ei)}
+                    aria-label={`Заменить «${ex.name}»`}
+                  >
+                    <Icon name="swap" size={18} />
+                    Заменить
+                  </button>
+                </div>
+
+                {hint && (
+                  <div className={styles.hint}>
+                    <span className={styles.hintText}>
+                      В прошлый раз все повторы сделаны — попробуйте{' '}
+                      <b>{formatDecimal(hint.weightKg)} кг</b>
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      onClick={() => change(applyWeightToOpenSets(w, ei, hint.weightKg))}
+                    >
+                      Поставить
+                    </Button>
+                  </div>
+                )}
+
+                <div className={styles.setHead} aria-hidden="true">
+                  {timed ? (
+                    <span className={styles.span2}>Время, с</span>
+                  ) : (
+                    <>
+                      <span>{ex.type === 'bodyweight' ? 'Доп. вес, кг' : 'Вес, кг'}</span>
+                      <span>Повторы</span>
+                    </>
+                  )}
+                  <span />
+                </div>
+
+                <ol className={styles.sets} aria-label="Подходы">
+                  {entry.sets.map((set, si) => (
+                    <li
+                      key={si}
+                      className={[
+                        styles.set,
+                        set.done && styles.done,
+                        next?.ei === ei && next.si === si && styles.next,
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                      aria-current={next?.ei === ei && next.si === si ? 'step' : undefined}
+                    >
+                      {timed ? (
+                        <div className={styles.span2}>
+                          <Stepper
+                            compact
+                            label={`Подход ${si + 1}, время, с`}
+                            value={set.timeSec ?? 0}
+                            step={5}
+                            max={SET_LIMITS.timeSec.max}
+                            onChange={(v) =>
+                              change(setValue(w, ei, si, 'timeSec', v), TYPING_SAVE_MS)
+                            }
+                          />
+                        </div>
+                      ) : (
+                        <>
+                          <Stepper
+                            compact
+                            decimal
+                            label={`Подход ${si + 1}, вес, кг`}
+                            value={set.weightKg}
+                            step={weightStep}
+                            max={SET_LIMITS.weightKg.max}
+                            onChange={(v) =>
+                              change(setValue(w, ei, si, 'weightKg', v), TYPING_SAVE_MS)
+                            }
+                          />
+                          <Stepper
+                            compact
+                            label={`Подход ${si + 1}, повторы`}
+                            value={set.reps}
+                            step={1}
+                            max={SET_LIMITS.reps.max}
+                            onChange={(v) => change(setValue(w, ei, si, 'reps', v), TYPING_SAVE_MS)}
+                          />
+                        </>
+                      )}
+                      {planned ? (
+                        <span className={styles.setNum} aria-hidden="true">
+                          {si + 1}
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          className={styles.doneBtn}
+                          aria-pressed={set.done}
+                          aria-label={`Подход ${si + 1} выполнен`}
+                          onClick={() => {
+                            if (editing) {
+                              change(toggleSetOnly(w, ei, si))
+                              return
+                            }
+                            unlockAudio()
+                            if (!set.done) tapFeedback()
+                            const after = toggleDone(w, ei, si, Date.now())
+                            change(after)
+                            // суперсет: круг не закончен — сразу к следующему упражнению группы
+                            const [a, b] = supersetSpan(after.entries, ei)
+                            const upcoming = nextOpenSet(after)
+                            if (
+                              !set.done &&
+                              a !== b &&
+                              !after.restEndsAt &&
+                              upcoming &&
+                              upcoming.ei !== ei &&
+                              upcoming.ei >= a &&
+                              upcoming.ei <= b
+                            ) {
+                              openEntry(upcoming.ei)
+                            }
+                          }}
+                        >
+                          {set.done ? <Icon name="check" size={22} /> : si + 1}
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                </ol>
+
+                <div className={styles.entryActions}>
+                  <Button
+                    size="sm"
+                    icon="plus"
+                    onClick={() => change(addSet(w, ei, editing && !planned))}
+                  >
+                    Подход
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    icon="minus"
+                    aria-label="Убрать последний подход"
+                    disabled={entry.sets.length <= 1}
+                    onClick={() => change(removeLastSet(w, ei))}
+                  >
+                    Подход
+                  </Button>
+                  <span className={styles.restInfo}>отдых {formatRest(entry.restSec)}</span>
+                </div>
+
+                {restPanel(true)}
+
+                {confirm === `entry:${ei}` && (
+                  <div className={styles.confirm} role="alertdialog" aria-label="Подтверждение">
+                    <p>Убрать «{ex.name}» из этой тренировки?</p>
+                    <div className={styles.confirmActions}>
+                      <Button
+                        variant="danger"
+                        onClick={() => {
+                          change(removeEntry(w, ei))
+                          setConfirm(null)
+                        }}
+                      >
+                        Убрать
+                      </Button>
+                      <Button variant="ghost" onClick={() => setConfirm(null)}>
+                        Отмена
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                <label className={styles.noteField}>
+                  <span className={styles.label}>Заметка к упражнению</span>
+                  <textarea
+                    className={styles.note}
+                    value={entry.note ?? ''}
+                    placeholder={
+                      lastNotes?.get(entry.exerciseId)
+                        ? `В прошлый раз: ${lastNotes.get(entry.exerciseId)}`
+                        : 'Настройка тренажёра, хват, ощущения'
+                    }
+                    onChange={(e) => change(setEntryNote(w, ei, e.target.value), TYPING_SAVE_MS)}
+                  />
+                </label>
+
+                {confirm !== `entry:${ei}` && (
+                  <Button
+                    variant="ghost"
+                    className={styles.dangerText}
+                    onClick={() => setConfirm(`entry:${ei}`)}
+                  >
+                    Убрать из тренировки
+                  </Button>
+                )}
+              </>
+            )
+          })()}
+        </Sheet>
+      )}
+
+      <ExerciseInfoSheet
+        exercise={info?.exercise ?? null}
+        tab={info?.tab ?? 'technique'}
+        excludeWorkoutId={w.id}
+        onTab={(tab) => info && setInfo({ ...info, tab })}
+        onClose={() => setInfo(null)}
       />
 
       <Sheet open={finishOpen} onClose={() => setFinishOpen(false)} title="Завершить тренировку?">

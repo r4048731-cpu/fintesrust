@@ -97,16 +97,32 @@ describe('справочник упражнений', () => {
     const { user, repos } = await openLibrary()
     await user.type(screen.getByRole('searchbox'), 'планка')
     await user.click(screen.getByRole('button', { name: /^Планка/ }))
+    // нажатие открывает карточку упражнения, «Изменить» — форму поверх неё
+    const card = screen.getByRole('dialog', { name: 'Планка' })
+    expect(card).toHaveTextContent('Время')
+    await user.click(within(card).getByRole('button', { name: 'Изменить' }))
     let dialog = screen.getByRole('dialog', { name: 'Упражнение' })
     const name = within(dialog).getByLabelText('Название')
     await user.clear(name)
     await user.type(name, 'Планка на локтях')
     await user.click(within(dialog).getByRole('button', { name: 'Сохранить' }))
     expect((await repos.exercises.get('builtin-plank'))?.name).toBe('Планка на локтях')
+    // карточка сразу показывает новое название
+    expect(await screen.findByRole('dialog', { name: 'Планка на локтях' })).toBeInTheDocument()
+    await user.click(
+      within(screen.getByRole('dialog', { name: 'Планка на локтях' })).getByRole('button', {
+        name: 'Закрыть',
+      }),
+    )
 
     await user.clear(screen.getByRole('searchbox'))
     await user.type(screen.getByRole('searchbox'), 'планка')
     await user.click(await screen.findByRole('button', { name: /Планка на локтях/ }))
+    await user.click(
+      within(screen.getByRole('dialog', { name: 'Планка на локтях' })).getByRole('button', {
+        name: 'Изменить',
+      }),
+    )
     dialog = screen.getByRole('dialog', { name: 'Упражнение' })
     await user.click(within(dialog).getByRole('button', { name: 'Удалить упражнение' }))
     await user.click(within(dialog).getByRole('button', { name: 'Удалить' }))

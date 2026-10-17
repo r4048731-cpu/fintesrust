@@ -1,10 +1,27 @@
 // Резервная копия всех данных в одном JSON-файле (ТЗ, раздел 5; архитектура, решение 6).
 // Копия содержит всё, включая удалённые записи: так её можно восстановить без потерь.
 
-import type { BodyWeight, Exercise, MetaRecord, Program, Workout } from '../domain/types'
+import type {
+  BodyWeight,
+  CustomRecipe,
+  Exercise,
+  Meal,
+  MetaKey,
+  MetaRecord,
+  Note,
+  Program,
+  Workout,
+} from '../domain/types'
+import type { Run } from '../domain/run'
 import { SCHEMA_VERSION, type FitnessDB } from './db'
 
 export const BACKUP_APP = 'fitnes'
+
+/**
+ * Настройки, которые остаются на телефоне и в копию не попадают: время последней копии.
+ * `aiKeys` — ключи ИИ из промежуточной версии: если они остались в базе, наружу не уходят.
+ */
+const DEVICE_ONLY: string[] = ['lastExportAt', 'aiKeys']
 /** Версия формата файла. При изменении формата — поднять и дописать перевод в migrate(). */
 export const BACKUP_VERSION = 1
 
@@ -18,6 +35,14 @@ export interface Backup {
   workouts: Workout[]
   /** Появилось в схеме 2; в копиях, сделанных раньше, его нет. */
   bodyWeights: BodyWeight[]
+  /** Появилось в схеме 3; в копиях, сделанных раньше, его нет. */
+  meals: Meal[]
+  /** Появилось в схеме 4; в копиях, сделанных раньше, его нет. */
+  notes: Note[]
+  /** Свои блюда; появились в схеме 5. Любимые рецепты хранятся в meta. */
+  recipes: CustomRecipe[]
+  /** Пробежки и прогулки; появились в схеме 6. */
+  runs: Run[]
   meta: MetaRecord[]
 }
 
@@ -33,7 +58,17 @@ export class BackupError extends Error {}
 export async function createBackup(db: FitnessDB, now: number): Promise<Backup> {
   return db.transaction(
     'r',
-    [db.exercises, db.programs, db.workouts, db.bodyWeights, db.meta],
+    [
+      db.exercises,
+      db.programs,
+      db.workouts,
+      db.bodyWeights,
+      db.meals,
+      db.notes,
+      db.recipes,
+      db.runs,
+      db.meta,
+    ],
     async () => ({
       app: BACKUP_APP,
       version: BACKUP_VERSION,
@@ -43,8 +78,12 @@ export async function createBackup(db: FitnessDB, now: number): Promise<Backup> 
       programs: await db.programs.toArray(),
       workouts: await db.workouts.toArray(),
       bodyWeights: await db.bodyWeights.toArray(),
+      meals: await db.meals.toArray(),
+      notes: await db.notes.toArray(),
+      recipes: await db.recipes.toArray(),
+      runs: await db.runs.toArray(),
       // Время последней копии — свойство устройства, а не данных: в файл не попадает
-      meta: (await db.meta.toArray()).filter((m) => m.key !== 'lastExportAt'),
+      meta: (await db.meta.toArray()).filter((m) => !DEVICE_ONLY.includes(m.key)),
     }),
   )
 }
@@ -79,7 +118,16 @@ export function parseBackup(text: string): Backup {
     throw new BackupError('Копия сделана более новой версией приложения. Обновите приложение.')
   }
   const b = migrate(data)
-  for (const key of ['exercises', 'programs', 'workouts', 'bodyWeights'] as const) {
+  for (const key of [
+    'exercises',
+    'programs',
+    'workouts',
+    'bodyWeights',
+    'meals',
+    'notes',
+    'recipes',
+    'runs',
+  ] as const) {
     const list = b[key] as unknown
     if (!Array.isArray(list) || !list.every(hasId)) {
       throw new BackupError('В копии повреждены данные. Восстановить её нельзя.')
@@ -95,10 +143,17 @@ export function parseBackup(text: string): Backup {
   return b
 }
 
-/** Перевод старых копий в текущий формат: в копиях до веса тела нет списка bodyWeights. */
+/** Перевод старых копий в текущий формат: в копиях до веса тела, питания, заметок и своих блюд нет этих списков. */
 function migrate(data: Record<string, unknown>): Backup {
-  const bodyWeights = Array.isArray(data.bodyWeights) ? data.bodyWeights : []
-  return { ...data, bodyWeights } as unknown as Backup
+  const list = (v: unknown) => (Array.isArray(v) ? v : [])
+  return {
+    ...data,
+    bodyWeights: list(data.bodyWeights),
+    meals: list(data.meals),
+    notes: list(data.notes),
+    recipes: list(data.recipes),
+    runs: list(data.runs),
+  } as unknown as Backup
 }
 
 /**
@@ -108,22 +163,40 @@ function migrate(data: Record<string, unknown>): Backup {
 export async function restoreBackup(db: FitnessDB, b: Backup): Promise<BackupCounts> {
   await db.transaction(
     'rw',
-    [db.exercises, db.programs, db.workouts, db.bodyWeights, db.meta],
+    [
+      db.exercises,
+      db.programs,
+      db.workouts,
+      db.bodyWeights,
+      db.meals,
+      db.notes,
+      db.recipes,
+      db.runs,
+      db.meta,
+    ],
     async () => {
-      const lastExportAt = await db.meta.get('lastExportAt')
+      const kept = (await db.meta.bulkGet(DEVICE_ONLY as MetaKey[])).filter((m) => m !== undefined)
       await Promise.all([
         db.exercises.clear(),
         db.programs.clear(),
         db.workouts.clear(),
         db.bodyWeights.clear(),
+        db.meals.clear(),
+        db.notes.clear(),
+        db.recipes.clear(),
+        db.runs.clear(),
         db.meta.clear(),
       ])
       await db.exercises.bulkPut(b.exercises)
       await db.programs.bulkPut(b.programs)
       await db.workouts.bulkPut(b.workouts)
       await db.bodyWeights.bulkPut(b.bodyWeights)
-      await db.meta.bulkPut(b.meta.filter((m) => m.key !== 'lastExportAt'))
-      if (lastExportAt) await db.meta.put(lastExportAt)
+      await db.meals.bulkPut(b.meals)
+      await db.notes.bulkPut(b.notes)
+      await db.recipes.bulkPut(b.recipes)
+      await db.runs.bulkPut(b.runs)
+      await db.meta.bulkPut(b.meta.filter((m) => !DEVICE_ONLY.includes(m.key)))
+      await db.meta.bulkPut(kept)
       // Копия без отметки о стартовом наборе иначе получила бы его второй раз при запуске
       await db.meta.put({ key: 'seeded', value: true })
     },
@@ -135,13 +208,27 @@ export async function restoreBackup(db: FitnessDB, b: Backup): Promise<BackupCou
 export async function wipeAll(db: FitnessDB): Promise<void> {
   await db.transaction(
     'rw',
-    [db.exercises, db.programs, db.workouts, db.bodyWeights, db.meta],
+    [
+      db.exercises,
+      db.programs,
+      db.workouts,
+      db.bodyWeights,
+      db.meals,
+      db.notes,
+      db.recipes,
+      db.runs,
+      db.meta,
+    ],
     async () => {
       await Promise.all([
         db.exercises.clear(),
         db.programs.clear(),
         db.workouts.clear(),
         db.bodyWeights.clear(),
+        db.meals.clear(),
+        db.notes.clear(),
+        db.recipes.clear(),
+        db.runs.clear(),
         db.meta.clear(),
       ])
     },
