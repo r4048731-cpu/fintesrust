@@ -7,6 +7,7 @@ import { AddWorkoutSheet } from '../components/AddWorkoutSheet'
 import { Button } from '../components/Button'
 import { EmptyState } from '../components/EmptyState'
 import { Icon } from '../components/Icon'
+import { MonthSummaryCard } from '../components/MonthSummaryCard'
 import { doneSetCount, parseISODate, toISODate, workoutTonnage } from '../domain/metrics'
 import { formatInteger } from '../domain/number'
 import { plural } from '../domain/plural'
@@ -76,6 +77,7 @@ export function HistoryPanel() {
         </Button>
       </div>
       {workouts && workouts.length > 0 && <ActivityHeatmap workouts={workouts} />}
+      {workouts && workouts.length > 0 && <MonthSummaryCard workouts={workouts} />}
       {planned && planned.length > 0 && (
         <section className={styles.month} aria-label="Запланировано">
           <h2 className={styles.monthTitle}>

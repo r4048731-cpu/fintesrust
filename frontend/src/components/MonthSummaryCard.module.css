@@ -1,0 +1,166 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.title {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+}
+
+.title h2 {
+  margin: 0;
+  font: 600 18px/1.2 var(--title-font);
+}
+
+.eyebrow {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.muted {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.up {
+  color: var(--good);
+  font-weight: 600;
+}
+
+.hero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.hero > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.big {
+  background: var(--gradient);
+  background-clip: text;
+  color: transparent;
+  font: 700 56px/1 var(--num-font);
+}
+
+.heroLabel {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.tile span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.tile b {
+  overflow: hidden;
+  font: 600 15px/1.2 var(--num-font);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.records {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.records li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cup {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #fbbf24, #f97316);
+  color: #fff;
+}
+
+.recText,
+.recValue {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.recText {
+  flex: 1;
+}
+
+.recText b {
+  overflow: hidden;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recText span,
+.recValue span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.recValue {
+  align-items: flex-end;
+}
+
+.recValue b {
+  font: 600 14px/1.3 var(--num-font);
+  white-space: nowrap;
+}
+
+.records .more {
+  padding-left: 40px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.facts {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  font-size: 13.5px;
+}
