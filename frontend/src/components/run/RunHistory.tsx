@@ -5,6 +5,7 @@ import { formatKm, formatPace, paceSecPerKm, runCalories, runTotals } from '../.
 import { formatClock } from '../../domain/workout'
 import { EmptyState } from '../EmptyState'
 import { RouteSketch } from './RouteSketch'
+import { CountUp } from '../fx/CountUp'
 import styles from './Run.module.css'
 
 const dateFormat = new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'short' })
@@ -17,7 +18,7 @@ export function RunHistory({ limit }: { limit?: number }) {
   if (!runs) return null
   if (runs.length === 0) {
     return (
-      <EmptyState title="Пробежек пока нет">
+      <EmptyState title="Пробежек пока нет" icon="run">
         <p>Нажмите «Старт» — приложение запишет маршрут, километры и темп по GPS.</p>
       </EmptyState>
     )
@@ -28,7 +29,9 @@ export function RunHistory({ limit }: { limit?: number }) {
     <>
       <div className={styles.totals} role="group" aria-label="Итоги">
         <div className={styles.total}>
-          <b>{formatKm(t.distanceM)}</b>
+          <b>
+            <CountUp value={t.distanceM} format={formatKm} />
+          </b>
           <span>км всего</span>
         </div>
         <div className={styles.total}>
@@ -36,7 +39,9 @@ export function RunHistory({ limit }: { limit?: number }) {
           <span>в движении</span>
         </div>
         <div className={styles.total}>
-          <b>{t.calories}</b>
+          <b>
+            <CountUp value={t.calories} format={(v) => String(Math.round(v))} />
+          </b>
           <span>ккал</span>
         </div>
         <div className={styles.total}>

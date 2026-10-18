@@ -1,4 +1,6 @@
 .empty {
+  position: relative;
+  isolation: isolate;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -29,4 +31,42 @@
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 4px;
+}
+
+.empty::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background-image: var(--pattern-grid);
+  background-position: right -1px top -1px;
+  background-size: 20px 20px;
+  content: '';
+  mask-image: radial-gradient(90% 120% at 100% 0%, #000 10%, transparent 75%);
+  pointer-events: none;
+}
+
+/* Значок: мягкий фон акцента и тонкая градиентная рамка */
+.icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 4px;
+  border: 1.5px solid transparent;
+  border-radius: 14px;
+  background:
+    linear-gradient(var(--accent-soft), var(--accent-soft)) padding-box,
+    var(--gradient) border-box;
+  color: var(--accent);
+}
+
+.icon {
+  animation: bob 3.2s ease-in-out infinite;
+}
+
+@keyframes bob {
+  50% {
+    translate: 0 -4px;
+  }
 }

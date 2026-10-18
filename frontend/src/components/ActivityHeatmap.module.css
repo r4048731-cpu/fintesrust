@@ -1,0 +1,153 @@
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.title {
+  font: 600 15px/1.2 var(--title-font);
+}
+
+.sub {
+  color: var(--muted);
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+/* Клетка 12 px и зазор 3 px — шаг столбца 15 px */
+.body {
+  --cell: 12px;
+  --gap: 3px;
+
+  display: flex;
+  gap: 6px;
+}
+
+.weekdays {
+  display: grid;
+  flex: none;
+  grid-template-rows: repeat(7, var(--cell));
+  gap: var(--gap);
+  margin-top: 18px;
+  color: var(--muted);
+  font-size: 9.5px;
+  line-height: var(--cell);
+}
+
+.scroller {
+  flex: 1;
+  overflow-x: auto;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to right, transparent, #000 16px);
+}
+
+.scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.months {
+  display: flex;
+  gap: var(--gap);
+  height: 18px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.months span {
+  flex: none;
+  width: var(--cell);
+  overflow: visible;
+  white-space: nowrap;
+}
+
+.grid {
+  display: flex;
+  gap: var(--gap);
+  width: max-content;
+}
+
+.column {
+  display: grid;
+  grid-template-rows: repeat(7, var(--cell));
+  gap: var(--gap);
+}
+
+.cell {
+  display: block;
+  width: var(--cell);
+  height: var(--cell);
+  border-radius: 3px;
+  background: var(--surface-2);
+}
+
+/* Клетки проявляются волной слева направо */
+.column .cell {
+  animation: cell-in 360ms ease backwards;
+  animation-delay: calc(var(--c) * 9ms);
+}
+
+@keyframes cell-in {
+  from {
+    opacity: 0;
+    scale: 0.4;
+  }
+}
+
+.cell[data-level='1'] {
+  background: color-mix(in srgb, var(--violet) 28%, var(--surface-2));
+}
+
+.cell[data-level='2'] {
+  background: color-mix(in srgb, var(--violet) 52%, var(--surface-2));
+}
+
+.cell[data-level='3'] {
+  background: color-mix(in srgb, var(--violet) 80%, var(--surface-2));
+}
+
+.cell[data-level='4'] {
+  background: linear-gradient(135deg, var(--violet), var(--pink));
+}
+
+.future {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.today {
+  outline: 1.5px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.column .picked {
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
+}
+
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 18px;
+}
+
+.info {
+  min-width: 0;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.legend {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 3px;
+  color: var(--muted);
+  font-size: 10.5px;
+}
+
+.legend .cell {
+  --cell: 10px;
+}

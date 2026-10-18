@@ -1,0 +1,105 @@
+.thumb {
+  position: relative;
+  flex: none;
+  width: 48px;
+  height: 48px;
+}
+
+.frame {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Рисунки целиком, с полями; фото — по центру и чёрно-белые, чтобы список был ровным */
+.frame[data-kind='drawing'] img {
+  padding: 3px;
+  object-fit: contain;
+}
+
+.frame[data-kind='photo'] img,
+.frame[data-kind='boxing'] img {
+  filter: grayscale(1) contrast(0.9) brightness(1.15);
+}
+
+.frame[data-kind='boxing'] img {
+  object-position: 50% 20%;
+}
+
+.frame:not([data-kind]) {
+  background: var(--accent-soft);
+}
+
+.letter {
+  color: var(--accent);
+  font: 600 16px/1 var(--title-font);
+}
+
+/* Номер или галочка в углу */
+.mark {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border: 2px solid var(--surface);
+  border-radius: 99px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font: 600 10px/1 var(--num-font);
+}
+
+.current {
+  background: var(--gradient);
+  color: var(--accent-ink);
+}
+
+.done {
+  background: var(--good);
+  color: var(--surface);
+}
+
+/* Тёмная тема: рисунок светлыми линиями на тёмном, фото чуть приглушены */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .frame[data-kind='drawing'] {
+    background: var(--surface-2);
+  }
+
+  :root:not([data-theme='light']) .frame[data-kind='drawing'] img {
+    filter: invert(1) hue-rotate(180deg) brightness(0.9);
+    mix-blend-mode: screen;
+  }
+
+  :root:not([data-theme='light']) .frame[data-kind='photo'] img,
+  :root:not([data-theme='light']) .frame[data-kind='boxing'] img {
+    filter: grayscale(1) brightness(0.85);
+  }
+}
+
+:root[data-theme='dark'] .frame[data-kind='drawing'] {
+  background: var(--surface-2);
+}
+
+:root[data-theme='dark'] .frame[data-kind='drawing'] img {
+  filter: invert(1) hue-rotate(180deg) brightness(0.9);
+  mix-blend-mode: screen;
+}
+
+:root[data-theme='dark'] .frame[data-kind='photo'] img,
+:root[data-theme='dark'] .frame[data-kind='boxing'] img {
+  filter: grayscale(1) brightness(0.85);
+}

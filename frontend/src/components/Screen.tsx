@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { IconButton } from './Button'
+import frame from './frame.module.css'
 import styles from './Screen.module.css'
 
 interface Props {
@@ -37,7 +38,19 @@ export function SectionLabel({ children }: { children: ReactNode }) {
   return <h2 className={styles.label}>{children}</h2>
 }
 
-/** Карточка-блок на поверхности. */
-export function Card({ children }: { children: ReactNode }) {
-  return <section className={styles.card}>{children}</section>
+/** Карточка-блок на поверхности; `framed` — градиентная рамка у главной карточки экрана. */
+export function Card({
+  children,
+  className,
+  framed,
+}: {
+  children: ReactNode
+  className?: string
+  framed?: boolean
+}) {
+  return (
+    <section className={[styles.card, framed && frame.frame, className].filter(Boolean).join(' ')}>
+      {children}
+    </section>
+  )
 }

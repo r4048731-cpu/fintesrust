@@ -6,6 +6,7 @@ export const META_DEFAULTS: MetaValues = {
   seeded: false,
   seedVersion: 0,
   weightStepKg: 2.5,
+  weekGoal: null,
   activeProgramId: null,
   nextDayIndex: {},
   lastExportAt: null,

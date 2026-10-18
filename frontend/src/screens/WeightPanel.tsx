@@ -67,7 +67,7 @@ export function WeightPanel() {
 
   return (
     <>
-      <WeightEntry title="Вес сегодня" />
+      <WeightEntry title="Вес сегодня" framed />
 
       {last && (
         <div className={styles.tiles}>
@@ -91,7 +91,7 @@ export function WeightPanel() {
       )}
 
       {rows.length >= 2 && (
-        <Card>
+        <Card framed>
           <h2 className={styles.cardTitle}>Итоговый вес, кг</h2>
           <LineChart
             points={rows.map((r) => ({ label: shortDate(r.date), values: { kg: r.weightKg } }))}

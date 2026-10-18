@@ -12,6 +12,7 @@ import type { BodyWeight, WeighTime } from '../domain/types'
 import { Button } from './Button'
 import { Segmented } from './Segmented'
 import { Stepper } from './Stepper'
+import frame from './frame.module.css'
 import styles from './WeightEntry.module.css'
 
 const DEFAULT_KG = 70
@@ -28,10 +29,13 @@ const TIME_OPTIONS: { value: WeighTime; label: string }[] = [
  */
 export function WeightEntry({
   title,
+  framed,
   onSaved,
   row,
 }: {
   title?: string
+  /** Градиентная рамка — когда карточка стоит на экране, а не в шторке. */
+  framed?: boolean
   onSaved?: () => void
   row?: BodyWeight
 }) {
@@ -62,7 +66,10 @@ export function WeightEntry({
   }
 
   return (
-    <section className={styles.entry} aria-label={title ?? 'Записать вес'}>
+    <section
+      className={framed ? `${styles.entry} ${frame.frame}` : styles.entry}
+      aria-label={title ?? 'Записать вес'}
+    >
       {title && (
         <div className={styles.head}>
           <h2 className={styles.title}>{title}</h2>

@@ -105,3 +105,31 @@
   outline: 2px solid var(--accent);
   outline-offset: 4px;
 }
+
+/* Главная линия графика слегка светится */
+.mainLine {
+  filter: drop-shadow(0 3px 5px color-mix(in srgb, var(--violet) 35%, transparent));
+}
+
+/* Главная линия прорисовывается слева направо, заливка и точки проявляются следом */
+.mainLine[pathLength] {
+  stroke-dasharray: 1;
+  animation: draw 900ms cubic-bezier(0.4, 0, 0.2, 1) backwards;
+}
+
+.chart svg > path:not(.mainLine),
+.dot {
+  animation: chart-fade 500ms ease 450ms backwards;
+}
+
+@keyframes draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
+@keyframes chart-fade {
+  from {
+    opacity: 0;
+  }
+}

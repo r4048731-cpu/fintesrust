@@ -1,8 +1,12 @@
-.map {
+/* Карта в градиентной рамке; двойной класс — сильнее серого фона .leaflet-container */
+.map.map {
   width: 100%;
   overflow: hidden;
+  border: 1.5px solid transparent;
   border-radius: var(--radius);
-  background: var(--surface-2);
+  background:
+    linear-gradient(var(--surface-2), var(--surface-2)) padding-box,
+    var(--gradient) border-box;
 }
 
 .totals {
@@ -12,6 +16,7 @@
 }
 
 .total {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -83,4 +88,34 @@
 .rowMeta {
   color: var(--muted);
   font-size: 12.5px;
+}
+
+.total::before {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 22px;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: var(--gradient);
+  content: '';
+  translate: -50% 0;
+}
+
+/* Главная цифра — километры: градиентная рамка и цифры градиентом */
+.total:first-child {
+  border: 1.5px solid transparent;
+  background:
+    linear-gradient(var(--surface), var(--surface)) padding-box,
+    var(--gradient) border-box;
+}
+
+.total:first-child::before {
+  display: none;
+}
+
+.total:first-child b {
+  background: var(--gradient);
+  background-clip: text;
+  color: transparent;
 }

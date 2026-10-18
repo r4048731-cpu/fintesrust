@@ -76,3 +76,24 @@
   background: var(--gradient);
   color: var(--accent-ink);
 }
+
+/* Фокус: рамка акцента и мягкое кольцо вместо обводки браузера */
+.control {
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.control:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  outline: none;
+}
+
+.control::placeholder {
+  color: color-mix(in srgb, var(--muted) 70%, transparent);
+}
+
+.chip[aria-pressed='true'] {
+  box-shadow: 0 3px 10px rgb(124 58 237 / 22%);
+}

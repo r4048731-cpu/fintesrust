@@ -43,6 +43,14 @@
   --chart-1: #7c3aed;
   --chart-2: #db2777;
   --chart-grid: #ebe8f3;
+  --grid-line: rgb(22 19 31 / 7%); /* декоративная сетка-миллиметровка */
+  /* Узоры для фона и карточек; цвет линий берут из --grid-line текущей темы */
+  --pattern-grid:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  /* Лупа в полях поиска; серый средней яркости читается в обеих темах */
+  --search-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a85a0' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='6.5'/%3E%3Cpath d='m16 16 4 4'/%3E%3C/svg%3E");
+  --pattern-dots: radial-gradient(var(--grid-line) 1.3px, transparent 1.6px);
 
   --good: #15803d;
   --good-soft: #dcf5e4;
@@ -75,6 +83,7 @@
     --chart-1: #8f63f5;
     --chart-2: #e24d8c;
     --chart-grid: #26222f;
+    --grid-line: rgb(255 255 255 / 6%);
 
     --good: #4ade80;
     --good-soft: #10291a;
@@ -107,6 +116,7 @@
   --chart-1: #8f63f5;
   --chart-2: #e24d8c;
   --chart-grid: #26222f;
+  --grid-line: rgb(255 255 255 / 6%);
 
   --good: #4ade80;
   --good-soft: #10291a;
@@ -148,6 +158,16 @@ textarea {
 
 button {
   cursor: pointer;
+  transition: scale 120ms ease;
+}
+
+/* Отклик на нажатие: кнопка чуть проседает */
+button:active:not(:disabled) {
+  scale: 0.98;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--violet) 28%, transparent);
 }
 
 :focus-visible {

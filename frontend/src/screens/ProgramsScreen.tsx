@@ -10,6 +10,7 @@ import { Sheet } from '../components/Sheet'
 import { plural } from '../domain/plural'
 import { PROGRAM_KIND_LABELS, PROGRAM_TEMPLATES } from '../domain/templates'
 import type { ProgramKind } from '../domain/types'
+import frame from '../components/frame.module.css'
 import styles from './ProgramsScreen.module.css'
 
 export function ProgramsScreen() {
@@ -40,6 +41,7 @@ export function ProgramsScreen() {
       {programs?.length === 0 && (
         <EmptyState
           title="Программ пока нет"
+          icon="programs"
           action={
             <Button variant="primary" icon="plus" onClick={create}>
               Создать программу
@@ -51,7 +53,7 @@ export function ProgramsScreen() {
       )}
       {programs && programs.length > 0 && (
         <>
-          <ul className={styles.list} aria-label="Программы">
+          <ul className={`${styles.list} ${frame.frame}`} aria-label="Программы">
             {programs.map((p) => {
               const exercises = p.days.reduce((n, d) => n + d.items.length, 0)
               return (
@@ -61,6 +63,12 @@ export function ProgramsScreen() {
                     className={styles.row}
                     onClick={() => navigate(`/programs/${p.id}`)}
                   >
+                    <span
+                      className={`${styles.badge} ${p.id === activeId ? styles.badgeActive : ''}`}
+                      aria-hidden="true"
+                    >
+                      <Icon name="programs" size={20} />
+                    </span>
                     <span className={styles.text}>
                       <span className={styles.name}>
                         {p.name}
@@ -75,7 +83,13 @@ export function ProgramsScreen() {
                         {p.days.length} {plural(p.days.length, 'день', 'дня', 'дней')} · {exercises}{' '}
                         {plural(exercises, 'упражнение', 'упражнения', 'упражнений')}
                       </span>
-                      <span className={styles.meta}>{p.days.map((d) => d.name).join(' · ')}</span>
+                      <span className={styles.dayChips}>
+                        {p.days.map((d) => (
+                          <span key={d.id} className={styles.dayChip}>
+                            {d.name}
+                          </span>
+                        ))}
+                      </span>
                     </span>
                     <span className={styles.chevron}>
                       <Icon name="chevron" size={20} />

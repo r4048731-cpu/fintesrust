@@ -198,7 +198,7 @@ export function RecipesPanel({ onAdded }: { onAdded: () => void }) {
             Добавить своё блюдо
           </Button>
           {mine.length === 0 ? (
-            <EmptyState title="Своих блюд пока нет">
+            <EmptyState title="Своих блюд пока нет" icon="food">
               <p>Добавьте блюдо из продуктов с граммами — КБЖУ порции посчитаются сами.</p>
             </EmptyState>
           ) : (
@@ -209,7 +209,7 @@ export function RecipesPanel({ onAdded }: { onAdded: () => void }) {
 
       {menu === 'favorites' &&
         (favoriteViews.length === 0 ? (
-          <EmptyState title="Любимых блюд пока нет">
+          <EmptyState title="Любимых блюд пока нет" icon="heart">
             <p>Нажмите сердечко на карточке рецепта — он появится здесь.</p>
           </EmptyState>
         ) : (

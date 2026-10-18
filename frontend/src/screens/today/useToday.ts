@@ -4,7 +4,13 @@ import { useNavigate } from 'react-router'
 import { useRepos } from '../../app/dataContext'
 import { ActiveWorkoutExistsError } from '../../data'
 import { backupIsDue } from '../../data/backup'
-import { activitySummary, toISODate, weekStart, workoutTonnage } from '../../domain/metrics'
+import {
+  activitySummary,
+  toISODate,
+  weekStart,
+  weekStreak,
+  workoutTonnage,
+} from '../../domain/metrics'
 import type { Exercise, PlanItem, Workout } from '../../domain/types'
 
 /** Что предложить сегодня: запланированную тренировку или следующий день программы. */
@@ -36,6 +42,13 @@ export interface WeekDay {
 }
 
 const WEEK_LABELS = ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс']
+/** Цель недели без активной программы — две тренировки. */
+export const DEFAULT_WEEK_GOAL = 2
+
+/** Цель «Авто»: столько тренировок, сколько дней в активной программе (1–7). */
+export function autoWeekGoal(programDays: number | undefined): number {
+  return Math.min(7, Math.max(1, programDays ?? DEFAULT_WEEK_GOAL))
+}
 const WORK_SEC = 45
 
 function estimateMinutes(parts: { sets: number; restSec: number }[]): number {
@@ -133,7 +146,11 @@ export function useToday() {
       }
     })
     const thisWeek = done.filter((w) => w.date >= days[0].date && w.date <= days[6].date)
+    // цель недели — своя из настроек или по числу дней активной программы
+    const program = await repos.programs.getActive()
+    const goal = (await repos.meta.get('weekGoal')) ?? autoWeekGoal(program?.days.length)
     return {
+      streak: weekStreak(done, goal, new Date()),
       days,
       count: thisWeek.length,
       tonnageKg: thisWeek.reduce((s, w) => s + workoutTonnage(w), 0),

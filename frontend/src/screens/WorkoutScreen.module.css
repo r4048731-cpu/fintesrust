@@ -395,23 +395,6 @@
   text-align: left;
 }
 
-.planNum {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--surface);
-  color: var(--muted);
-  font: 600 13px var(--num-font);
-}
-
-.planDone .planNum {
-  background: var(--gradient);
-  color: var(--accent-ink);
-}
-
 .planText {
   display: flex;
   flex-direction: column;
@@ -437,12 +420,17 @@
 }
 
 /* Отдых внутри шторки упражнения: не закреплён, а идёт под подходами */
+/* Таймер в шторке — «живой» блок, в градиентной рамке, как карточка идущей тренировки */
 .restInline {
   position: static;
   z-index: auto;
-  border: 1px solid var(--line);
+  border: 1.5px solid transparent;
   border-radius: var(--radius-sm);
   padding-bottom: 0;
+  background:
+    linear-gradient(var(--surface), var(--surface)) padding-box,
+    var(--gradient) border-box;
+  box-shadow: 0 8px 24px rgb(124 58 237 / 12%);
 }
 
 /* Низ шторки упражнения: «назад» и «далее» */
@@ -481,4 +469,184 @@
 
 .planRow [aria-pressed='true'] {
   color: var(--accent);
+}
+
+/* ——— Украшения экрана тренировки ——— */
+
+/* Фон: сетка и цветное свечение за верхом, как на остальных экранах */
+.page::before,
+.page::after {
+  position: fixed;
+  inset: 0 0 auto;
+  height: 520px;
+  pointer-events: none;
+  content: '';
+}
+
+.page::before {
+  z-index: -1;
+  background-image: var(--pattern-grid);
+  background-position: center -1px;
+  background-size: 28px 28px;
+  mask-image: radial-gradient(130% 100% at 50% 0%, #000 25%, transparent 72%);
+}
+
+.page::after {
+  z-index: -2;
+  background:
+    radial-gradient(
+      60% 55% at 12% 0%,
+      color-mix(in srgb, var(--blue) 14%, transparent),
+      transparent
+    ),
+    radial-gradient(
+      55% 50% at 92% 8%,
+      color-mix(in srgb, var(--pink) 12%, transparent),
+      transparent
+    );
+}
+
+/* Часы: точка «идёт запись» и цифры градиентом */
+.clock {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+  background: var(--gradient);
+  background-clip: text;
+  color: transparent;
+}
+
+.live {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--pink);
+  animation: live 2s ease-in-out infinite;
+}
+
+@keyframes live {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* Полоса общего прогресса по нижнему краю шапки */
+.totalBar {
+  position: absolute;
+  inset: auto 0 -1px;
+  height: 3px;
+  background: color-mix(in srgb, var(--line) 60%, transparent);
+}
+
+.totalBar span {
+  display: block;
+  height: 100%;
+  border-radius: 0 3px 3px 0;
+  background: var(--gradient);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--violet) 50%, transparent);
+  transition: width 400ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Все подходы сделаны — «Завершить» трижды вспыхивает */
+.ready {
+  animation: ready 1.6s ease-in-out 3;
+}
+
+@keyframes ready {
+  50% {
+    box-shadow:
+      0 0 0 5px color-mix(in srgb, var(--violet) 25%, transparent),
+      0 6px 18px rgb(124 58 237 / 35%);
+  }
+}
+
+/* Строка плана: полоска сделанных подходов снизу */
+/* Без overflow: hidden — он срезал бы рамку фокуса; полоска сама держится внутри скруглений */
+.planRow {
+  position: relative;
+}
+
+.planRow::after {
+  position: absolute;
+  bottom: 0;
+  left: 10px;
+  width: calc(var(--done, 0) * (100% - 20px));
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: var(--gradient);
+  content: '';
+  transition: width 400ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Текущее упражнение: градиентная рамка, номер на градиенте */
+.planCurrent {
+  border-color: transparent;
+  background:
+    linear-gradient(var(--surface), var(--surface)) padding-box,
+    var(--gradient) border-box;
+  box-shadow: 0 6px 18px rgb(124 58 237 / 14%);
+}
+
+/* Сделанное упражнение: зелёная галочка и зелёная полоска */
+.planDone {
+  background: color-mix(in srgb, var(--good) 8%, var(--surface-2));
+}
+
+.planDone::after {
+  background: var(--good);
+}
+
+/* Отмеченный подход: галочка «выстреливает» и светится */
+.done .doneBtn {
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--good) 35%, transparent);
+  animation: set-pop 360ms cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+
+@keyframes set-pop {
+  from {
+    scale: 0.6;
+  }
+}
+
+/* Отдых: время градиентом, полоса толще */
+.restTime {
+  width: fit-content;
+  background: var(--gradient);
+  background-clip: text;
+  color: transparent;
+}
+
+.restOver .restTime {
+  background: none;
+  color: var(--pink);
+}
+
+.restBar {
+  height: 5px;
+  border-radius: 0 3px 3px 0;
+}
+
+/* Рамка фокуса внутри строки плана, чтобы не налезать на соседние */
+.planJump:focus-visible {
+  border-radius: var(--radius-sm);
+  outline-offset: -2px;
+}
+
+/* ——— Шторка упражнения покомпактнее ——— */
+
+/* Техника, история, замена — значок и подпись в строку */
+.tools .tool {
+  flex-direction: row;
+  gap: 6px;
+  min-height: 40px;
+}
+
+/* Заметка в шторке — одна строка, растёт по мере текста */
+.noteCompact {
+  min-height: var(--tap);
+  field-sizing: content;
+  max-height: 160px;
+  resize: none;
 }

@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useRepos } from '../app/dataContext'
+import { ActivityHeatmap } from '../components/ActivityHeatmap'
 import { AddWorkoutSheet } from '../components/AddWorkoutSheet'
 import { Button } from '../components/Button'
 import { EmptyState } from '../components/EmptyState'
@@ -74,6 +75,7 @@ export function HistoryPanel() {
           Добавить
         </Button>
       </div>
+      {workouts && workouts.length > 0 && <ActivityHeatmap workouts={workouts} />}
       {planned && planned.length > 0 && (
         <section className={styles.month} aria-label="Запланировано">
           <h2 className={styles.monthTitle}>
@@ -117,7 +119,7 @@ export function HistoryPanel() {
       )}
 
       {workouts?.length === 0 && (
-        <EmptyState title="Тренировок пока нет">
+        <EmptyState title="Тренировок пока нет" icon="history">
           <p>Здесь появятся завершённые тренировки.</p>
         </EmptyState>
       )}

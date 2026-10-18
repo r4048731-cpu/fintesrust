@@ -14,7 +14,11 @@ import {
 } from '../app/device'
 import { BotLinks } from '../components/BotLinks'
 import { Button } from '../components/Button'
+import { Icon, type IconName } from '../components/Icon'
+import { Chips } from '../components/Field'
 import { Card, Screen, SectionLabel } from '../components/Screen'
+import { StepsSettings } from '../components/steps/StepsSettings'
+import { isAndroidApp } from '../native/steps'
 import { Sheet } from '../components/Sheet'
 import { Stepper } from '../components/Stepper'
 import { formatLongDateInline } from '../components/dates'
@@ -29,12 +33,49 @@ import {
   type Backup,
 } from '../data/backup'
 import { plural } from '../domain/plural'
+import { autoWeekGoal } from './today/useToday'
 import styles from './SettingsScreen.module.css'
 
 const counts = (c: { programs: number; workouts: number; exercises: number }) =>
   `${c.programs} ${plural(c.programs, 'программа', 'программы', 'программ')}, ` +
   `${c.workouts} ${plural(c.workouts, 'тренировка', 'тренировки', 'тренировок')}, ` +
   `${c.exercises} ${plural(c.exercises, 'упражнение', 'упражнения', 'упражнений')}`
+
+type WeekGoalOption = 'auto' | '1' | '2' | '3' | '4' | '5' | '6' | '7'
+
+const WEEK_GOAL_OPTIONS: { value: WeekGoalOption; label: string }[] = [
+  { value: 'auto', label: 'Авто' },
+  ...(['1', '2', '3', '4', '5', '6', '7'] as const).map((n) => ({ value: n, label: n })),
+]
+
+/** Копия старше недели — пора сохранить новую. */
+const BACKUP_FRESH_DAYS = 7
+
+interface Status {
+  tone: 'good' | 'warn'
+  text: string
+}
+
+/** Шапка карточки: значок, название и, если есть, цветная метка состояния. */
+function CardHead({ icon, title, status }: { icon: IconName; title: string; status?: Status }) {
+  return (
+    <div className={styles.head}>
+      <span className={styles.headIcon} aria-hidden="true">
+        <Icon name={icon} size={20} />
+      </span>
+      <h3 className={styles.headTitle}>{title}</h3>
+      {status && <span className={`${styles.pill} ${styles[status.tone]}`}>{status.text}</span>}
+    </div>
+  )
+}
+
+function backupStatus(lastExportAt: number | null | undefined): Status {
+  if (!lastExportAt) return { tone: 'warn', text: 'нет копии' }
+  const days = (Date.now() - lastExportAt) / 864e5
+  return days <= BACKUP_FRESH_DAYS
+    ? { tone: 'good', text: 'свежая' }
+    : { tone: 'warn', text: 'давно' }
+}
 
 /** Настройки: шаг веса, резервная копия, хранилище, установка на главный экран. */
 export function SettingsScreen() {
@@ -43,6 +84,8 @@ export function SettingsScreen() {
   const fileInput = useRef<HTMLInputElement>(null)
   const weightStep = useLiveQuery(() => repos.meta.get('weightStepKg'), [repos])
   const lastExportAt = useLiveQuery(() => repos.meta.get('lastExportAt'), [repos])
+  const weekGoal = useLiveQuery(() => repos.meta.get('weekGoal'), [repos])
+  const activeProgram = useLiveQuery(() => repos.programs.getActive(), [repos])
   const [message, setMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null)
   const [pending, setPending] = useState<Backup | null>(null)
   const [confirmWipe, setConfirmWipe] = useState(false)
@@ -95,7 +138,10 @@ export function SettingsScreen() {
     <Screen title="Настройки" onBack={() => navigate(-1)}>
       <SectionLabel>Тренировки</SectionLabel>
       <Card>
-        <label htmlFor="weight-step">Шаг веса для кнопок ±, кг</label>
+        <CardHead icon="scale" title="Шаг веса" />
+        <label htmlFor="weight-step" className={styles.muted}>
+          Для кнопок ± в тренировке, кг
+        </label>
         {weightStep !== undefined && (
           <Stepper
             id="weight-step"
@@ -110,8 +156,40 @@ export function SettingsScreen() {
         )}
       </Card>
 
-      <SectionLabel>Резервная копия</SectionLabel>
       <Card>
+        <CardHead icon="flame" title="Цель недели" />
+        <p className={styles.muted}>Сколько тренировок в неделю нужно для серии на «Сегодня».</p>
+        {weekGoal !== undefined && (
+          <div className={styles.goalChips}>
+            <Chips
+              label="Цель недели"
+              options={WEEK_GOAL_OPTIONS}
+              value={weekGoal === null ? 'auto' : (String(weekGoal) as WeekGoalOption)}
+              onChange={(v) => repos.meta.set('weekGoal', v === 'auto' ? null : Number(v))}
+            />
+          </div>
+        )}
+        {weekGoal === null && activeProgram !== undefined && (
+          <p className={styles.muted}>
+            Авто —{' '}
+            {activeProgram ? `по дням программы «${activeProgram.name}»` : 'без активной программы'}
+            : {autoWeekGoal(activeProgram?.days.length)}{' '}
+            {plural(
+              autoWeekGoal(activeProgram?.days.length),
+              'тренировка',
+              'тренировки',
+              'тренировок',
+            )}
+            .
+          </p>
+        )}
+      </Card>
+
+      {isAndroidApp() && <StepsSettings />}
+
+      <SectionLabel>Резервная копия</SectionLabel>
+      <Card framed>
+        <CardHead icon="save" title="Копия в файл" status={backupStatus(lastExportAt)} />
         <p className={styles.text}>
           Данные хранятся только на этом телефоне. Сохраняйте копию раз в неделю.
         </p>
@@ -149,6 +227,11 @@ export function SettingsScreen() {
 
       <SectionLabel>Приложение</SectionLabel>
       <Card>
+        <CardHead
+          icon="phone"
+          title="На этом телефоне"
+          status={persisted ? { tone: 'good', text: 'защищено' } : undefined}
+        />
         <Button block icon="help" onClick={() => navigate('/help')}>
           Как пользоваться
         </Button>
@@ -187,7 +270,8 @@ export function SettingsScreen() {
       />
 
       <SectionLabel>Опасная зона</SectionLabel>
-      <Card>
+      <Card className={styles.danger}>
+        <CardHead icon="trash" title="Удаление данных" />
         {confirmWipe ? (
           <div
             className={styles.confirm}
@@ -212,7 +296,8 @@ export function SettingsScreen() {
       </Card>
 
       <p className={styles.version}>
-        Версия {import.meta.env.VITE_APP_VERSION?.slice(0, 7) ?? 'разработка'}
+        <span className={styles.logo}>Фитнес</span> · версия{' '}
+        {import.meta.env.VITE_APP_VERSION?.slice(0, 7) ?? 'разработка'}
       </p>
 
       <Sheet open={pending !== null} onClose={() => setPending(null)} title="Восстановить копию?">

@@ -5,12 +5,25 @@
 }
 
 .days {
+  position: relative;
+  isolation: isolate;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 4px;
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+/* Пунктир через центры дней — неделя читается как одна линия */
+.days::before {
+  position: absolute;
+  top: 18px;
+  right: 7%;
+  left: 7%;
+  z-index: -1;
+  border-top: 1px dashed var(--line);
+  content: '';
 }
 
 .day {
@@ -70,4 +83,88 @@
   color: var(--muted);
   font-size: 13px;
   text-align: center;
+}
+
+/* Числа итога недели — крупнее и цифровым шрифтом */
+.summary b {
+  color: var(--ink);
+  font: 600 14px/1 var(--num-font);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Серия недель и цель текущей недели */
+.streakRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  padding: 4px 10px 4px 8px;
+  border-radius: 99px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+/* Серия идёт — огонёк оранжево-розовый, подпись градиентом */
+.hot {
+  background: color-mix(in srgb, var(--pink) 12%, var(--surface));
+  color: var(--ink);
+}
+
+.hot svg {
+  color: #f97316;
+  animation: flicker 2.4s ease-in-out infinite;
+}
+
+@keyframes flicker {
+  50% {
+    scale: 1.12;
+    translate: 0 -1px;
+  }
+}
+
+.goal {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.goalDots {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.goalDots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.goalDots .goalDone {
+  background: var(--gradient);
+  box-shadow: none;
+}
+
+/* Цель выполнена — неделя в градиентной рамке */
+.met {
+  padding: 12px;
+  border-radius: var(--radius);
+}
+
+.met .goal {
+  color: var(--accent);
+  font-weight: 600;
 }

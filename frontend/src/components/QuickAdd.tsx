@@ -121,7 +121,7 @@ export function QuickAdd() {
           {actions.map((a) => (
             <li key={a.title}>
               <button type="button" className={styles.action} onClick={a.onClick}>
-                <span className={styles.icon}>
+                <span className={styles.icon} data-icon={a.icon}>
                   <Icon name={a.icon} />
                 </span>
                 <span className={styles.text}>

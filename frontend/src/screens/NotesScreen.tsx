@@ -73,7 +73,7 @@ export function NotesScreen() {
       )}
 
       {notes?.length === 0 && (
-        <EmptyState title="Заметок пока нет">
+        <EmptyState title="Заметок пока нет" icon="note">
           <p>Записывайте сюда всё нужное: настройки тренажёров, самочувствие, планы.</p>
         </EmptyState>
       )}

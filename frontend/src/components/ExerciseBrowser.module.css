@@ -128,3 +128,30 @@
 .empty p {
   margin: 0;
 }
+
+/* Точка-акцент у заголовка группы мышц */
+.groupTitle::before {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--gradient);
+  content: '';
+  vertical-align: 1px;
+}
+
+/* Лупа слева и подсветка при фокусе */
+.search {
+  padding-left: 40px;
+  background: var(--search-icon) 13px 50% / 18px no-repeat var(--surface);
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.search:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  outline: none;
+}

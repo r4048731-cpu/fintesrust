@@ -5,11 +5,14 @@ import { useRepos } from '../app/dataContext'
 import { gpsAvailable } from '../app/gps'
 import { Button } from '../components/Button'
 import { Chips } from '../components/Field'
+import { Icon } from '../components/Icon'
+import { LiveCard, LiveIcon } from '../components/LiveCard'
 import { RunHistory } from '../components/run/RunHistory'
 import { Screen } from '../components/Screen'
 import { Segmented } from '../components/Segmented'
 import { ActiveRunExistsError } from '../data/repositories/runs'
 import { formatKm, RUN_KINDS, type RunGoal, type RunKind } from '../domain/run'
+import frame from '../components/frame.module.css'
 import styles from './RunScreen.module.css'
 
 type GoalKey = 'free' | 'd3' | 'd5' | 'd10' | 't20' | 't30' | 't60'
@@ -50,18 +53,39 @@ export function RunScreen() {
   return (
     <Screen title="Бег и ходьба" onBack={() => navigate(-1)}>
       {active && (
-        <button
-          type="button"
-          className={styles.activeBanner}
+        <LiveCard
+          label={`${active.kind === 'run' ? 'Пробежка' : 'Прогулка'} идёт`}
+          title={`${formatKm(active.distanceM)} км`}
+          meta="Маршрут пишется · вернуться"
           onClick={() => navigate('/run/active')}
-        >
-          <b>{active.kind === 'run' ? 'Пробежка' : 'Прогулка'} идёт</b>
-          <span>{formatKm(active.distanceM)} км · вернуться</span>
-        </button>
+          lead={
+            <LiveIcon>
+              <Icon name="run" size={24} />
+            </LiveIcon>
+          }
+        />
       )}
 
       {!active && (
-        <section className={styles.start} aria-label="Новая пробежка">
+        <section className={`${styles.start} ${frame.frame}`} aria-label="Новая пробежка">
+          <svg className={styles.route} viewBox="0 0 200 120" aria-hidden="true">
+            <path d="M8 104c26-6 30-40 58-44s34 22 60 14 18-48 44-56 20-4 22-8" />
+            <circle cx="8" cy="104" r="4" />
+            <circle cx="192" cy="10" r="5" />
+          </svg>
+          <div className={styles.startHead}>
+            <span className={styles.startIcon} aria-hidden="true">
+              <Icon name="run" size={24} />
+            </span>
+            <div>
+              <h2 className={styles.startTitle}>
+                {kind === 'run' ? 'Новая пробежка' : 'Новая прогулка'}
+              </h2>
+              <p className={styles.startGoal}>
+                Цель: {GOALS.find((g) => g.value === goal)!.label.toLowerCase()}
+              </p>
+            </div>
+          </div>
           <Segmented label="Вид" options={RUN_KINDS} value={kind} onChange={setKind} />
           <Chips label="Цель" options={GOALS} value={goal} onChange={setGoal} />
           {!gps && (
@@ -70,7 +94,14 @@ export function RunScreen() {
               такой ссылке после публикации.
             </p>
           )}
-          <Button variant="primary" block disabled={!gps} onClick={start} className={styles.go}>
+          <Button
+            variant="primary"
+            block
+            icon="run"
+            disabled={!gps}
+            onClick={start}
+            className={styles.go}
+          >
             Старт
           </Button>
           {error && (

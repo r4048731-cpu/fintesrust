@@ -146,7 +146,7 @@ describe('«История» → «Добавить тренировку»', () 
 })
 
 describe('экран «Сегодня»', () => {
-  it('план списком, кнопка «Начать» внизу, быстрые действия и запись сегодняшнего веса', async () => {
+  it('план списком, кнопка «Начать» внизу, быстрые действия, без записи веса', async () => {
     const { r } = await withProgram()
     const { user, router } = renderAt('/', r)
     const plan = await screen.findByRole('region', { name: 'Верх / Низ' })
@@ -159,15 +159,8 @@ describe('экран «Сегодня»', () => {
     // выбора вида больше нет
     expect(screen.queryByRole('group', { name: /Вид экрана/ })).not.toBeInTheDocument()
 
-    const weight = await screen.findByRole('region', { name: 'Вес сегодня' })
-    const input = within(weight).getByRole('textbox', { name: 'Вес на весах, кг' })
-    await user.click(input)
-    await user.keyboard('{Control>}a{/Control}80{Enter}')
-    await user.click(within(weight).getByRole('button', { name: 'Записать' }))
-    await waitFor(async () =>
-      expect((await r.bodyWeights.list()).map((x) => x.weightKg)).toEqual([80]),
-    )
-    expect(await within(weight).findByText('записано: 80 кг')).toBeInTheDocument()
+    // вес записывается в «Прогресс → Вес тела», на «Сегодня» его больше нет
+    expect(screen.queryByRole('region', { name: 'Вес сегодня' })).not.toBeInTheDocument()
 
     await user.click(screen.getByRole('link', { name: 'Питание' }))
     await waitFor(() => expect(router.state.location.pathname).toBe('/food'))

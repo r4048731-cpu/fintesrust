@@ -245,3 +245,43 @@
   margin: 0;
   color: var(--muted);
 }
+
+/* Доли калорий из Б/Ж/У одной полосой, когда плана нет */
+.split {
+  display: flex;
+  gap: 3px;
+  height: 8px;
+}
+
+.split span {
+  flex-basis: 0;
+  min-width: 6px;
+  border-radius: 99px;
+}
+
+/* Цветная точка перед подписью макроса; цвет — из классов protein/fat/carbs */
+.dot::before {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: currentcolor;
+  content: '';
+  vertical-align: 1px;
+}
+
+.dot.protein::before,
+.split .protein {
+  background: var(--blue);
+}
+
+.dot.fat::before,
+.split .fat {
+  background: var(--pink);
+}
+
+.dot.carbs::before,
+.split .carbs {
+  background: var(--violet);
+}

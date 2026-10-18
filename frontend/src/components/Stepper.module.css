@@ -48,3 +48,19 @@
   font: 600 16px/1 var(--font-body);
   font-variant-numeric: tabular-nums;
 }
+
+/* Фокус в поле числа подсвечивает весь степпер */
+.stepper {
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.stepper:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.input:focus-visible {
+  outline: none;
+}

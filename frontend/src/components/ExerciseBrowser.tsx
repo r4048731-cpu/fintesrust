@@ -9,6 +9,7 @@ import {
 } from '../domain/types'
 import { Chips } from './Field'
 import { Icon } from './Icon'
+import { ExerciseThumb } from './ExerciseThumb'
 import styles from './ExerciseBrowser.module.css'
 
 type MuscleFilter = MuscleGroup | 'all'
@@ -40,6 +41,7 @@ export function ExerciseBrowser({ exercises, onSelect, mode, renderEmpty }: Prop
   const row = (e: Exercise) => (
     <li key={e.id}>
       <button type="button" className={styles.row} onClick={() => onSelect(e)}>
+        <ExerciseThumb exercise={e} />
         <span className={styles.text}>
           <span className={styles.name}>
             {e.name}

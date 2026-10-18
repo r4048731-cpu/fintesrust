@@ -78,3 +78,32 @@
   color: var(--danger);
   font-size: 13px;
 }
+
+/* У каждого пункта свой цвет значка; тренировки — фирменным градиентом */
+.icon[data-icon='food'] {
+  --qa: #e8590c;
+}
+.icon[data-icon='scale'] {
+  --qa: #3563e9;
+}
+.icon[data-icon='run'] {
+  --qa: #12a06a;
+}
+.icon[data-icon='note'] {
+  --qa: #d9a404;
+}
+
+.icon[data-icon='food'],
+.icon[data-icon='scale'],
+.icon[data-icon='run'],
+.icon[data-icon='note'] {
+  background: color-mix(in srgb, var(--qa) 15%, var(--surface));
+  color: color-mix(in srgb, var(--qa) 80%, var(--ink));
+}
+
+.icon[data-icon='today'],
+.icon[data-icon='plus'] {
+  background: var(--gradient);
+  color: var(--accent-ink);
+  box-shadow: 0 4px 12px rgb(124 58 237 / 25%);
+}

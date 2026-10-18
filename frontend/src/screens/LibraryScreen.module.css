@@ -2,3 +2,12 @@
 .browser {
   --controls-top: calc(var(--topbar-h) + env(safe-area-inset-top, 0px));
 }
+
+/* Авторы картинок техники — их требуют лицензии рисунков и фото */
+.credit {
+  margin: 16px 0 0;
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.4;
+  text-align: center;
+}

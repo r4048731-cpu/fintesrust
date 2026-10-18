@@ -18,10 +18,13 @@ import {
   pauseRun,
   resumeRun,
   runCalories,
+  type GpsFix,
   type Run,
 } from '../domain/run'
 import { formatClock } from '../domain/workout'
 import { gpsAvailable } from '../app/gps'
+import { RunTracker } from '../native/runTracker'
+import { isAndroidApp } from '../native/steps'
 import styles from './RunActiveScreen.module.css'
 
 /** Как часто сохранять пробежку в базу во время бега, мс. */
@@ -71,24 +74,48 @@ export function RunActiveScreen() {
 
   // GPS: пока не на паузе
   const moving = run?.resumedAt != null
+  const kind = run?.kind
+  const applyFixes = useCallback((fixes: GpsFix[]) => {
+    if (!fixes.length) return
+    setGpsError(null)
+    setAccuracy(Math.round(fixes[fixes.length - 1].accuracy))
+    setRun((r) => (r ? fixes.reduce(addFix, r) : r))
+  }, [])
+
+  // Android-версия: точки пишет служба телефона — и при выключенном экране, и когда экран бега свёрнут
   useEffect(() => {
-    if (!moving || !gpsAvailable()) return
+    if (!moving || !isAndroidApp()) return
+    RunTracker.start({ title: kind === 'walk' ? 'Идёт ходьба' : 'Идёт бег' }).catch((err) =>
+      setGpsError(
+        err?.code === 'NO_LOCATION'
+          ? 'Нет доступа к геолокации — разрешите её приложению в настройках телефона.'
+          : 'Не удалось начать запись маршрута.',
+      ),
+    )
+    const pull = () =>
+      RunTracker.drain()
+        .then(({ fixes, gpsOn }) => {
+          applyFixes(fixes)
+          if (!gpsOn) setGpsError('Геолокация выключена — включите её в шторке телефона.')
+        })
+        .catch(() => {})
+    const id = setInterval(pull, 1000)
+    return () => clearInterval(id)
+  }, [moving, kind, applyFixes])
+
+  useEffect(() => {
+    if (!moving || isAndroidApp() || !gpsAvailable()) return
     const id = navigator.geolocation.watchPosition(
-      (pos) => {
-        setGpsError(null)
-        setAccuracy(Math.round(pos.coords.accuracy))
-        setRun((r) =>
-          r
-            ? addFix(r, {
-                lat: pos.coords.latitude,
-                lon: pos.coords.longitude,
-                accuracy: pos.coords.accuracy,
-                alt: pos.coords.altitude,
-                t: pos.timestamp,
-              })
-            : r,
-        )
-      },
+      (pos) =>
+        applyFixes([
+          {
+            lat: pos.coords.latitude,
+            lon: pos.coords.longitude,
+            accuracy: pos.coords.accuracy,
+            alt: pos.coords.altitude,
+            t: pos.timestamp,
+          },
+        ]),
       (err) =>
         setGpsError(
           err.code === err.PERMISSION_DENIED
@@ -98,7 +125,7 @@ export function RunActiveScreen() {
       { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 },
     )
     return () => navigator.geolocation.clearWatch(id)
-  }, [moving])
+  }, [moving, applyFixes])
 
   // Сохранение раз в несколько секунд и при сворачивании
   useEffect(() => {
@@ -150,18 +177,27 @@ export function RunActiveScreen() {
   const pace = paceSecPerKm(r.distanceM, ms)
   const progress = goalProgress(r, now)
 
+  /** Android-версия: остановить службу записи и добавить точки, которые она ещё не отдала. */
+  async function stopTracking(current: Run): Promise<Run> {
+    if (!isAndroidApp()) return current
+    const { fixes } = await RunTracker.stop().catch(() => ({ fixes: [] as GpsFix[] }))
+    return fixes.reduce(addFix, current)
+  }
+
   async function togglePause() {
-    const next = r.resumedAt !== null ? pauseRun(r, Date.now()) : resumeRun(r, Date.now())
+    const next =
+      r.resumedAt !== null ? pauseRun(await stopTracking(r), Date.now()) : resumeRun(r, Date.now())
     setRun(next)
     await persist(next)
   }
 
   async function finish() {
-    const done = await repos.runs.finish(r)
+    const done = await repos.runs.finish(await stopTracking(r))
     navigate(done ? `/run/${done.id}` : '/run', { replace: true })
   }
 
   async function discard() {
+    await stopTracking(r)
     await repos.runs.discard(r.id)
     navigate('/run', { replace: true })
   }

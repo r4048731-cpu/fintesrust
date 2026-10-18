@@ -113,4 +113,28 @@ describe('настройки', () => {
     expect(await r.workouts.listDone()).toEqual([])
     expect((await r.exercises.list()).length).toBe(N)
   })
+
+  it('цель недели: «Авто» — по программе, своя — сохраняется и видна на «Сегодня»', async () => {
+    const r = await setup()
+    await r.programs.create('Верх / Низ', 'upperlower')
+    const { user } = renderAt('/settings', r)
+
+    const goal = await screen.findByRole('group', { name: 'Цель недели' })
+    expect(within(goal).getByRole('button', { name: 'Авто' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    expect(
+      screen.getByText(/Авто — по дням программы «Верх \/ Низ»: 2 тренировки/),
+    ).toBeInTheDocument()
+
+    await user.click(within(goal).getByRole('button', { name: '3' }))
+    await waitFor(async () => expect(await r.meta.get('weekGoal')).toBe(3))
+
+    await user.click(screen.getByRole('link', { name: 'Сегодня' }))
+    expect(await screen.findByLabelText('Цель недели: 0 из 3')).toBeInTheDocument()
+
+    await r.meta.set('weekGoal', null)
+    expect(await screen.findByLabelText('Цель недели: 0 из 2')).toBeInTheDocument()
+  })
 })

@@ -1,0 +1,9 @@
+/* Градиентная рамка вокруг главной карточки экрана — как у карточки идущей тренировки.
+   Двойной класс сильнее обычного фона и тени карточки, в каком бы порядке ни подключились стили */
+.frame.frame {
+  border: 1.5px solid transparent;
+  background:
+    linear-gradient(var(--surface), var(--surface)) padding-box,
+    var(--gradient) border-box;
+  box-shadow: 0 8px 24px rgb(124 58 237 / 12%);
+}

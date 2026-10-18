@@ -41,13 +41,17 @@
   list-style: none;
 }
 
+/* Рекорд — в градиентной рамке на мягком фиолетовом фоне */
 .record {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 12px 14px;
+  border: 1.5px solid transparent;
   border-radius: var(--radius-sm);
-  background: var(--accent-soft);
+  background:
+    linear-gradient(var(--accent-soft), var(--accent-soft)) padding-box,
+    var(--gradient) border-box;
 }
 
 .recordText {
@@ -82,7 +86,8 @@
 
 .entry {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 12px;
   padding-bottom: 8px;
   border-bottom: 1px solid var(--line);
 }
@@ -120,4 +125,11 @@
   font-size: 13.5px;
   font-style: italic;
   white-space: pre-wrap;
+}
+
+.entryBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
 }

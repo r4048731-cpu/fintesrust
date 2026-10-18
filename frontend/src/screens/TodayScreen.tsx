@@ -6,19 +6,23 @@ import { useNow } from '../app/hooks/useNow'
 import { Button } from '../components/Button'
 import { EmptyState } from '../components/EmptyState'
 import { Icon, type IconName } from '../components/Icon'
+import { LiveCard, LiveIcon } from '../components/LiveCard'
 import { Screen, SectionLabel } from '../components/Screen'
 import { Segmented } from '../components/Segmented'
 import { Sheet } from '../components/Sheet'
-import { WeightEntry } from '../components/WeightEntry'
 import { formatLongDate } from '../components/dates'
 import { plural } from '../domain/plural'
 import { doneSetCount, parseISODate, workoutTonnage } from '../domain/metrics'
 import { formatInteger } from '../domain/number'
 import { formatPlan } from '../domain/programs'
 import { formatKm } from '../domain/run'
+import { StepsCard } from '../components/steps/StepsCard'
+import { isAndroidApp } from '../native/steps'
 import { countSets, formatClock } from '../domain/workout'
 import { useToday, type TodayPlan, type WeekDay } from './today/useToday'
 import { WeekStrip } from './today/WeekStrip'
+import { ExerciseThumb } from '../components/ExerciseThumb'
+import frame from '../components/frame.module.css'
 import styles from './TodayScreen.module.css'
 
 export function TodayScreen() {
@@ -59,18 +63,40 @@ export function TodayScreen() {
       : []),
   ]
 
-  const activeBanner = t.active && (
-    <button type="button" className={styles.live} onClick={() => navigate('/workout')}>
-      <span className={styles.liveText}>
-        <span className={styles.liveLabel}>Тренировка идёт</span>
-        <span className={styles.liveName}>{t.active.name}</span>
-        <span className={styles.liveMeta}>
-          {countSets(t.active).done} из {countSets(t.active).total} подходов
+  const liveSets = t.active ? countSets(t.active) : null
+  const activeBanner = t.active && liveSets && (
+    <LiveCard
+      label="Тренировка идёт"
+      title={t.active.name}
+      meta={`${liveSets.done} из ${liveSets.total} подходов`}
+      onClick={() => navigate('/workout')}
+      // Кольцо — доля отмеченных подходов, внутри — время тренировки
+      lead={
+        <span className={styles.liveRing}>
+          <svg viewBox="0 0 64 64" aria-hidden="true">
+            <defs>
+              <linearGradient id="live-ring" x1="0" x2="1" y1="0" y2="1">
+                <stop offset="0%" style={{ stopColor: 'var(--blue)' }} />
+                <stop offset="55%" style={{ stopColor: 'var(--violet)' }} />
+                <stop offset="100%" style={{ stopColor: 'var(--pink)' }} />
+              </linearGradient>
+            </defs>
+            <circle cx="32" cy="32" r="28" className={styles.liveTrack} />
+            <circle
+              cx="32"
+              cy="32"
+              r="28"
+              pathLength={100}
+              className={styles.liveArc}
+              style={{
+                strokeDasharray: `${liveSets.total ? (100 * liveSets.done) / liveSets.total : 0} 100`,
+              }}
+            />
+          </svg>
+          <span className={styles.liveClock}>{formatClock((now - t.active.startedAt) / 1000)}</span>
         </span>
-      </span>
-      <span className={styles.liveClock}>{formatClock((now - t.active.startedAt) / 1000)}</span>
-      <Icon name="chevron" />
-    </button>
+      }
+    />
   )
 
   const noProgram = t.plan === null && (
@@ -91,6 +117,7 @@ export function TodayScreen() {
       days={t.week.days}
       count={t.week.count}
       tonnageKg={t.week.tonnageKg}
+      streak={t.week.streak}
       onPickDay={(d) => setPickedDate(d.date)}
       onSummary={() => navigate('/progress')}
     />
@@ -122,28 +149,31 @@ export function TodayScreen() {
       {noProgram}
 
       {week}
-      <button
-        type="button"
-        className={`${styles.runCard} ${activeRun ? styles.runActive : ''}`}
-        onClick={() => navigate(activeRun ? '/run/active' : '/run')}
-      >
-        <span className={styles.runIcon}>
-          <Icon name="run" />
-        </span>
-        <span className={styles.runText}>
-          <b>
-            {activeRun
-              ? `${activeRun.kind === 'run' ? 'Пробежка' : 'Прогулка'} идёт`
-              : 'Бег и ходьба'}
-          </b>
-          <span>
-            {activeRun
-              ? `${formatKm(activeRun.distanceM)} км · вернуться`
-              : 'Маршрут, километры и темп по GPS'}
+      {isAndroidApp() && <StepsCard />}
+      {activeRun ? (
+        <LiveCard
+          label={`${activeRun.kind === 'run' ? 'Пробежка' : 'Прогулка'} идёт`}
+          title={`${formatKm(activeRun.distanceM)} км`}
+          meta="Маршрут пишется · вернуться"
+          onClick={() => navigate('/run/active')}
+          lead={
+            <LiveIcon>
+              <Icon name="run" size={24} />
+            </LiveIcon>
+          }
+        />
+      ) : (
+        <button type="button" className={styles.runCard} onClick={() => navigate('/run')}>
+          <span className={styles.runIcon}>
+            <Icon name="run" />
           </span>
-        </span>
-        <Icon name="chevron" size={18} />
-      </button>
+          <span className={styles.runText}>
+            <b>Бег и ходьба</b>
+            <span>Маршрут, километры и темп по GPS</span>
+          </span>
+          <Icon name="chevron" size={18} />
+        </button>
+      )}
       {t.plan && (
         <PlanList
           plan={t.plan}
@@ -167,13 +197,12 @@ export function TodayScreen() {
           </button>
         ))}
       </div>
-      <WeightEntry title="Вес сегодня" />
       {extras}
       {t.plan && !t.active && (
         <>
           {/* место под закреплённую кнопку, чтобы она не закрывала низ экрана */}
           <div className={styles.startBarSpace} aria-hidden="true" />
-          <div className={styles.startBar} data-start-bar>
+          <div className={styles.startBar} data-start-bar data-pinned>
             <Button variant="primary" block onClick={() => void t.plan!.start({ light: t.light })}>
               Начать: {t.plan.title}
               {t.plan.kind === 'program' && t.light ? ' · лёгкий' : ''}
@@ -259,7 +288,7 @@ function PlanList({
   onLight?: (light: boolean) => void
 }) {
   return (
-    <section className={styles.card} aria-label={plan.source}>
+    <section className={`${styles.card} ${frame.frame}`} aria-label={plan.source}>
       <div className={styles.listHead}>
         <div>
           <span className={styles.listSource}>{plan.source}</span>
@@ -299,7 +328,7 @@ function PlanList({
         <ol className={styles.listPlan}>
           {plan.items.map((i, n) => (
             <li key={n}>
-              <span className={styles.listNum}>{n + 1}</span>
+              <ExerciseThumb exercise={i.exercise ?? { id: '', name: i.name }} mark={n + 1} />
               <span className={styles.listText}>
                 <span>{i.name}</span>
                 <span className={styles.planText}>{planLine(i)}</span>

@@ -6,15 +6,22 @@
   max-height: 88dvh;
   margin: 0 auto;
   padding: 0;
-  border: 0;
+  /* Градиентная рамка сверху и по бокам, к низу растворяется в фоне */
+  border: 1.5px solid transparent;
+  border-bottom: 0;
   border-radius: calc(var(--radius) + 4px) calc(var(--radius) + 4px) 0 0;
-  background: var(--surface);
+  background:
+    linear-gradient(var(--surface), var(--surface)) padding-box,
+    linear-gradient(to bottom, transparent 15%, var(--surface) 60%) border-box,
+    var(--gradient) border-box;
   color: var(--ink);
   box-shadow: var(--shadow);
 }
 
 .sheet::backdrop {
   background: var(--backdrop);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
 }
 
 /* Выезд снизу и плавное затемнение; уход — в обратную сторону */
@@ -81,6 +88,8 @@
 }
 
 .inner {
+  position: relative;
+  isolation: isolate;
   display: flex;
   flex-direction: column;
   max-height: 88dvh;
@@ -91,7 +100,8 @@
   height: 5px;
   margin: 10px auto 2px;
   border-radius: 4px;
-  background: var(--line);
+  background: var(--gradient);
+  opacity: 0.45;
 }
 
 .head {
@@ -123,11 +133,15 @@
 }
 
 .footer {
+  position: relative;
   display: flex;
   gap: 8px;
   padding-inline: var(--gutter);
   padding-block: 12px calc(12px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid var(--line);
+  background: var(--glass);
+  backdrop-filter: saturate(1.6) blur(12px);
+  -webkit-backdrop-filter: saturate(1.6) blur(12px);
 }
 
 .footer > * {
@@ -144,4 +158,56 @@
   flex: 1;
   /* Без этого длинное содержимое растягивает шторку, а не прокручивается внутри неё */
   min-height: 0;
+}
+
+/* Верх шторки: цветное свечение и сетка, как за верхом экрана */
+.inner::before {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: -1;
+  height: 180px;
+  border-radius: inherit;
+  background:
+    var(--pattern-grid) 0 -1px / 22px 22px,
+    radial-gradient(
+      70% 90% at 10% 0%,
+      color-mix(in srgb, var(--blue) 12%, transparent),
+      transparent
+    ),
+    radial-gradient(
+      60% 80% at 95% 0%,
+      color-mix(in srgb, var(--pink) 11%, transparent),
+      transparent
+    );
+  content: '';
+  mask-image: linear-gradient(to bottom, #000 20%, transparent);
+  pointer-events: none;
+}
+
+/* Точка-акцент после заголовка, как у заголовков экранов */
+.title::after {
+  display: inline-block;
+  width: 0.28em;
+  height: 0.28em;
+  margin-left: 0.12em;
+  border-radius: 50%;
+  background: var(--gradient);
+  content: '';
+}
+
+/* Крестик в круглой подложке */
+.close {
+  border-color: transparent;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+/* Пока шторку тянут, хват растягивается */
+.grab {
+  transition: width 160ms ease;
+}
+
+.sheet[data-dragging] .grab {
+  width: 56px;
 }

@@ -14,46 +14,40 @@
 }
 
 /* Баннер незавершённой тренировки */
-.live {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 14px 16px;
-  border: 0;
-  border-radius: var(--radius);
-  background: var(--gradient);
-  color: var(--accent-ink);
-  text-align: left;
-  box-shadow: 0 8px 24px rgb(124 58 237 / 30%);
+/* Кольцо прогресса подходов в карточке идущей тренировки */
+.liveRing {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 68px;
+  height: 68px;
 }
 
-.liveText {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-width: 0;
+.liveRing svg {
+  position: absolute;
+  inset: 0;
+  rotate: -90deg;
 }
 
-.liveLabel {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  opacity: 0.85;
-  text-transform: uppercase;
+.liveTrack,
+.liveArc {
+  fill: none;
+  stroke-width: 6;
 }
 
-.liveName {
-  font: 600 18px/1.2 var(--title-font);
+.liveTrack {
+  stroke: var(--surface-2);
 }
 
-.liveMeta {
-  font-size: 13px;
-  opacity: 0.85;
+.liveArc {
+  stroke: url(#live-ring);
+  stroke-linecap: round;
+  transition: stroke-dasharray 500ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .liveClock {
-  font: 600 20px/1 var(--num-font);
+  font: 600 13px/1 var(--num-font);
   font-variant-numeric: tabular-nums;
 }
 
@@ -112,6 +106,9 @@
 }
 
 .card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -128,13 +125,28 @@
   gap: 8px;
 }
 
+/* Источник плана — плашка-метка над заголовком */
 .listSource {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  padding: 3px 9px 3px 7px;
+  border-radius: 99px;
+  background: var(--accent-soft);
   color: var(--accent);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.listSource::before {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gradient);
+  content: '';
 }
 
 .listTitle {
@@ -157,21 +169,9 @@
 .listPlan li {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 7px 0;
+  gap: 12px;
+  padding: 8px 0;
   border-top: 1px solid var(--line);
-}
-
-.listNum {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--accent-soft);
-  color: var(--accent);
-  font: 600 11px/1 var(--num-font);
 }
 
 .listText {
@@ -279,6 +279,9 @@
 
 /* Карточка «Бег и ходьба» */
 .runCard {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -290,12 +293,6 @@
   text-align: left;
 }
 
-.runActive {
-  border-color: transparent;
-  background: var(--gradient);
-  color: var(--accent-ink);
-}
-
 .runIcon {
   display: grid;
   flex: none;
@@ -305,11 +302,6 @@
   border-radius: 12px;
   background: var(--accent-soft);
   color: var(--accent);
-}
-
-.runActive .runIcon {
-  background: rgb(255 255 255 / 20%);
-  color: inherit;
 }
 
 .runText {
@@ -325,7 +317,28 @@
   font-size: 13px;
 }
 
-.runActive .runText span {
-  color: inherit;
-  opacity: 0.9;
+/* Сетка в правом верхнем углу карточки плана */
+.card::before {
+  position: absolute;
+  inset: 0 0 auto auto;
+  z-index: -1;
+  width: 65%;
+  height: 140px;
+  background-image: var(--pattern-grid);
+  background-position: right -1px top -1px;
+  background-size: 16px 16px;
+  content: '';
+  mask-image: radial-gradient(100% 100% at 100% 0%, #000 20%, transparent 75%);
+}
+
+/* Точечная сетка справа в карточке бега — как подложка карты */
+.runCard::before {
+  position: absolute;
+  inset: 0 0 0 auto;
+  z-index: -1;
+  width: 55%;
+  background-image: var(--pattern-dots);
+  background-size: 10px 10px;
+  content: '';
+  mask-image: linear-gradient(to left, #000, transparent);
 }

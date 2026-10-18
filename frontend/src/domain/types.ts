@@ -201,6 +201,8 @@ export interface MetaValues {
   /** Какая версия стартового набора упражнений уже загружена. */
   seedVersion: number
   weightStepKg: number
+  /** Цель недели для серии на «Сегодня», тренировок; null — по числу дней активной программы. */
+  weekGoal: number | null
   activeProgramId: ID | null
   /** Индекс следующего дня для каждой программы. */
   nextDayIndex: Record<ID, number>

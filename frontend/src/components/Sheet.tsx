@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { IconButton } from './Button'
+import { motionAllowed } from './fx/motion'
 import styles from './Sheet.module.css'
 
 interface Props {
@@ -19,14 +20,6 @@ const ANIMATION_MS = 220
 const CLOSE_DISTANCE = 90
 /** Или с какой скоростью смахнуть, px/мс. */
 const CLOSE_VELOCITY = 0.6
-
-/** Анимации нет в тестах (там нет matchMedia) и при системной настройке «уменьшить движение». */
-function animated(): boolean {
-  return (
-    typeof window.matchMedia === 'function' &&
-    !window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  )
-}
 
 /**
  * Нижняя шторка на нативном <dialog>: браузер сам держит фокус внутри,
@@ -48,7 +41,7 @@ export function Sheet({ open, onClose, title, children, footer, tall }: Props) {
   const [kept, setKept] = useState(children)
   if (open !== prevOpen) {
     setPrevOpen(open)
-    setClosing(!open && animated())
+    setClosing(!open && motionAllowed())
     if (open) setDrag(0)
   }
   if (open && kept !== children) setKept(children)
@@ -135,7 +128,7 @@ export function Sheet({ open, onClose, title, children, footer, tall }: Props) {
               <h2 id={titleId} className={styles.title}>
                 {title}
               </h2>
-              <IconButton icon="close" label="Закрыть" onClick={onClose} />
+              <IconButton icon="close" label="Закрыть" onClick={onClose} className={styles.close} />
             </header>
           </div>
           <div className={styles.body}>{open ? children : kept}</div>

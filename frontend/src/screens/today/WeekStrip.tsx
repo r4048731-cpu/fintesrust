@@ -1,12 +1,17 @@
 import { formatDecimal } from '../../domain/number'
 import { plural } from '../../domain/plural'
+import type { WeekStreak } from '../../domain/metrics'
+import { Icon } from '../../components/Icon'
+import frame from '../../components/frame.module.css'
 import type { WeekDay } from './useToday'
+import { CountUp } from '../../components/fx/CountUp'
 import styles from './WeekStrip.module.css'
 
 interface Props {
   days: WeekDay[]
   count: number
   tonnageKg: number
+  streak: WeekStreak
   /** Нажатие на день — показать его тренировки. */
   onPickDay: (day: WeekDay) => void
   /** Нажатие на итог недели — открыть прогресс. */
@@ -14,9 +19,31 @@ interface Props {
 }
 
 /** Неделя пн–вс: дни с тренировкой залиты, запланированные обведены пунктиром, сегодня обведено. */
-export function WeekStrip({ days, count, tonnageKg, onPickDay, onSummary }: Props) {
+export function WeekStrip({ days, count, tonnageKg, streak, onPickDay, onSummary }: Props) {
   return (
-    <section className={styles.week} aria-label="Эта неделя">
+    <section
+      className={streak.met ? `${styles.week} ${styles.met} ${frame.frame}` : styles.week}
+      aria-label="Эта неделя"
+    >
+      <div className={styles.streakRow}>
+        <span className={`${styles.streak} ${streak.weeks ? styles.hot : ''}`}>
+          <Icon name="flame" size={16} />
+          {streak.weeks
+            ? `${streak.weeks} ${plural(streak.weeks, 'неделя', 'недели', 'недель')} подряд`
+            : 'Начните серию'}
+        </span>
+        <span
+          className={styles.goal}
+          aria-label={`Цель недели: ${Math.min(streak.thisWeek, streak.goal)} из ${streak.goal}`}
+        >
+          {streak.met ? 'цель ✓' : `цель ${streak.thisWeek} из ${streak.goal}`}
+          <span className={styles.goalDots} aria-hidden="true">
+            {Array.from({ length: streak.goal }, (_, i) => (
+              <span key={i} className={i < streak.thisWeek ? styles.goalDone : undefined} />
+            ))}
+          </span>
+        </span>
+      </div>
       <ol className={styles.days}>
         {days.map((d) => (
           <li key={d.date}>
@@ -45,9 +72,23 @@ export function WeekStrip({ days, count, tonnageKg, onPickDay, onSummary }: Prop
         onClick={onSummary}
         aria-label="Эта неделя — открыть прогресс"
       >
-        {count
-          ? `${count} ${plural(count, 'тренировка', 'тренировки', 'тренировок')} · ${formatDecimal(Math.round(tonnageKg / 100) / 10)} т за неделю`
-          : 'На этой неделе тренировок ещё не было'}
+        {count ? (
+          <>
+            <b>
+              <CountUp value={count} format={(v) => String(Math.round(v))} />
+            </b>{' '}
+            {plural(count, 'тренировка', 'тренировки', 'тренировок')} ·{' '}
+            <b>
+              <CountUp
+                value={tonnageKg}
+                format={(v) => `${formatDecimal(Math.round(v / 100) / 10)} т`}
+              />
+            </b>{' '}
+            за неделю
+          </>
+        ) : (
+          'На этой неделе тренировок ещё не было'
+        )}
       </button>
     </section>
   )

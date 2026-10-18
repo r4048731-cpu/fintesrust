@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  activityGrid,
   estimate1RM,
   exerciseHistory,
   findNewRecords,
@@ -7,6 +8,7 @@ import {
   weekStart,
   weeklyTonnage,
   workoutTonnage,
+  weekStreak,
   toISODate,
 } from '../src/domain/metrics'
 import type { Workout, WorkoutSet } from '../src/domain/types'
@@ -151,5 +153,75 @@ describe('weeklyTonnage', () => {
       { weekStart: '2026-09-14', tonnageKg: 0, workouts: 0 },
       { weekStart: '2026-09-21', tonnageKg: 1500, workouts: 2 },
     ])
+  })
+})
+
+describe('weekStreak', () => {
+  // воскресенье 2026-10-18; недели начинаются 12 окт, 5 окт, 28 сен
+  const now = new Date(2026, 9, 18)
+  const done = (...dates: string[]) => dates.map((d) => workout(d, { bench: [set(60, 10)] }))
+
+  it('считает недели подряд с выполненной целью, включая текущую', () => {
+    const list = done(
+      '2026-10-13',
+      '2026-10-15',
+      '2026-10-06',
+      '2026-10-09',
+      '2026-09-29',
+      '2026-10-01',
+    )
+    expect(weekStreak(list, 2, now)).toEqual({ weeks: 3, thisWeek: 2, goal: 2, met: true })
+  })
+
+  it('незаконченная текущая неделя серию не обрывает', () => {
+    const list = done('2026-10-14', '2026-10-06', '2026-10-09', '2026-09-29', '2026-10-01')
+    expect(weekStreak(list, 2, now)).toEqual({ weeks: 2, thisWeek: 1, goal: 2, met: false })
+  })
+
+  it('пропущенная неделя обрывает серию', () => {
+    const list = done('2026-10-13', '2026-10-15', '2026-09-29', '2026-10-01')
+    expect(weekStreak(list, 2, now).weeks).toBe(1)
+  })
+
+  it('удалённые и незавершённые тренировки не считаются', () => {
+    const list = [
+      workout('2026-10-13', {}, { deletedAt: 5 }),
+      workout('2026-10-14', {}, { status: 'active' }),
+    ]
+    expect(weekStreak(list, 1, now)).toEqual({ weeks: 0, thisWeek: 0, goal: 1, met: false })
+  })
+})
+
+describe('activityGrid', () => {
+  const now = new Date(2026, 9, 14) // среда
+
+  it('строит столбцы-недели с понедельника, последний — текущая неделя', () => {
+    const grid = activityGrid([], 3, now)
+    expect(grid).toHaveLength(3)
+    expect(grid[0][0].date).toBe('2026-09-28')
+    expect(grid[2].map((d) => d.date)).toEqual([
+      '2026-10-12',
+      '2026-10-13',
+      '2026-10-14',
+      '2026-10-15',
+      '2026-10-16',
+      '2026-10-17',
+      '2026-10-18',
+    ])
+    expect(grid[2].map((d) => d.future)).toEqual([false, false, false, true, true, true, true])
+  })
+
+  it('яркость — по тоннажу относительно самого тяжёлого дня; без тоннажа — средняя', () => {
+    const grid = activityGrid(
+      [
+        workout('2026-10-12', { bench: [set(100, 10)] }), // 1000 кг — максимум
+        workout('2026-10-13', { bench: [set(20, 10)] }), // 200 кг
+        workout('2026-10-14', { plank: [set(0, 1)] }), // без тоннажа
+      ],
+      1,
+      now,
+    )
+    expect(grid[0].slice(0, 4).map((d) => d.level)).toEqual([4, 1, 2, 0])
+    expect(grid[0][0]).toMatchObject({ workouts: 1, tonnageKg: 1000 })
   })
 })

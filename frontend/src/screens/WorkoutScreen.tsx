@@ -40,6 +40,7 @@ import {
   toggleSuperset,
 } from '../domain/workout'
 import { linkedToNext, supersetSpan } from '../domain/superset'
+import { ExerciseThumb } from '../components/ExerciseThumb'
 import styles from './WorkoutScreen.module.css'
 
 /** Правки чисел сохраняются через полсекунды после последнего нажатия, отметки — сразу. */
@@ -279,6 +280,7 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
           .join(' ')}
         role="timer"
         aria-label="Отдых"
+        data-pinned
       >
         <div
           className={styles.restBar}
@@ -336,15 +338,26 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
             <IconButton icon="down" label="Свернуть тренировку" onClick={() => navigate('/')} />
             <div className={styles.status}>
               <span className={styles.clock} aria-label="Время тренировки">
+                <span className={styles.live} aria-hidden="true" />
                 {formatClock((now - w.startedAt) / 1000)}
               </span>
               <span className={styles.progress}>
                 {sets.done} из {sets.total} подходов
               </span>
             </div>
-            <Button variant="primary" size="sm" onClick={() => setFinishOpen(true)}>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setFinishOpen(true)}
+              className={sets.total > 0 && sets.done === sets.total ? styles.ready : undefined}
+            >
               Завершить
             </Button>
+          </div>
+        )}
+        {!editing && sets.total > 0 && (
+          <div className={styles.totalBar} aria-hidden="true">
+            <span style={{ width: `${(100 * sets.done) / sets.total}%` }} />
           </div>
         )}
       </header>
@@ -400,6 +413,11 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
               return (
                 <li
                   key={`${entry.exerciseId}-${ei}`}
+                  style={
+                    !planned && entry.sets.length
+                      ? ({ '--done': done / entry.sets.length } as React.CSSProperties)
+                      : undefined
+                  }
                   className={[
                     styles.planRow,
                     current && styles.planCurrent,
@@ -417,9 +435,11 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
                     aria-label={`${ex.name} — ${count}`}
                     onClick={() => openEntry(ei)}
                   >
-                    <span className={styles.planNum}>
-                      {complete ? <Icon name="check" size={16} /> : ei + 1}
-                    </span>
+                    <ExerciseThumb
+                      exercise={ex}
+                      mark={complete ? <Icon name="check" size={11} /> : ei + 1}
+                      tone={complete ? 'done' : current ? 'current' : undefined}
+                    />
                     <span className={styles.planText}>
                       <b>{ex.name}</b>
                       <span>
@@ -551,7 +571,6 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
       {shown && (
         <Sheet
           open={opened !== null}
-          tall
           onClose={() => setOpenIndex(null)}
           title={shown.ex.name}
           footer={
@@ -804,7 +823,8 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
                 <label className={styles.noteField}>
                   <span className={styles.label}>Заметка к упражнению</span>
                   <textarea
-                    className={styles.note}
+                    className={`${styles.note} ${styles.noteCompact}`}
+                    rows={1}
                     value={entry.note ?? ''}
                     placeholder={
                       lastNotes?.get(entry.exerciseId)
@@ -818,6 +838,7 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
                 {confirm !== `entry:${ei}` && (
                   <Button
                     variant="ghost"
+                    size="sm"
                     className={styles.dangerText}
                     onClick={() => setConfirm(`entry:${ei}`)}
                   >

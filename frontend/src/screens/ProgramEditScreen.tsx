@@ -23,6 +23,7 @@ import {
 } from '../domain/programs'
 import { PROGRAM_KIND_LABELS } from '../domain/templates'
 import type { Exercise, PlanItem, Program, ProgramDay, ProgramKind } from '../domain/types'
+import { ExerciseThumb } from '../components/ExerciseThumb'
 import styles from './ProgramEditScreen.module.css'
 
 const SAVE_DELAY_MS = 400
@@ -227,7 +228,7 @@ export function ProgramEditScreen() {
                       aria-expanded={open}
                       onClick={() => setExpanded(open ? null : key)}
                     >
-                      <span className={styles.itemNum}>{ii + 1}</span>
+                      <ExerciseThumb exercise={ex} mark={ii + 1} />
                       <span className={styles.itemText}>
                         <span className={styles.itemName}>
                           {ex.name}

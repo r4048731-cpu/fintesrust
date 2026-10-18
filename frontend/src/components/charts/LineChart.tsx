@@ -107,6 +107,19 @@ export function LineChart({ points, series, format, ariaLabel, xLabels }: Props)
             <stop offset="0%" stopColor={series[0].color} stopOpacity={0.22} />
             <stop offset="100%" stopColor={series[0].color} stopOpacity={0} />
           </linearGradient>
+          {/* userSpaceOnUse: у ровной линии высота рамки 0, и обычный градиент её бы скрыл */}
+          <linearGradient
+            id={`${gradId}-line`}
+            gradientUnits="userSpaceOnUse"
+            x1={PAD.l}
+            x2={W - PAD.r}
+            y1={0}
+            y2={0}
+          >
+            <stop offset="0%" style={{ stopColor: 'var(--blue)' }} />
+            <stop offset="55%" style={{ stopColor: series[0].color }} />
+            <stop offset="100%" style={{ stopColor: 'var(--pink)' }} />
+          </linearGradient>
         </defs>
 
         {ticks.map((t) => (
@@ -141,13 +154,15 @@ export function LineChart({ points, series, format, ariaLabel, xLabels }: Props)
             fill={`url(#${gradId})`}
           />
         )}
-        {series.map((s) => (
+        {series.map((s, i) => (
           <path
             key={s.key}
             d={pathOf(s.key)}
             fill="none"
-            stroke={s.color}
-            strokeWidth={2}
+            stroke={i === 0 && !s.dashed ? `url(#${gradId}-line)` : s.color}
+            className={i === 0 ? styles.mainLine : undefined}
+            pathLength={i === 0 && !s.dashed ? 1 : undefined}
+            strokeWidth={i === 0 ? 2.5 : 2}
             strokeLinejoin="round"
             strokeLinecap="round"
             strokeDasharray={s.dashed ? '5 4' : undefined}

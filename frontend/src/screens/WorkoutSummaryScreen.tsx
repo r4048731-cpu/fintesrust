@@ -2,6 +2,7 @@ import { useNavigate, useParams } from 'react-router'
 import { useRepos } from '../app/dataContext'
 import { Button } from '../components/Button'
 import { EmptyState } from '../components/EmptyState'
+import { Confetti } from '../components/fx/Confetti'
 import { Screen } from '../components/Screen'
 import { useWorkoutReport } from '../components/useWorkoutReport'
 import { WorkoutReport } from '../components/WorkoutReport'
@@ -24,6 +25,7 @@ export function WorkoutSummaryScreen() {
 
   return (
     <Screen title="Готово!" eyebrow={data.workout.name}>
+      <Confetti />
       <WorkoutReport data={data} />
       <Button variant="primary" block onClick={() => navigate('/', { replace: true })}>
         Готово

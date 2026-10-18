@@ -13,6 +13,7 @@ import { parseISODate, toISODate } from '../domain/metrics'
 import { addDays, dailyTotals, sumNutrients } from '../domain/nutrition'
 import { formatDecimal } from '../domain/number'
 import type { Meal, Nutrients } from '../domain/types'
+import { CountUp } from '../components/fx/CountUp'
 import styles from './NutritionPanel.module.css'
 
 const MONTHS_SHORT = [
@@ -95,7 +96,7 @@ export function NutritionPanel({ onCalc }: { onCalc: () => void }) {
         />
       </div>
 
-      <Card>
+      <Card framed>
         <div className={styles.calHead}>
           <span className={styles.label}>Калории</span>
           <Button size="sm" variant="ghost" onClick={() => setPlanOpen(true)}>
@@ -108,7 +109,7 @@ export function NutritionPanel({ onCalc }: { onCalc: () => void }) {
           onClick={() => setBreakdownOpen(true)}
           aria-label={`${kcal(total.calories)} ккал — откуда калории`}
         >
-          {kcal(total.calories)}
+          <CountUp value={total.calories} format={kcal} />
           <span> {plan ? `/ ${kcal(plan.calories)} ккал` : 'ккал'}</span>
           <Icon name="chevron" size={18} />
         </button>
@@ -127,12 +128,13 @@ export function NutritionPanel({ onCalc }: { onCalc: () => void }) {
             </p>
           </>
         )}
+        {!plan && <MacroSplit total={total} />}
         <div className={styles.macros}>
           {MACROS.map((m) => {
             const target = plan?.[m.key] ?? 0
             return (
               <div key={m.key} className={styles.macro}>
-                <span className={styles.label}>{m.label}</span>
+                <span className={`${styles.label} ${styles.dot} ${styles[m.key]}`}>{m.label}</span>
                 <b>
                   {grams(total[m.key])}
                   <span>{target ? ` / ${grams(target)} г` : ' г'}</span>
@@ -184,7 +186,7 @@ export function NutritionPanel({ onCalc }: { onCalc: () => void }) {
       )}
 
       {week.length > 0 && (
-        <Card>
+        <Card framed>
           <h2 className={styles.cardTitle}>Калории за 7 дней</h2>
           <LineChart
             points={days.map((d) => {
@@ -280,5 +282,19 @@ function Breakdown({ meals }: { meals: Meal[] }) {
         </ol>
       </section>
     </>
+  )
+}
+
+/** Без плана: одна полоса — какая доля калорий пришла из белков, жиров и углеводов. */
+function MacroSplit({ total }: { total: Nutrients }) {
+  const parts = MACROS.map((m) => ({ key: m.key, kcal: total[m.key] * m.kcalPerGram }))
+  const sum = parts.reduce((s, p) => s + p.kcal, 0)
+  if (sum <= 0) return null
+  return (
+    <div className={styles.split} aria-hidden="true">
+      {parts.map((p) => (
+        <span key={p.key} className={styles[p.key]} style={{ flexGrow: p.kcal }} />
+      ))}
+    </div>
   )
 }

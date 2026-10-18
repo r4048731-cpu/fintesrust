@@ -1,0 +1,29 @@
+.confetti {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.confetti span {
+  position: absolute;
+  top: -16px;
+  width: 8px;
+  height: 14px;
+  border-radius: 2px;
+  animation: fall linear forwards;
+}
+
+.confetti span.round {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+@keyframes fall {
+  to {
+    transform: translate(var(--drift), 105dvh) rotate(var(--spin));
+    opacity: 0.6;
+  }
+}

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Фитнес</string>
+    <string name="title_activity_main">Фитнес</string>
+    <string name="package_name">ru.fitnes.app</string>
+    <string name="custom_url_scheme">ru.fitnes.app</string>
+</resources>

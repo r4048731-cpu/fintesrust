@@ -1,0 +1,74 @@
+# Сборка Android-версии (APK) при каждом пуше в main.
+# Готовая APK — на странице репозитория: Releases → «Android-версия», постоянная ссылка:
+# https://github.com/r4048731-cpu/fintesrust/releases/latest/download/fitnes.apk
+# Нужны секреты (Settings → Secrets and variables → Actions):
+#   ANDROID_KEYSTORE_BASE64 — ключ подписи в base64, ANDROID_KEYSTORE_PASSWORD — пароль к нему.
+name: Android
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+      - run: npm ci
+      - run: npm run build
+        env:
+          VITE_APP_VERSION: ${{ github.sha }}
+      - run: npx cap sync android
+
+      - name: Ключ подписи
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          # без постоянного ключа новая APK не встанет поверх старой — лучше не собирать вовсе
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::Нет секрета ANDROID_KEYSTORE_BASE64 — см. комментарий в начале android.yml"
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+
+      - name: Сборка APK
+        working-directory: frontend/android
+        env:
+          FITNES_KEYSTORE: ${{ runner.temp }}/release.jks
+          FITNES_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          FITNES_VERSION_CODE: ${{ github.run_number }}
+        run: |
+          ./gradlew assembleRelease --no-daemon
+          cp app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/fitnes.apk"
+
+      - name: Публикация в Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # один релиз «android» — каждый раз пересоздаётся на текущем коммите
+          gh release delete android --cleanup-tag --yes || true
+          gh release create android "$RUNNER_TEMP/fitnes.apk" \
+            --target "$GITHUB_SHA" --latest \
+            --title "Android-версия 1.2.${{ github.run_number }}" \
+            --notes "Скачайте fitnes.apk на телефон и откройте. При первой установке Android попросит разрешить установку из этого источника. Новая версия ставится поверх старой, данные сохраняются."

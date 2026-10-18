@@ -30,6 +30,7 @@
 }
 
 .tile {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -99,4 +100,16 @@
 
 .table td:first-child {
   white-space: nowrap;
+}
+
+/* Цветная черта сверху плитки */
+.tile::before {
+  position: absolute;
+  top: 0;
+  left: 12px;
+  width: 22px;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: var(--gradient);
+  content: '';
 }

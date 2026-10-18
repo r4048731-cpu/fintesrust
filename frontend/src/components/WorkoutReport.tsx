@@ -2,6 +2,9 @@ import { doneSetCount, workoutTonnage, type NewRecord } from '../domain/metrics'
 import { formatDecimal, formatInteger } from '../domain/number'
 import { formatDuration, formatSet } from '../domain/workout'
 import { Card, SectionLabel } from './Screen'
+import { CountUp } from './fx/CountUp'
+import { ExerciseThumb } from './ExerciseThumb'
+import frame from './frame.module.css'
 import styles from './WorkoutReport.module.css'
 import type { WorkoutReportData } from './useWorkoutReport'
 
@@ -26,20 +29,22 @@ export function WorkoutReport({ data }: { data: WorkoutReportData }) {
   return (
     <>
       <div className={styles.stats}>
-        <div className={styles.stat}>
+        <div className={`${styles.stat} ${frame.frame}`}>
           <span className={styles.statLabel}>Время</span>
           <span className={styles.statValue}>
             {workout.manual ? '—' : formatDuration(duration)}
           </span>
         </div>
-        <div className={styles.stat}>
+        <div className={`${styles.stat} ${frame.frame}`}>
           <span className={styles.statLabel}>Подходы</span>
-          <span className={styles.statValue}>{doneSetCount(workout)}</span>
+          <span className={styles.statValue}>
+            <CountUp value={doneSetCount(workout)} format={(v) => String(Math.round(v))} />
+          </span>
         </div>
-        <div className={styles.stat}>
+        <div className={`${styles.stat} ${frame.frame}`}>
           <span className={styles.statLabel}>Тоннаж</span>
           <span className={styles.statValue}>
-            {formatInteger(workoutTonnage(workout))} <small>кг</small>
+            <CountUp value={workoutTonnage(workout)} format={formatInteger} /> <small>кг</small>
           </span>
         </div>
       </div>
@@ -71,14 +76,17 @@ export function WorkoutReport({ data }: { data: WorkoutReportData }) {
           const ex = exercises.get(e.exerciseId)
           return (
             <div key={i} className={styles.entry}>
-              <span className={styles.entryName}>
-                {ex?.name ?? 'Упражнение не найдено'}
-                {e.superset && <span className={styles.entryTag}> · суперсет</span>}
-              </span>
-              <span className={styles.entrySets}>
-                {e.sets.map((s) => formatSet(s, ex?.type ?? 'weight')).join(' · ')}
-              </span>
-              {e.note && <span className={styles.entryNote}>{e.note}</span>}
+              {ex && <ExerciseThumb exercise={ex} />}
+              <div className={styles.entryBody}>
+                <span className={styles.entryName}>
+                  {ex?.name ?? 'Упражнение не найдено'}
+                  {e.superset && <span className={styles.entryTag}> · суперсет</span>}
+                </span>
+                <span className={styles.entrySets}>
+                  {e.sets.map((s) => formatSet(s, ex?.type ?? 'weight')).join(' · ')}
+                </span>
+                {e.note && <span className={styles.entryNote}>{e.note}</span>}
+              </div>
             </div>
           )
         })}

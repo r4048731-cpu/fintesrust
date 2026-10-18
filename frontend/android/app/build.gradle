@@ -1,0 +1,81 @@
+apply plugin: 'com.android.application'
+apply plugin: 'org.jetbrains.kotlin.android'
+
+android {
+    namespace = "ru.fitnes.app"
+    compileSdk = rootProject.ext.compileSdkVersion
+    defaultConfig {
+        applicationId "ru.fitnes.app"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        // в GitHub Actions — номер сборки: каждая новая APK ставится поверх старой
+        versionCode((System.getenv("FITNES_VERSION_CODE") ?: "1").toInteger())
+        versionName "1.2.${versionCode}"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    // Постоянный ключ подписи: без него обновление не встанет поверх (а удаление стирает данные).
+    // Сам ключ — не в репозитории: путь и пароль приходят из переменных окружения (секреты GitHub).
+    signingConfigs {
+        release {
+            def keystore = System.getenv("FITNES_KEYSTORE")
+            if (keystore) {
+                storeFile file(keystore)
+                storePassword System.getenv("FITNES_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("FITNES_KEY_ALIAS") ?: "fitnes"
+                keyPassword System.getenv("FITNES_KEYSTORE_PASSWORD")
+            }
+        }
+    }
+    buildTypes {
+        release {
+            if (System.getenv("FITNES_KEYSTORE")) signingConfig signingConfigs.release
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation project(':capacitor-android')
+    // Шаги за день и вечернее уведомление
+    implementation "androidx.health.connect:connect-client:1.1.0"
+    implementation "androidx.work:work-runtime-ktx:2.12.0"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0"
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    implementation project(':capacitor-cordova-android-plugins')
+}
+
+apply from: 'capacitor.build.gradle'
+
+try {
+    def servicesJSON = file('google-services.json')
+    if (servicesJSON.text) {
+        apply plugin: 'com.google.gms.google-services'
+    }
+} catch(Exception e) {
+    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}
+
+// Kotlin компилируется под ту же Java 21, что и Capacitor
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
+    }
+}

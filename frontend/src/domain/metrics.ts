@@ -251,3 +251,92 @@ export function activitySummary(workouts: Workout[], now: Date): ActivitySummary
     total: list.length,
   }
 }
+
+export interface WeekStreak {
+  /** Недель подряд с выполненной целью; текущая входит, когда цель уже выполнена. */
+  weeks: number
+  /** Тренировок на текущей неделе. */
+  thisWeek: number
+  goal: number
+  /** Цель текущей недели выполнена. */
+  met: boolean
+}
+
+/**
+ * Серия недель (пн–вс) подряд, в каждую из которых сделано не меньше `goal` тренировок.
+ * Текущая неделя серию не обрывает, пока не кончилась: считаем от прошлой назад.
+ */
+export function weekStreak(workouts: Workout[], goal: number, now: Date): WeekStreak {
+  const perWeek = new Map<ISODate, number>()
+  for (const w of countable(workouts)) {
+    const key = toISODate(weekStart(parseISODate(w.date)))
+    perWeek.set(key, (perWeek.get(key) ?? 0) + 1)
+  }
+  const current = weekStart(now)
+  const count = (weeksAgo: number) =>
+    perWeek.get(
+      toISODate(
+        new Date(current.getFullYear(), current.getMonth(), current.getDate() - 7 * weeksAgo),
+      ),
+    ) ?? 0
+  const thisWeek = count(0)
+  const met = thisWeek >= goal
+  let weeks = met ? 1 : 0
+  for (let i = 1; count(i) >= goal; i++) weeks++
+  return { weeks, thisWeek, goal, met }
+}
+
+export interface ActivityDay {
+  date: ISODate
+  workouts: number
+  tonnageKg: number
+  /** Яркость клетки: 0 — пусто, 1–4 — по тоннажу относительно самого тяжёлого дня. */
+  level: 0 | 1 | 2 | 3 | 4
+  /** День ещё не наступил (конец текущей недели). */
+  future: boolean
+}
+
+/**
+ * Тепловая карта: `weeks` недель (пн–вс) до текущей включительно — столбцы по 7 дней.
+ * Тренировка без тоннажа (на время, свой вес) — уровень 2, чтобы не терялась.
+ */
+export function activityGrid(workouts: Workout[], weeks: number, now: Date): ActivityDay[][] {
+  const byDate = new Map<ISODate, { workouts: number; tonnageKg: number }>()
+  for (const w of countable(workouts)) {
+    const d = byDate.get(w.date) ?? { workouts: 0, tonnageKg: 0 }
+    d.workouts += 1
+    d.tonnageKg += workoutTonnage(w)
+    byDate.set(w.date, d)
+  }
+  const today = toISODate(now)
+  const first = weekStart(now)
+  first.setDate(first.getDate() - 7 * (weeks - 1))
+  const grid: ActivityDay[][] = []
+  let max = 0
+  for (let c = 0; c < weeks; c++) {
+    const column: ActivityDay[] = []
+    for (let r = 0; r < 7; r++) {
+      const date = toISODate(
+        new Date(first.getFullYear(), first.getMonth(), first.getDate() + c * 7 + r),
+      )
+      const d = byDate.get(date)
+      max = Math.max(max, d?.tonnageKg ?? 0)
+      column.push({
+        date,
+        workouts: d?.workouts ?? 0,
+        tonnageKg: d?.tonnageKg ?? 0,
+        level: 0,
+        future: date > today,
+      })
+    }
+    grid.push(column)
+  }
+  for (const day of grid.flat()) {
+    if (!day.workouts) continue
+    day.level =
+      day.tonnageKg > 0 && max > 0
+        ? (Math.max(1, Math.ceil((4 * day.tonnageKg) / max)) as ActivityDay['level'])
+        : 2
+  }
+  return grid
+}

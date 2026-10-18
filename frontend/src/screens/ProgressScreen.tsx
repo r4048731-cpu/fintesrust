@@ -173,7 +173,7 @@ function WorkoutProgress() {
 
   if (workouts.length === 0) {
     return (
-      <EmptyState title="Графиков пока нет">
+      <EmptyState title="Графиков пока нет" icon="progress">
         <p>Графики и рекорды появятся после первых тренировок.</p>
       </EmptyState>
     )
@@ -259,7 +259,7 @@ function WorkoutProgress() {
         </div>
       )}
 
-      <Card>
+      <Card framed>
         {chartOptions.length > 1 && (
           <Segmented
             label="График"

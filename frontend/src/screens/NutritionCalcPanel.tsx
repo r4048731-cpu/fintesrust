@@ -211,7 +211,7 @@ function CalcForm({
       </Button>
 
       {result && (
-        <Card>
+        <Card framed>
           <section className={styles.result} aria-label="Ваша норма">
             <span className={styles.label}>Ваша норма в день</span>
             <p className={styles.big}>

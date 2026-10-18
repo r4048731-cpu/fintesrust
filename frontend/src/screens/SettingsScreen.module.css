@@ -45,3 +45,79 @@
   font-size: 12px;
   text-align: center;
 }
+
+/* Шапка карточки: значок, название, метка состояния */
+.head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.headIcon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.headTitle {
+  flex: 1;
+  margin: 0;
+  font: 600 15px/1.2 var(--title-font);
+}
+
+.pill {
+  flex: none;
+  padding: 3px 9px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pill.good {
+  background: var(--good-soft);
+  color: var(--good);
+}
+
+.pill.warn {
+  background: color-mix(in srgb, var(--danger) 13%, var(--surface));
+  color: var(--danger);
+}
+
+/* Опасная зона: красноватая обводка и значок */
+.danger {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--danger) 35%, transparent),
+    var(--shadow);
+}
+
+.danger .headIcon {
+  background: color-mix(in srgb, var(--danger) 13%, var(--surface));
+  color: var(--danger);
+}
+
+.logo {
+  background: var(--gradient);
+  background-clip: text;
+  color: transparent;
+  font: 600 12px var(--title-font);
+}
+
+/* Цель недели: «Авто» и 1–7 в одну строку без прокрутки */
+.goalChips > div {
+  display: grid;
+  grid-template-columns: auto repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+}
+
+.goalChips button {
+  min-width: 0;
+  padding: 0 10px;
+}

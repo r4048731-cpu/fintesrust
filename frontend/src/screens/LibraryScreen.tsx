@@ -45,6 +45,10 @@ export function LibraryScreen() {
             )}
           />
         )}
+        <p className={styles.credit}>
+          Рисунки: Everkinetic, Greg Priday — CC BY-SA 4.0. Фото: free-exercise-db и наставления
+          армии США — общественное достояние; Ike Williams, Los Angeles Times — CC BY 4.0.
+        </p>
       </div>
       <ExerciseInfoSheet
         exercise={card?.exercise ?? null}
