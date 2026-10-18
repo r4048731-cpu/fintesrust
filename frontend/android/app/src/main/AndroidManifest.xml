@@ -47,6 +47,11 @@
             android:exported="false"
             android:foregroundServiceType="location" />
 
+        <!-- Конец отдыха между подходами: будильник показывает уведомление и вибрирует -->
+        <receiver
+            android:name=".workout.RestAlarmReceiver"
+            android:exported="false" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -75,6 +80,13 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- Конец отдыха точно в срок: точный будильник и вибрация -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission
+        android:name="android.permission.SCHEDULE_EXACT_ALARM"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <!-- Чтобы найти установленный Health Connect -->
     <queries>

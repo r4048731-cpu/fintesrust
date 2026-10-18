@@ -121,3 +121,28 @@
   min-width: 0;
   padding: 0 10px;
 }
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toggle input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+
+.toggle span {
+  display: flex;
+  flex-direction: column;
+  font-weight: 600;
+}
+
+.toggle small {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 400;
+}

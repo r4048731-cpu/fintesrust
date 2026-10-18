@@ -21,6 +21,7 @@ import { isAndroidApp } from '../native/steps'
 import { countSets, formatClock } from '../domain/workout'
 import { useToday, type TodayPlan, type WeekDay } from './today/useToday'
 import { WeekStrip } from './today/WeekStrip'
+import { DayRings } from '../components/DayRings'
 import { ExerciseThumb } from '../components/ExerciseThumb'
 import frame from '../components/frame.module.css'
 import styles from './TodayScreen.module.css'
@@ -149,6 +150,10 @@ export function TodayScreen() {
       {noProgram}
 
       {week}
+      <DayRings
+        active={liveSets}
+        doneToday={t.week.days.find((d) => d.today)?.workouts.length ?? 0}
+      />
       {isAndroidApp() && <StepsCard />}
       {activeRun ? (
         <LiveCard

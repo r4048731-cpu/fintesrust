@@ -5,6 +5,7 @@ import {
   exerciseHistory,
   findNewRecords,
   personalRecords,
+  recordFromSet,
   weekStart,
   weeklyTonnage,
   workoutTonnage,
@@ -223,5 +224,33 @@ describe('activityGrid', () => {
     )
     expect(grid[0].slice(0, 4).map((d) => d.level)).toEqual([4, 1, 2, 0])
     expect(grid[0][0]).toMatchObject({ workouts: 1, tonnageKg: 1000 })
+  })
+})
+
+describe('recordFromSet', () => {
+  const type = () => 'weight' as const
+  const history = [workout('2026-10-01', { bench: [set(70, 8), set(70, 8)] })]
+  const bench = (...sets: WorkoutSet[]) => workout('2026-10-15', { bench: sets }, { id: 'now' })
+
+  it('подход тяжелее прошлого максимума — рекорд веса', () => {
+    const before = bench(set(70, 8), set(72.5, 6, false))
+    const after = bench(set(70, 8), set(72.5, 6))
+    expect(recordFromSet(before, after, history, 'bench', type)).toMatchObject({
+      kind: 'weight',
+      value: 72.5,
+      previous: 70,
+    })
+  })
+
+  it('рекорд уже стоял раньше в этой тренировке — повтор не считается', () => {
+    const before = bench(set(72.5, 6), set(72.5, 6, false))
+    const after = bench(set(72.5, 6), set(72.5, 6))
+    expect(recordFromSet(before, after, history, 'bench', type)).toBeNull()
+  })
+
+  it('обычный подход рекорда не даёт', () => {
+    const before = bench(set(70, 8, false))
+    const after = bench(set(70, 8))
+    expect(recordFromSet(before, after, history, 'bench', type)).toBeNull()
   })
 })

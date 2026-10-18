@@ -137,4 +137,30 @@ describe('настройки', () => {
     await r.meta.set('weekGoal', null)
     expect(await screen.findByLabelText('Цель недели: 0 из 2')).toBeInTheDocument()
   })
+
+  it('оформление: тема из настроек и чистый чёрный для AMOLED', async () => {
+    localStorage.removeItem('fitnes.theme')
+    localStorage.removeItem('fitnes.amoled')
+    const { user } = renderAt('/settings', await setup())
+
+    const theme = await screen.findByRole('group', { name: 'Тема' })
+    expect(within(theme).getByRole('button', { name: 'Как в телефоне' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    await user.click(within(theme).getByRole('button', { name: 'Тёмная' }))
+    expect(document.documentElement.dataset.theme).toBe('dark')
+    expect(localStorage.getItem('fitnes.theme')).toBe('dark')
+    // кнопка в шапке узнала о смене
+    expect(screen.getByRole('button', { name: 'Включить светлую тему' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('checkbox', { name: /Чистый чёрный/ }))
+    expect(document.documentElement.dataset.amoled).toBe('')
+    expect(localStorage.getItem('fitnes.amoled')).toBe('1')
+
+    await user.click(within(theme).getByRole('button', { name: 'Как в телефоне' }))
+    expect(localStorage.getItem('fitnes.theme')).toBeNull()
+    await user.click(screen.getByRole('checkbox', { name: /Чистый чёрный/ }))
+    expect(document.documentElement.dataset.amoled).toBeUndefined()
+  })
 })

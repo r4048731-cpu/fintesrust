@@ -137,6 +137,31 @@
   grid-column: span 2;
 }
 
+/* «Вес, кг · блины» — открывает калькулятор блинов */
+.platesBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+.platesTag {
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--violet) 14%, transparent);
+  color: var(--violet);
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
 .sets {
   display: flex;
   flex-direction: column;
@@ -198,11 +223,31 @@
 
 .entryActions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
 }
 
+/* Разминочный подход: приглушён, номер — «Р» оранжевым */
+.warm:not(.done) > div {
+  opacity: 0.78;
+}
+
+.warm:not(.done) .doneBtn {
+  border-color: color-mix(in srgb, #f97316 55%, transparent);
+  color: #f97316;
+  font-size: 15px;
+}
+
+/* Кнопки без рамки в ряду «Подход / Разминка» — поуже, чтобы влез отдых */
+.entryActions > button + button {
+  padding-inline: 6px;
+}
+
 .restInfo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   margin-left: auto;
   color: var(--muted);
   font-size: 12.5px;
@@ -649,4 +694,54 @@
   field-sizing: content;
   max-height: 160px;
   resize: none;
+}
+
+/* Новый рекорд: плашка поверх шапки шторки, выскакивает и сама уходит */
+.recordFlash {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  left: 12px;
+  z-index: 5;
+  display: flex;
+  pointer-events: none;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-sm);
+  background:
+    linear-gradient(var(--surface), var(--surface)) padding-box,
+    var(--gradient) border-box;
+  box-shadow: 0 10px 30px rgb(124 58 237 / 30%);
+  font-size: 14px;
+  animation:
+    record-in 420ms cubic-bezier(0.3, 1.5, 0.5, 1),
+    record-out 300ms ease 3.2s forwards;
+}
+
+.recordIcon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #f59e0b, #f97316);
+  color: #fff;
+}
+
+@keyframes record-in {
+  from {
+    opacity: 0;
+    translate: 0 -16px;
+    scale: 0.9;
+  }
+}
+
+@keyframes record-out {
+  to {
+    opacity: 0;
+    translate: 0 -10px;
+  }
 }

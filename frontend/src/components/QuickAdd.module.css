@@ -1,5 +1,6 @@
 /* Плавающая «+» справа над панелью вкладок */
 .fab {
+  view-transition-name: fab;
   position: fixed;
   right: max(var(--gutter), calc((100vw - var(--content-max)) / 2 + var(--gutter)));
   bottom: calc(var(--tabbar-h) + 2 * var(--tabbar-inset) + 12px + env(safe-area-inset-bottom, 0px));

@@ -1,0 +1,128 @@
+.card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 14px 14px 16px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.rings {
+  flex: none;
+  width: 112px;
+  height: 112px;
+  rotate: -90deg;
+}
+
+.track,
+.arc {
+  fill: none;
+  stroke-width: 10;
+}
+
+.track {
+  stroke: var(--surface-2);
+}
+
+.arc {
+  stroke-linecap: round;
+  transition: stroke-dasharray 600ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: ring-in 900ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
+@keyframes ring-in {
+  from {
+    stroke-dasharray: 0 100;
+  }
+}
+
+.list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 5px 4px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+button.row {
+  cursor: pointer;
+}
+
+button.row:active {
+  background: var(--surface-2);
+}
+
+.dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.dot.train {
+  background: var(--gradient);
+}
+
+.dot.food {
+  background: linear-gradient(135deg, #fbbf24, #f97316);
+}
+
+.dot.steps {
+  background: linear-gradient(135deg, #34d399, #0d9488);
+}
+
+.text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.label {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.check {
+  color: var(--good);
+  font-weight: 700;
+}
+
+.value {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pct {
+  color: var(--muted);
+  font: 600 12px/1 var(--num-font);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arc {
+    animation: none;
+    transition: none;
+  }
+}

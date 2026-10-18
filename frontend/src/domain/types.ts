@@ -100,6 +100,8 @@ export interface WorkoutSet {
   /** Только для упражнений типа `time`. */
   timeSec?: number
   done: boolean
+  /** Разминочный подход: не идёт в рекорды, тоннаж и подсказку прогрессии. */
+  warmup?: boolean
 }
 
 /** Упражнение в тренировке: фактические подходы и копия плана на момент старта. */
@@ -203,6 +205,8 @@ export interface MetaValues {
   weightStepKg: number
   /** Цель недели для серии на «Сегодня», тренировок; null — по числу дней активной программы. */
   weekGoal: number | null
+  /** Вес грифа в калькуляторе блинов, кг; 0 — без грифа. */
+  barKg: number
   activeProgramId: ID | null
   /** Индекс следующего дня для каждой программы. */
   nextDayIndex: Record<ID, number>

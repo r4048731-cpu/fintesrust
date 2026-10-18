@@ -128,6 +128,29 @@
   color-scheme: dark;
 }
 
+/* Чистый чёрный (AMOLED): только поверх тёмной темы — чёрные пиксели на таких экранах не светятся */
+@media (prefers-color-scheme: dark) {
+  :root[data-amoled]:not([data-theme='light']) {
+    --bg: #000;
+    --surface: #0c0b10;
+    --surface-2: #17151e;
+    --line: #201d29;
+    --chart-grid: #1a1822;
+    --glass: rgb(0 0 0 / 78%);
+    --shadow: 0 0 0 1px rgb(255 255 255 / 4%);
+  }
+}
+
+:root[data-amoled][data-theme='dark'] {
+  --bg: #000;
+  --surface: #0c0b10;
+  --surface-2: #17151e;
+  --line: #201d29;
+  --chart-grid: #1a1822;
+  --glass: rgb(0 0 0 / 78%);
+  --shadow: 0 0 0 1px rgb(255 255 255 / 4%);
+}
+
 *,
 *::before,
 *::after {

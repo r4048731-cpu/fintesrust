@@ -172,3 +172,45 @@
       0 0 0 5px color-mix(in srgb, var(--violet) 18%, transparent);
   }
 }
+
+/* ——— Смена вкладки (View Transitions): экран мягко сдвигается, шапка, панель и «+» стоят ——— */
+.topbar {
+  view-transition-name: topbar;
+}
+
+.tabbar {
+  view-transition-name: tabbar;
+}
+
+:global(::view-transition-old(root)) {
+  animation: 180ms ease both slide-out;
+}
+
+:global(::view-transition-new(root)) {
+  animation: 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both slide-in;
+}
+
+@keyframes slide-out {
+  to {
+    opacity: 0;
+    translate: calc(var(--slide, 1) * -24px) 0;
+  }
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    translate: calc(var(--slide, 1) * 24px) 0;
+  }
+}
+
+:global(:root[data-slide='back']) {
+  --slide: -1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :global(::view-transition-old(root)),
+  :global(::view-transition-new(root)) {
+    animation: none;
+  }
+}

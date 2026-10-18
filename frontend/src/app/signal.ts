@@ -2,6 +2,9 @@
 // Звук в браузере разрешён только после касания пользователя, поэтому AudioContext
 // создаётся заранее — в обработчике нажатия «подход выполнен» (unlockAudio).
 // На iPhone вибрации в браузере нет, а беззвучный режим глушит звук: остаётся цвет таймера.
+// В Android-версии конец отдыха объявляет системный будильник (native/workoutAlerts).
+
+import { nativeRestAlarm, vibrate } from '../native/workoutAlerts'
 
 let ctx: AudioContext | null = null
 
@@ -15,11 +18,8 @@ export function unlockAudio(): void {
 }
 
 export function restEndSignal(): void {
-  try {
-    navigator.vibrate?.([200, 100, 200])
-  } catch {
-    // вибрация недоступна
-  }
+  if (nativeRestAlarm()) return
+  vibrate([200, 100, 200])
   if (!ctx) return
   for (const offset of [0, 0.28]) {
     const t = ctx.currentTime + offset
@@ -37,9 +37,5 @@ export function restEndSignal(): void {
 
 /** Короткий отклик на отметку подхода (Android). */
 export function tapFeedback(): void {
-  try {
-    navigator.vibrate?.(25)
-  } catch {
-    // вибрация недоступна
-  }
+  vibrate([25])
 }

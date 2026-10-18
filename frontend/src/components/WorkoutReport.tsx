@@ -1,5 +1,5 @@
-import { doneSetCount, workoutTonnage, type NewRecord } from '../domain/metrics'
-import { formatDecimal, formatInteger } from '../domain/number'
+import { doneSetCount, formatRecordValue, workoutTonnage, type NewRecord } from '../domain/metrics'
+import { formatInteger } from '../domain/number'
 import { formatDuration, formatSet } from '../domain/workout'
 import { Card, SectionLabel } from './Screen'
 import { CountUp } from './fx/CountUp'
@@ -15,11 +15,7 @@ const RECORD_LABEL: Record<NewRecord['kind'], string> = {
   time: 'Время',
 }
 
-function recordValue(r: NewRecord, v: number): string {
-  if (r.kind === 'time') return `${Math.round(v)} с`
-  if (r.kind === 'reps') return String(Math.round(v))
-  return `${formatDecimal(r.kind === '1rm' ? Math.round(v * 2) / 2 : v)} кг`
-}
+const recordValue = (r: NewRecord, v: number) => formatRecordValue(r.kind, v)
 
 /** Время, подходы, тоннаж, рекорды и все подходы тренировки. */
 export function WorkoutReport({ data }: { data: WorkoutReportData }) {

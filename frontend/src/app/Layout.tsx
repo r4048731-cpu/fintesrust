@@ -24,6 +24,15 @@ const RIGHT: Tab[] = [
   { to: '/food', label: 'Питание', icon: 'food' },
 ]
 
+const ORDER = [...LEFT, ...RIGHT].map((t) => t.to)
+const tabIndex = (path: string) =>
+  ORDER.reduce((found, to, i) => (to !== '/' && path.startsWith(to) ? i : found), 0)
+
+/** Куда сдвигать экран при смене вкладки: вправо по панели — новый въезжает справа. */
+function slideDirection(to: string, from: string) {
+  document.documentElement.dataset.slide = tabIndex(to) < tabIndex(from) ? 'back' : 'forward'
+}
+
 /** Каркас приложения: верхняя панель, содержимое вкладки и нижняя панель навигации. */
 export function Layout() {
   const { pathname } = useLocation()
@@ -34,6 +43,8 @@ export function Layout() {
       key={t.to}
       to={t.to}
       end={t.to === '/'}
+      viewTransition
+      onClick={() => slideDirection(t.to, pathname)}
       className={({ isActive }) =>
         [styles.tab, (isActive || (t.also && pathname.startsWith(t.also))) && styles.active]
           .filter(Boolean)

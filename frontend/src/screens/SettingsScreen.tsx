@@ -12,11 +12,20 @@ import {
   requestPersistentStorage,
   saveFile,
 } from '../app/device'
+import {
+  getAmoled,
+  getThemeChoice,
+  onThemeChange,
+  setAmoled,
+  setThemeChoice,
+  type ThemeChoice,
+} from '../app/theme'
 import { BotLinks } from '../components/BotLinks'
 import { Button } from '../components/Button'
 import { Icon, type IconName } from '../components/Icon'
 import { Chips } from '../components/Field'
 import { Card, Screen, SectionLabel } from '../components/Screen'
+import { Segmented } from '../components/Segmented'
 import { StepsSettings } from '../components/steps/StepsSettings'
 import { isAndroidApp } from '../native/steps'
 import { Sheet } from '../components/Sheet'
@@ -40,6 +49,12 @@ const counts = (c: { programs: number; workouts: number; exercises: number }) =>
   `${c.programs} ${plural(c.programs, 'программа', 'программы', 'программ')}, ` +
   `${c.workouts} ${plural(c.workouts, 'тренировка', 'тренировки', 'тренировок')}, ` +
   `${c.exercises} ${plural(c.exercises, 'упражнение', 'упражнения', 'упражнений')}`
+
+const THEME_OPTIONS: { value: ThemeChoice; label: string }[] = [
+  { value: 'system', label: 'Как в телефоне' },
+  { value: 'light', label: 'Светлая' },
+  { value: 'dark', label: 'Тёмная' },
+]
 
 type WeekGoalOption = 'auto' | '1' | '2' | '3' | '4' | '5' | '6' | '7'
 
@@ -91,6 +106,18 @@ export function SettingsScreen() {
   const [confirmWipe, setConfirmWipe] = useState(false)
   const [persisted, setPersisted] = useState<boolean | null>(null)
   const [installable, setInstallable] = useState(canPromptInstall)
+  const [themeChoice, setChoice] = useState(getThemeChoice)
+  const [amoled, setAmoledState] = useState(getAmoled)
+
+  // кнопка темы в шапке и этот раздел показывают одно и то же
+  useEffect(
+    () =>
+      onThemeChange(() => {
+        setChoice(getThemeChoice())
+        setAmoledState(getAmoled())
+      }),
+    [],
+  )
 
   useEffect(() => {
     void isStoragePersisted().then(setPersisted)
@@ -186,6 +213,24 @@ export function SettingsScreen() {
       </Card>
 
       {isAndroidApp() && <StepsSettings />}
+
+      <SectionLabel>Оформление</SectionLabel>
+      <Card>
+        <CardHead icon="moon" title="Тема" />
+        <Segmented
+          label="Тема"
+          options={THEME_OPTIONS}
+          value={themeChoice}
+          onChange={setThemeChoice}
+        />
+        <label className={styles.toggle}>
+          <input type="checkbox" checked={amoled} onChange={(e) => setAmoled(e.target.checked)} />
+          <span>
+            Чистый чёрный
+            <small>В тёмной теме: экономит батарею на AMOLED-экранах</small>
+          </span>
+        </label>
+      </Card>
 
       <SectionLabel>Резервная копия</SectionLabel>
       <Card framed>

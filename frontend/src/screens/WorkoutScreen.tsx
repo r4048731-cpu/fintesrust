@@ -5,9 +5,11 @@ import { useRepos } from '../app/dataContext'
 import { useNow } from '../app/hooks/useNow'
 import { useWakeLock } from '../app/hooks/useWakeLock'
 import { restEndSignal, tapFeedback, unlockAudio } from '../app/signal'
+import { cancelRestAlarm, scheduleRestAlarm, vibrate } from '../native/workoutAlerts'
 import { Button, IconButton } from '../components/Button'
 import { ExercisePicker } from '../components/ExercisePicker'
 import { ExerciseInfoSheet } from '../components/ExerciseInfoSheet'
+import { PlatesSheet } from '../components/PlatesSheet'
 import { Icon } from '../components/Icon'
 import { Sheet } from '../components/Sheet'
 import { Stepper } from '../components/Stepper'
@@ -18,6 +20,7 @@ import type { Exercise, Workout, WorkoutEntry, WorkoutSet } from '../domain/type
 import {
   addEntry,
   addSet,
+  addWarmup,
   adjustRest,
   changeDate,
   keepDone,
@@ -28,6 +31,10 @@ import {
   removeEntry,
   replaceEntry,
   removeLastSet,
+  removeWarmup,
+  warmupSets,
+  workingCount,
+  workWeight,
   setValue,
   SET_LIMITS,
   stopRest,
@@ -41,6 +48,7 @@ import {
 } from '../domain/workout'
 import { linkedToNext, supersetSpan } from '../domain/superset'
 import { ExerciseThumb } from '../components/ExerciseThumb'
+import { formatRecordValue, RECORD_LABELS, recordFromSet, type NewRecord } from '../domain/metrics'
 import styles from './WorkoutScreen.module.css'
 
 /** Правки чисел сохраняются через полсекунды после последнего нажатия, отметки — сразу. */
@@ -74,6 +82,9 @@ interface Props {
   mode?: 'active' | 'edit'
 }
 
+/** Сколько висит плашка нового рекорда, мс. */
+const RECORD_FLASH_MS = 3500
+
 export function WorkoutScreen({ mode = 'active' }: Props) {
   const editing = mode === 'edit'
   const { workoutId = '' } = useParams()
@@ -84,6 +95,8 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
   const [finishOpen, setFinishOpen] = useState(false)
   const [confirm, setConfirm] = useState<string | null>(null)
   /** Справка по упражнению: техника или история. */
+  /** Калькулятор блинов для упражнения с этим индексом. */
+  const [platesFor, setPlatesFor] = useState<number | null>(null)
   const [info, setInfo] = useState<{ exercise: Exercise; tab: 'technique' | 'history' } | null>(
     null,
   )
@@ -95,6 +108,8 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
   const pending = useRef<Workout | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const signaledFor = useRef<number | null>(null)
+  /** Рекорд, поставленный только что отмеченным подходом, — плашка на 3,5 с. */
+  const [flash, setFlash] = useState<{ record: NewRecord; at: number } | null>(null)
 
   const now = useNow(250, !!workout && !editing)
   useWakeLock(!!workout && !editing)
@@ -104,6 +119,15 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
     return new Map(all.map((e) => [e.id, e]))
   }, [repos])
   const weightStep = useLiveQuery(() => repos.meta.get('weightStepKg'), [repos]) ?? 2.5
+  const barKg = useLiveQuery(() => repos.meta.get('barKg'), [repos]) ?? 20
+  /** Завершённые тренировки — с ними сравниваем подходы, чтобы поймать рекорд. */
+  const history = useLiveQuery(() => (editing ? [] : repos.workouts.listDone()), [repos, editing])
+
+  useEffect(() => {
+    if (!flash) return
+    const t = setTimeout(() => setFlash(null), RECORD_FLASH_MS)
+    return () => clearTimeout(t)
+  }, [flash])
 
   // Пересчёт «прошлого раза» только при смене набора упражнений, а не на каждое нажатие
   const idsKey = workout ? [...new Set(workout.entries.map((e) => e.exerciseId))].join(',') : ''
@@ -166,6 +190,19 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
 
   // Сигнал конца отдыха — один раз на каждый отдых
   const restEndsAt = workout?.restEndsAt ?? null
+
+  // Будильник телефона (Android) — сработает и при погасшем экране; «Готов» и ±15 с его переставляют.
+  // При уходе с экрана не отменяем: тренировка идёт, отдых тоже.
+  const restText = (() => {
+    const upcoming = workout && exercises ? nextOpenSet(workout) : null
+    const ex = upcoming && exercises?.get(workout!.entries[upcoming.ei].exerciseId)
+    return ex ? `Дальше: ${ex.name}` : ''
+  })()
+  useEffect(() => {
+    if (editing) return
+    if (restEndsAt && restEndsAt > Date.now()) scheduleRestAlarm(restEndsAt, restText)
+    else cancelRestAlarm()
+  }, [restEndsAt, restText, editing])
   useEffect(() => {
     if (restEndsAt && now >= restEndsAt && signaledFor.current !== restEndsAt) {
       signaledFor.current = restEndsAt
@@ -221,6 +258,7 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
   const shown = opened ?? entryAt(shownIndex)
 
   async function finish() {
+    cancelRestAlarm()
     await flush()
     await repos.workouts.finish(w.id)
     navigate(`/workout/${w.id}/summary`, { replace: true })
@@ -263,6 +301,7 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
   }
 
   async function discard() {
+    cancelRestAlarm()
     clearTimeout(timer.current)
     pending.current = null
     await repos.workouts.discard(w.id)
@@ -610,8 +649,21 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
             const timed = ex.type === 'time'
             const plan = entry.plan
             const hint = editing ? null : progressionHint(entry, prev ?? null, ex.type, weightStep)
+            const openWarmup = entry.sets.some((s) => s.warmup && !s.done)
             return (
               <>
+                {flash && flash.record.exerciseId === entry.exerciseId && (
+                  <div key={flash.at} className={styles.recordFlash} role="status">
+                    <span className={styles.recordIcon} aria-hidden="true">
+                      <Icon name="trophy" size={20} />
+                    </span>
+                    <span>
+                      <b>Новый рекорд!</b> {RECORD_LABELS[flash.record.kind]}:{' '}
+                      {formatRecordValue(flash.record.kind, flash.record.value)} · было{' '}
+                      {formatRecordValue(flash.record.kind, flash.record.previous)}
+                    </span>
+                  </div>
+                )}
                 <p className={styles.meta}>
                   {plan && (
                     <>
@@ -674,13 +726,25 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
                   </div>
                 )}
 
-                <div className={styles.setHead} aria-hidden="true">
+                <div className={styles.setHead}>
                   {timed ? (
-                    <span className={styles.span2}>Время, с</span>
+                    <span className={styles.span2} aria-hidden="true">
+                      Время, с
+                    </span>
                   ) : (
                     <>
-                      <span>{ex.type === 'bodyweight' ? 'Доп. вес, кг' : 'Вес, кг'}</span>
-                      <span>Повторы</span>
+                      {ex.type === 'weight' ? (
+                        <button
+                          type="button"
+                          className={styles.platesBtn}
+                          onClick={() => setPlatesFor(ei)}
+                        >
+                          Вес, кг <span className={styles.platesTag}>блины</span>
+                        </button>
+                      ) : (
+                        <span aria-hidden="true">Доп. вес, кг</span>
+                      )}
+                      <span aria-hidden="true">Повторы</span>
                     </>
                   )}
                   <span />
@@ -693,6 +757,7 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
                       className={[
                         styles.set,
                         set.done && styles.done,
+                        set.warmup && styles.warm,
                         next?.ei === ei && next.si === si && styles.next,
                       ]
                         .filter(Boolean)
@@ -703,7 +768,7 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
                         <div className={styles.span2}>
                           <Stepper
                             compact
-                            label={`Подход ${si + 1}, время, с`}
+                            label={`${setName(entry.sets, si)}, время, с`}
                             value={set.timeSec ?? 0}
                             step={5}
                             max={SET_LIMITS.timeSec.max}
@@ -717,7 +782,7 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
                           <Stepper
                             compact
                             decimal
-                            label={`Подход ${si + 1}, вес, кг`}
+                            label={`${setName(entry.sets, si)}, вес, кг`}
                             value={set.weightKg}
                             step={weightStep}
                             max={SET_LIMITS.weightKg.max}
@@ -727,7 +792,7 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
                           />
                           <Stepper
                             compact
-                            label={`Подход ${si + 1}, повторы`}
+                            label={`${setName(entry.sets, si)}, повторы`}
                             value={set.reps}
                             step={1}
                             max={SET_LIMITS.reps.max}
@@ -744,7 +809,7 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
                           type="button"
                           className={styles.doneBtn}
                           aria-pressed={set.done}
-                          aria-label={`Подход ${si + 1} выполнен`}
+                          aria-label={`${setName(entry.sets, si)} ${set.warmup ? 'выполнена' : 'выполнен'}`}
                           onClick={() => {
                             if (editing) {
                               change(toggleSetOnly(w, ei, si))
@@ -754,6 +819,20 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
                             if (!set.done) tapFeedback()
                             const after = toggleDone(w, ei, si, Date.now())
                             change(after)
+                            const record =
+                              !set.done && history
+                                ? recordFromSet(
+                                    w,
+                                    after,
+                                    history,
+                                    entry.exerciseId,
+                                    (id) => exerciseOf(id).type,
+                                  )
+                                : null
+                            if (record) {
+                              setFlash({ record, at: Date.now() })
+                              vibrate([30, 60, 30, 60, 140])
+                            }
                             // суперсет: круг не закончен — сразу к следующему упражнению группы
                             const [a, b] = supersetSpan(after.entries, ei)
                             const upcoming = nextOpenSet(after)
@@ -770,7 +849,13 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
                             }
                           }}
                         >
-                          {set.done ? <Icon name="check" size={22} /> : si + 1}
+                          {set.done ? (
+                            <Icon name="check" size={22} />
+                          ) : set.warmup ? (
+                            'Р'
+                          ) : (
+                            workNo(entry.sets, si)
+                          )}
                         </button>
                       )}
                     </li>
@@ -790,12 +875,35 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
                     variant="ghost"
                     icon="minus"
                     aria-label="Убрать последний подход"
-                    disabled={entry.sets.length <= 1}
+                    disabled={workingCount(entry) <= 1}
                     onClick={() => change(removeLastSet(w, ei))}
                   >
                     Подход
                   </Button>
-                  <span className={styles.restInfo}>отдых {formatRest(entry.restSec)}</span>
+                  {ex.type === 'weight' && !planned && !editing && !entry.superset && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      icon={openWarmup ? 'close' : 'flame'}
+                      disabled={
+                        !openWarmup && !warmupSets(workWeight(entry), weightStep, barKg).length
+                      }
+                      onClick={() =>
+                        change(
+                          openWarmup ? removeWarmup(w, ei) : addWarmup(w, ei, weightStep, barKg),
+                        )
+                      }
+                    >
+                      Разминка
+                    </Button>
+                  )}
+                  <span
+                    className={styles.restInfo}
+                    aria-label={`Отдых ${formatRest(entry.restSec)}`}
+                  >
+                    <Icon name="history" size={14} />
+                    {formatRest(entry.restSec)}
+                  </span>
                 </div>
 
                 {restPanel(true)}
@@ -851,6 +959,18 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
         </Sheet>
       )}
 
+      <PlatesSheet
+        open={platesFor !== null}
+        onClose={() => setPlatesFor(null)}
+        initialKg={platesKg(w, platesFor)}
+        step={weightStep}
+        onApply={
+          platesFor === null || planned
+            ? undefined
+            : (kg) => change(applyWeightToOpenSets(w, platesFor, kg))
+        }
+      />
+
       <ExerciseInfoSheet
         exercise={info?.exercise ?? null}
         tab={info?.tab ?? 'technique'}
@@ -897,4 +1017,21 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
       </Sheet>
     </div>
   )
+}
+
+/** Вес для калькулятора блинов: первый несделанный подход упражнения, иначе последний. */
+function platesKg(w: Workout, ei: number | null): number {
+  const sets = ei === null ? undefined : w.entries[ei]?.sets
+  if (!sets?.length) return 20
+  return (sets.find((s) => !s.done) ?? sets[sets.length - 1]).weightKg
+}
+
+/** Номер рабочего подхода: разминка в счёт не идёт. */
+function workNo(sets: WorkoutSet[], si: number): number {
+  return sets.slice(0, si + 1).filter((s) => !s.warmup).length
+}
+
+/** «Подход 2» или «Разминка 1» — подпись для экранного диктора. */
+function setName(sets: WorkoutSet[], si: number): string {
+  return sets[si]?.warmup ? `Разминка ${si + 1}` : `Подход ${workNo(sets, si)}`
 }

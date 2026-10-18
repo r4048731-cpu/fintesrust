@@ -349,8 +349,8 @@ export function workoutsRepo(db: FitnessDB, clock: Clock) {
         if (!current || current.status !== 'active')
           throw new Error('Активная тренировка не найдена')
         const entries = current.entries
-          .map((e) => ({ ...e, sets: doneSets(e.sets) }))
-          .filter((e) => e.sets.length > 0)
+          .map((e) => ({ ...e, sets: e.sets.filter((s) => s.done) }))
+          .filter((e) => doneSets(e.sets).length > 0)
         if (!entries.length) throw new NothingDoneError()
         const now = clock()
         const workout = withIndex({ ...current, entries, status: 'done', finishedAt: now }, now)

@@ -1,6 +1,7 @@
 // Расчёты по подходам. Чистые функции: метрики не хранятся, а считаются из данных
 // (архитектура, решение 3), поэтому правка старой тренировки сразу меняет статистику.
 
+import { formatDecimal } from './number'
 import type { ExerciseType, ID, ISODate, Workout, WorkoutSet } from './types'
 
 /** Расчётный одноповторный максимум по формуле Эпли: w × (1 + r / 30). */
@@ -15,8 +16,9 @@ export function setVolume(set: WorkoutSet): number {
   return Math.max(0, set.weightKg) * Math.max(0, set.reps)
 }
 
+/** Выполненные рабочие подходы — разминка в статистику не идёт. */
 export function doneSets(sets: WorkoutSet[]): WorkoutSet[] {
-  return sets.filter((s) => s.done)
+  return sets.filter((s) => s.done && !s.warmup)
 }
 
 /** Тоннаж тренировки: сумма weightKg × reps по выполненным подходам. */
@@ -339,4 +341,37 @@ export function activityGrid(workouts: Workout[], weeks: number, now: Date): Act
         : 2
   }
   return grid
+}
+
+/**
+ * Рекорд, который поставил только что отмеченный подход: есть в тренировке «после»
+ * и не было (или был меньше) «до». null — подход рекорда не дал.
+ */
+export function recordFromSet(
+  before: Workout,
+  after: Workout,
+  previousWorkouts: Workout[],
+  exerciseId: ID,
+  getType: (exerciseId: ID) => ExerciseType,
+): NewRecord | null {
+  const find = (w: Workout) =>
+    findNewRecords(w, previousWorkouts, getType).find((r) => r.exerciseId === exerciseId)
+  const now = find(after)
+  if (!now) return null
+  const was = find(before)
+  return !was || was.kind !== now.kind || now.value > was.value + EPS ? now : null
+}
+
+/** «72,5 кг», «15», «90 с» — значение рекорда для подписи. */
+export function formatRecordValue(kind: RecordKind, value: number): string {
+  if (kind === 'time') return `${Math.round(value)} с`
+  if (kind === 'reps') return String(Math.round(value))
+  return `${formatDecimal(kind === '1rm' ? Math.round(value * 2) / 2 : value)} кг`
+}
+
+export const RECORD_LABELS: Record<RecordKind, string> = {
+  weight: 'Вес',
+  '1rm': 'Расчётный 1ПМ',
+  reps: 'Повторы',
+  time: 'Время',
 }

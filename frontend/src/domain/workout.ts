@@ -48,9 +48,11 @@ export function setValue(
   )
   return mapEntry(w, ei, (e) => {
     const old = e.sets[si]?.[field] ?? 0
+    const warmup = !!e.sets[si]?.warmup
     return mapSets(e, (s, i) => {
       if (i === si) return { ...s, [field]: next }
-      if (i > si && !s.done && (s[field] ?? 0) === old) return { ...s, [field]: next }
+      if (i > si && !s.done && !!s.warmup === warmup && (s[field] ?? 0) === old)
+        return { ...s, [field]: next }
       return s
     })
   })
@@ -69,7 +71,12 @@ export function toggleDone(w: Workout, ei: number, si: number, now: Timestamp): 
   const [a, b] = supersetSpan(next.entries, ei)
   const group = next.entries.slice(a, b + 1)
   if (a !== b && !group.every((e) => !e.sets[si] || e.sets[si].done)) return stopRest(next)
-  const restSec = a !== b ? next.entries[b].restSec : entry.restSec
+  const restSec =
+    a !== b
+      ? next.entries[b].restSec
+      : entry.sets[si].warmup
+        ? Math.min(entry.restSec, WARMUP_REST_SEC)
+        : entry.restSec
   if (restSec <= 0 || allDone(next)) return stopRest(next)
   return startRest(next, restSec, now)
 }
@@ -105,14 +112,65 @@ export function adjustRest(w: Workout, deltaSec: number, now: Timestamp): Workou
 export function addSet(w: Workout, ei: number, done = false): Workout {
   return mapEntry(w, ei, (e) => {
     const last = e.sets[e.sets.length - 1]
-    const set: WorkoutSet = last ? { ...last, done } : { weightKg: 0, reps: 10, done }
+    const set: WorkoutSet = last
+      ? { ...last, done, warmup: undefined }
+      : { weightKg: 0, reps: 10, done }
     return { ...e, sets: [...e.sets, set] }
   })
 }
 
-/** Убирает последний подход. Хотя бы один подход у упражнения остаётся. */
+/** Убирает последний подход. Хотя бы один рабочий подход у упражнения остаётся. */
 export function removeLastSet(w: Workout, ei: number): Workout {
-  return mapEntry(w, ei, (e) => (e.sets.length <= 1 ? e : { ...e, sets: e.sets.slice(0, -1) }))
+  return mapEntry(w, ei, (e) => (workingCount(e) <= 1 ? e : { ...e, sets: e.sets.slice(0, -1) }))
+}
+
+export function workingCount(e: WorkoutEntry): number {
+  return e.sets.filter((s) => !s.warmup).length
+}
+
+/** Отдых после разминочного подхода, с: короче рабочего. */
+export const WARMUP_REST_SEC = 60
+
+/** Разминка: доли рабочего веса и повторы. */
+export const WARMUP_SCHEME = [
+  { share: 0.4, reps: 8 },
+  { share: 0.6, reps: 5 },
+  { share: 0.8, reps: 3 },
+] as const
+
+/**
+ * Разминочные подходы к рабочему весу: 40/60/80% с округлением до шага веса,
+ * не легче пустого грифа; одинаковые и не легче рабочего веса отбрасываются.
+ */
+export function warmupSets(workKg: number, stepKg: number, barKg: number): WorkoutSet[] {
+  const step = stepKg > 0 ? stepKg : 2.5
+  const out: WorkoutSet[] = []
+  for (const { share, reps } of WARMUP_SCHEME) {
+    const kg = Math.max(barKg, Math.round((workKg * share) / step) * step)
+    const weightKg = Math.round(kg * 100) / 100
+    if (weightKg >= workKg || out.some((s) => s.weightKg === weightKg)) continue
+    out.push({ weightKg, reps, done: false, warmup: true })
+  }
+  return out
+}
+
+/** Вес первого невыполненного рабочего подхода — от него считается разминка. */
+export function workWeight(e: WorkoutEntry): number {
+  const work = e.sets.filter((s) => !s.warmup)
+  return (work.find((s) => !s.done) ?? work[work.length - 1])?.weightKg ?? 0
+}
+
+/** Ставит разминку перед рабочими подходами; прежняя невыполненная разминка заменяется. */
+export function addWarmup(w: Workout, ei: number, stepKg: number, barKg: number): Workout {
+  return mapEntry(w, ei, (e) => {
+    const warm = warmupSets(workWeight(e), stepKg, barKg)
+    return { ...e, sets: [...warm, ...e.sets.filter((s) => !s.warmup || s.done)] }
+  })
+}
+
+/** Убирает невыполненную разминку. */
+export function removeWarmup(w: Workout, ei: number): Workout {
+  return mapEntry(w, ei, (e) => ({ ...e, sets: e.sets.filter((s) => !s.warmup || s.done) }))
 }
 
 export function addEntry(w: Workout, entry: WorkoutEntry): Workout {
@@ -254,13 +312,15 @@ export function progressionHint(
   const lastWeight = Math.max(...previous.map((s) => s.weightKg))
   if (lastWeight <= 0) return null
   const weightKg = Math.round((lastWeight + stepKg) * 100) / 100
-  const setsToChange = entry.sets.filter((s) => !s.done && s.weightKg < weightKg).length
+  const setsToChange = entry.sets.filter(
+    (s) => !s.done && !s.warmup && s.weightKg < weightKg,
+  ).length
   return setsToChange > 0 ? { weightKg, setsToChange } : null
 }
 
 /** Ставит вес всем невыполненным подходам упражнения. */
 export function applyWeightToOpenSets(w: Workout, ei: number, weightKg: number): Workout {
-  return mapEntry(w, ei, (e) => mapSets(e, (s) => (s.done ? s : { ...s, weightKg })))
+  return mapEntry(w, ei, (e) => mapSets(e, (s) => (s.done || s.warmup ? s : { ...s, weightKg })))
 }
 
 /** Первый невыполненный подход тренировки — его подсвечиваем как следующий. */
