@@ -43,6 +43,9 @@
 
 /* Рекорд — в градиентной рамке на мягком фиолетовом фоне */
 .record {
+  position: relative;
+  overflow: hidden;
+  animation: record-pop 480ms cubic-bezier(0.3, 1.5, 0.5, 1) both;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -132,4 +135,40 @@
   flex: 1;
   flex-direction: column;
   min-width: 0;
+}
+
+/* Блик по рекорду — вслед за его появлением */
+.record::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 30%, rgb(255 255 255 / 55%) 48%, transparent 66%);
+  content: '';
+  pointer-events: none;
+  translate: -110% 0;
+  animation: record-shine 900ms ease-out 1;
+  animation-delay: inherit;
+}
+
+@keyframes record-pop {
+  from {
+    opacity: 0;
+    scale: 0.9;
+  }
+}
+
+@keyframes record-shine {
+  from {
+    translate: -110% 0;
+  }
+
+  to {
+    translate: 110% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .record,
+  .record::after {
+    animation: none;
+  }
 }

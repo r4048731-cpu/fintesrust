@@ -26,6 +26,7 @@ import { Icon, type IconName } from '../components/Icon'
 import { Chips } from '../components/Field'
 import { Card, Screen, SectionLabel } from '../components/Screen'
 import { Segmented } from '../components/Segmented'
+import { TrainingReminderSettings } from '../components/reminder/TrainingReminderSettings'
 import { StepsSettings } from '../components/steps/StepsSettings'
 import { isAndroidApp } from '../native/steps'
 import { Sheet } from '../components/Sheet'
@@ -211,6 +212,8 @@ export function SettingsScreen() {
           </p>
         )}
       </Card>
+
+      {isAndroidApp() && <TrainingReminderSettings />}
 
       {isAndroidApp() && <StepsSettings />}
 

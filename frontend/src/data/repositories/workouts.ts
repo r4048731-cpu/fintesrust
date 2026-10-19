@@ -19,6 +19,7 @@ import type { Clock } from './clock'
 import { metaRepo } from './meta'
 import { programsRepo } from './programs'
 import { lightenEntries } from '../../domain/workout'
+import { deloadActive, deloadEntries } from '../../domain/deload'
 import { newId } from '../../domain/id'
 
 export class ActiveWorkoutExistsError extends Error {
@@ -205,8 +206,12 @@ export function workoutsRepo(db: FitnessDB, clock: Clock) {
       for (const item of day?.items ?? []) entries.push(await buildEntry(item.exerciseId, item))
       const light = options.light && day
       if (light) entries = lightenEntries(entries, await meta.get('weightStepKg'))
+      // В неделю разгрузки подходов на 40 % меньше — см. deloadEntries
+      const deload = day && deloadActive(await meta.get('deload'), toISODate(new Date(clock())))
+      if (deload) entries = deloadEntries(entries)
+      const suffix = `${light ? ' · лёгкий' : ''}${deload ? ' · разгрузка' : ''}`
       return createActive(
-        day ? `${day.name}${light ? ' · лёгкий' : ''}` : 'Свободная тренировка',
+        day ? `${day.name}${suffix}` : 'Свободная тренировка',
         program?.id ?? null,
         day?.id ?? null,
         entries,

@@ -5,6 +5,7 @@ import { useRepos } from '../app/dataContext'
 import { Button } from '../components/Button'
 import { EmptyState } from '../components/EmptyState'
 import { Icon } from '../components/Icon'
+import { ProgramBuilderSheet } from '../components/ProgramBuilderSheet'
 import { Screen } from '../components/Screen'
 import { Sheet } from '../components/Sheet'
 import { plural } from '../domain/plural'
@@ -20,12 +21,18 @@ export function ProgramsScreen() {
   const activeId = useLiveQuery(async () => (await repos.programs.getActive())?.id ?? null, [repos])
 
   const [chooseOpen, setChooseOpen] = useState(false)
+  const [builderOpen, setBuilderOpen] = useState(false)
   const create = () => setChooseOpen(true)
 
   async function createOf(kind: ProgramKind, name: string) {
     setChooseOpen(false)
     const program = await repos.programs.create(name, kind)
     navigate(`/programs/${program.id}`)
+  }
+
+  const openBuilder = () => {
+    setChooseOpen(false)
+    setBuilderOpen(true)
   }
 
   return (
@@ -43,12 +50,17 @@ export function ProgramsScreen() {
           title="Программ пока нет"
           icon="programs"
           action={
-            <Button variant="primary" icon="plus" onClick={create}>
-              Создать программу
-            </Button>
+            <div className={styles.emptyActions}>
+              <Button variant="primary" icon="ai" onClick={openBuilder}>
+                Подобрать под меня
+              </Button>
+              <Button icon="plus" onClick={create}>
+                Создать программу
+              </Button>
+            </div>
           }
         >
-          <p>Выберите готовую программу или соберите свою.</p>
+          <p>Выберите готовую программу, соберите свою или подберите под себя.</p>
         </EmptyState>
       )}
       {programs && programs.length > 0 && (
@@ -99,14 +111,32 @@ export function ProgramsScreen() {
               )
             })}
           </ul>
-          <Button variant="primary" icon="plus" block onClick={create}>
-            Новая программа
-          </Button>
+          <div className={styles.emptyActions}>
+            <Button variant="primary" icon="plus" block onClick={create}>
+              Новая программа
+            </Button>
+            <Button icon="ai" block onClick={openBuilder}>
+              Подобрать под меня
+            </Button>
+          </div>
         </>
       )}
       <Sheet open={chooseOpen} onClose={() => setChooseOpen(false)} title="Тип программы">
         <p className={styles.sheetHint}>Дни и упражнения потом можно поменять.</p>
         <ul className={styles.templates}>
+          <li>
+            <button
+              type="button"
+              className={`${styles.template} ${styles.builder}`}
+              onClick={openBuilder}
+            >
+              <span className={styles.templateName}>Подобрать под меня</span>
+              <span className={styles.summary}>
+                По полу, возрасту, росту и весу, месту, опыту и цели — с подходами и стартовыми
+                весами.
+              </span>
+            </button>
+          </li>
           {PROGRAM_TEMPLATES.map((t) => (
             <li key={t.kind}>
               <button
@@ -136,6 +166,11 @@ export function ProgramsScreen() {
           </li>
         </ul>
       </Sheet>
+      <ProgramBuilderSheet
+        open={builderOpen}
+        onClose={() => setBuilderOpen(false)}
+        onSaved={(id) => navigate(`/programs/${id}`)}
+      />
     </Screen>
   )
 }

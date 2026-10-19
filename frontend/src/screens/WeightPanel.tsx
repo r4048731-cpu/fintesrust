@@ -1,8 +1,11 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { useRepos } from '../app/dataContext'
+import { BodyMeasurements } from '../components/BodyMeasurements'
 import { Button } from '../components/Button'
+import { ProgressPhotos } from '../components/ProgressPhotos'
 import { LineChart } from '../components/charts/LineChart'
+import { shortDate } from '../components/dates'
 import { Card, SectionLabel } from '../components/Screen'
 import { Sheet } from '../components/Sheet'
 import { WeightEntry } from '../components/WeightEntry'
@@ -12,25 +15,7 @@ import { formatDecimal } from '../domain/number'
 import type { BodyWeight } from '../domain/types'
 import styles from './WeightPanel.module.css'
 
-const MONTHS_SHORT = [
-  'янв',
-  'фев',
-  'мар',
-  'апр',
-  'мая',
-  'июн',
-  'июл',
-  'авг',
-  'сен',
-  'окт',
-  'ноя',
-  'дек',
-]
 const WEEKDAYS = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб']
-const shortDate = (iso: string) => {
-  const d = parseISODate(iso)
-  return `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`
-}
 const kg = (v: number) => `${formatDecimal(v)} кг`
 
 /** «−0,5 кг», «+0,3 кг», «0 кг». */
@@ -51,7 +36,7 @@ function measured(r: BodyWeight): string {
     : 'утром'
 }
 
-/** Вес в разделе «Прогресс» → «Вес тела» (ТЗ 9.2): запись, итоги, график и список по дням с разницей между ними. */
+/** Вес в разделе «Прогресс» → «Вес тела» (ТЗ 9.2): запись, итоги, график, замеры, фото прогресса и список по дням с разницей между ними. */
 export function WeightPanel() {
   const repos = useRepos()
   const rows = useLiveQuery(() => repos.bodyWeights.list(), [repos])
@@ -101,6 +86,10 @@ export function WeightPanel() {
           />
         </Card>
       )}
+
+      <BodyMeasurements />
+
+      <ProgressPhotos weights={rows} />
 
       {rows.length > 0 && (
         <>

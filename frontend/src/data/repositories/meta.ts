@@ -13,10 +13,15 @@ export const META_DEFAULTS: MetaValues = {
   lastExportAt: null,
   nutritionPlan: null,
   bodyProfile: null,
+  builderInput: null,
   favoriteRecipes: [],
   aiChat: [],
   aiUseContext: true,
   runVoice: true,
+  onboarded: false,
+  deload: null,
+  deloadSnoozedUntil: null,
+  intervalTimer: null,
 }
 
 export function metaRepo(db: FitnessDB) {

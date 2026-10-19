@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#FFFFFF</color>
+    <!-- Фиолетовый из фирменного градиента: фон иконки там, где градиент не поддержан, и заставки -->
+    <color name="ic_launcher_background">#7C3AED</color>
+    <color name="splash_background">#6D33E6</color>
 </resources>

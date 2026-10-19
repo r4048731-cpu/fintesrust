@@ -195,6 +195,7 @@ describe('программы', () => {
         .getAllByRole('listitem')
         .map((li) => li.querySelector('button > span')?.textContent),
     ).toEqual([
+      'Подобрать под меня',
       'Фулбади',
       'Верх / Низ',
       'Тяни / Толкай / Ноги',

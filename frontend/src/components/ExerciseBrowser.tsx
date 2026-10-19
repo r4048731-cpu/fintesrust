@@ -10,6 +10,7 @@ import {
 import { Chips } from './Field'
 import { Icon } from './Icon'
 import { ExerciseThumb } from './ExerciseThumb'
+import { gearLabel } from '../domain/similar'
 import styles from './ExerciseBrowser.module.css'
 
 type MuscleFilter = MuscleGroup | 'all'
@@ -26,19 +27,21 @@ interface Props {
   mode: 'edit' | 'add'
   /** Что показать, когда поиск ничего не нашёл; получает введённый текст. */
   renderEmpty?: (query: string) => ReactNode
+  /** Похожие упражнения — сверху, пока нет поиска и фильтра. */
+  suggested?: Exercise[]
 }
 
 /**
  * Поиск, фильтр по группе мышц и список упражнений. Без фильтров список разбит
  * по группам мышц, с фильтром — один общий список по алфавиту.
  */
-export function ExerciseBrowser({ exercises, onSelect, mode, renderEmpty }: Props) {
+export function ExerciseBrowser({ exercises, onSelect, mode, renderEmpty, suggested }: Props) {
   const [query, setQuery] = useState('')
   const [muscle, setMuscle] = useState<MuscleFilter>('all')
   const list = filterExercises(exercises, { query, muscle: muscle === 'all' ? null : muscle })
   const grouped = !query.trim() && muscle === 'all'
 
-  const row = (e: Exercise) => (
+  const row = (e: Exercise, gear = false) => (
     <li key={e.id}>
       <button type="button" className={styles.row} onClick={() => onSelect(e)}>
         <ExerciseThumb exercise={e} />
@@ -48,8 +51,8 @@ export function ExerciseBrowser({ exercises, onSelect, mode, renderEmpty }: Prop
             {!e.builtin && <span className={styles.own}>своё</span>}
           </span>
           <span className={styles.meta}>
-            {grouped ? '' : `${MUSCLE_LABELS[e.muscle]} · `}
-            {EXERCISE_TYPE_LABELS[e.type]}
+            {grouped && !gear ? '' : `${MUSCLE_LABELS[e.muscle]} · `}
+            {(gear && gearLabel(e)) || EXERCISE_TYPE_LABELS[e.type]}
             {e.note && ` · ${e.note}`}
           </span>
         </span>
@@ -81,21 +84,29 @@ export function ExerciseBrowser({ exercises, onSelect, mode, renderEmpty }: Prop
           {renderEmpty?.(query.trim())}
         </div>
       ) : grouped ? (
-        MUSCLE_GROUPS.map((m) => {
-          const group = list.filter((e) => e.muscle === m)
-          if (!group.length) return null
-          return (
-            <section key={m} className={styles.group} aria-label={MUSCLE_LABELS[m]}>
-              <h3 className={styles.groupTitle}>
-                {MUSCLE_LABELS[m]} <span className={styles.count}>{group.length}</span>
-              </h3>
-              <ul className={styles.list}>{group.map(row)}</ul>
+        <>
+          {suggested && suggested.length > 0 && (
+            <section className={styles.group} aria-label="Похожие">
+              <h3 className={styles.groupTitle}>Похожие</h3>
+              <ul className={styles.list}>{suggested.map((e) => row(e, true))}</ul>
             </section>
-          )
-        })
+          )}
+          {MUSCLE_GROUPS.map((m) => {
+            const group = list.filter((e) => e.muscle === m)
+            if (!group.length) return null
+            return (
+              <section key={m} className={styles.group} aria-label={MUSCLE_LABELS[m]}>
+                <h3 className={styles.groupTitle}>
+                  {MUSCLE_LABELS[m]} <span className={styles.count}>{group.length}</span>
+                </h3>
+                <ul className={styles.list}>{group.map((e) => row(e))}</ul>
+              </section>
+            )
+          })}
+        </>
       ) : (
         <ul className={styles.list} aria-label="Найденные упражнения">
-          {list.map(row)}
+          {list.map((e) => row(e))}
         </ul>
       )}
     </div>

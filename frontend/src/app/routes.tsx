@@ -1,6 +1,7 @@
 import { Navigate, type RouteObject } from 'react-router'
 import { HistoryDetailScreen } from '../screens/HistoryDetailScreen'
 import { HelpScreen } from '../screens/HelpScreen'
+import { IntervalScreen } from '../screens/IntervalScreen'
 import { LibraryScreen } from '../screens/LibraryScreen'
 import { NotesScreen } from '../screens/NotesScreen'
 import { NutritionScreen } from '../screens/NutritionScreen'
@@ -13,6 +14,7 @@ import { RunScreen } from '../screens/RunScreen'
 import { SettingsScreen } from '../screens/SettingsScreen'
 import { TodayScreen } from '../screens/TodayScreen'
 import { WorkoutScreen } from '../screens/WorkoutScreen'
+import { WelcomeScreen } from '../screens/WelcomeScreen'
 import { WorkoutSummaryScreen } from '../screens/WorkoutSummaryScreen'
 import { Layout } from './Layout'
 
@@ -21,6 +23,8 @@ export const routes: RouteObject[] = [
   { path: 'workout', element: <WorkoutScreen /> },
   { path: 'history/:workoutId/edit', element: <WorkoutScreen mode="edit" /> },
   { path: 'run/active', element: <RunActiveScreen /> },
+  { path: 'interval', element: <IntervalScreen /> },
+  { path: 'welcome', element: <WelcomeScreen /> },
   {
     element: <Layout />,
     children: [

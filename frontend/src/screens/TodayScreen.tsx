@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
+import { Navigate, useNavigate } from 'react-router'
 import { useRepos } from '../app/dataContext'
 import { useNow } from '../app/hooks/useNow'
 import { Button } from '../components/Button'
@@ -10,10 +10,12 @@ import { LiveCard, LiveIcon } from '../components/LiveCard'
 import { Screen, SectionLabel } from '../components/Screen'
 import { Segmented } from '../components/Segmented'
 import { Sheet } from '../components/Sheet'
-import { formatLongDate } from '../components/dates'
+import { formatLongDate, shortDate } from '../components/dates'
 import { plural } from '../domain/plural'
 import { doneSetCount, parseISODate, workoutTonnage } from '../domain/metrics'
 import { formatInteger } from '../domain/number'
+import type { DeloadAdvice, DeloadWeek } from '../domain/deload'
+import { needsOnboarding } from '../domain/onboarding'
 import { formatPlan } from '../domain/programs'
 import { formatKm } from '../domain/run'
 import { StepsCard } from '../components/steps/StepsCard'
@@ -35,8 +37,21 @@ export function TodayScreen() {
   const now = useNow(1000, !!t.active)
   const programs = useLiveQuery(() => repos.programs.list(), [repos])
   const activeRun = useLiveQuery(() => repos.runs.getActive(), [repos])
+  const firstRun = useLiveQuery(
+    async () =>
+      needsOnboarding({
+        onboarded: await repos.meta.get('onboarded'),
+        programs: (await repos.programs.list()).length,
+        workouts: (await repos.workouts.listDone()).length,
+      }),
+    [repos],
+  )
 
-  if (t.active === undefined || t.plan === undefined || !t.week) return null
+  // Совсем пустое приложение — сначала знакомство: цель, программа, вес
+  if (firstRun) return <Navigate to="/welcome" replace />
+  if (t.active === undefined || t.plan === undefined || !t.week || firstRun === undefined) {
+    return null
+  }
 
   const quick: { icon: IconName; label: string; aria?: string; onClick: () => void }[] = [
     ...(!t.active && programs?.length
@@ -128,34 +143,10 @@ export function TodayScreen() {
 
   const editPlan = () => t.plan?.programId && navigate(`/programs/${t.plan.programId}`)
 
-  const extras = (
-    <>
-      {t.week.backupDue && !t.active && (
-        <button type="button" className={styles.reminder} onClick={() => navigate('/settings')}>
-          <span className={styles.reminderTitle}>Сохраните резервную копию</span>
-          <span className={styles.reminderText}>Данные хранятся только на этом телефоне.</span>
-        </button>
-      )}
-      {t.error && (
-        <p role="alert" className={styles.error}>
-          {t.error}
-        </p>
-      )}
-    </>
-  )
-
   return (
     <Screen title="Сегодня" eyebrow={formatLongDate(new Date())}>
       {activeBanner}
-      {noProgram}
-
-      {week}
-      <DayRings
-        active={liveSets}
-        doneToday={t.week.days.find((d) => d.today)?.workouts.length ?? 0}
-      />
-      {isAndroidApp() && <StepsCard />}
-      {activeRun ? (
+      {activeRun && (
         <LiveCard
           label={`${activeRun.kind === 'run' ? 'Пробежка' : 'Прогулка'} идёт`}
           title={`${formatKm(activeRun.distanceM)} км`}
@@ -167,18 +158,10 @@ export function TodayScreen() {
             </LiveIcon>
           }
         />
-      ) : (
-        <button type="button" className={styles.runCard} onClick={() => navigate('/run')}>
-          <span className={styles.runIcon}>
-            <Icon name="run" />
-          </span>
-          <span className={styles.runText}>
-            <b>Бег и ходьба</b>
-            <span>Маршрут, километры и темп по GPS</span>
-          </span>
-          <Icon name="chevron" size={18} />
-        </button>
       )}
+      {noProgram}
+
+      {/* Главное — что делать сегодня: план, а под ним другие способы начать */}
       {t.plan && (
         <PlanList
           plan={t.plan}
@@ -188,21 +171,71 @@ export function TodayScreen() {
           onLight={t.active ? undefined : t.setLight}
         />
       )}
-      <div className={styles.chips}>
-        {quick.map((q) => (
-          <button
-            key={q.label}
-            type="button"
-            className={styles.chip}
-            onClick={q.onClick}
-            aria-label={q.aria}
-          >
-            <Icon name={q.icon} size={18} />
-            {q.label}
+      {quick.length > 0 && (
+        <div className={styles.chips}>
+          {quick.map((q) => (
+            <button
+              key={q.label}
+              type="button"
+              className={styles.chip}
+              onClick={q.onClick}
+              aria-label={q.aria}
+            >
+              <Icon name={q.icon} size={18} />
+              {q.label}
+            </button>
+          ))}
+        </div>
+      )}
+      {t.error && (
+        <p role="alert" className={styles.error}>
+          {t.error}
+        </p>
+      )}
+      {!t.active && t.deload && (t.deload.week || (t.deload.advice && programs?.length)) && (
+        <DeloadCard
+          week={t.deload.week}
+          advice={t.deload.advice}
+          onStart={() => void t.startDeload()}
+          onEnd={() => t.deload?.week && void t.endDeload(t.deload.week)}
+          onSnooze={() => void t.snoozeDeload()}
+        />
+      )}
+
+      {week}
+      <DayRings
+        active={liveSets}
+        doneToday={t.week.days.find((d) => d.today)?.workouts.length ?? 0}
+      />
+      {isAndroidApp() && <StepsCard />}
+      <div className={styles.tools}>
+        {!activeRun && (
+          <button type="button" className={styles.tool} onClick={() => navigate('/run')}>
+            <span className={styles.toolIcon}>
+              <Icon name="run" size={20} />
+            </span>
+            <span className={styles.toolText}>
+              <b>Бег и ходьба</b>
+              <span>Маршрут по GPS</span>
+            </span>
           </button>
-        ))}
+        )}
+        <button type="button" className={styles.tool} onClick={() => navigate('/interval')}>
+          <span className={styles.toolIcon} data-tone="pink">
+            <Icon name="timer" size={20} />
+          </span>
+          <span className={styles.toolText}>
+            <b>Таймер</b>
+            <span>Табата, EMOM</span>
+          </span>
+        </button>
       </div>
-      {extras}
+      {t.week.backupDue && !t.active && (
+        <button type="button" className={styles.reminder} onClick={() => navigate('/settings')}>
+          <span className={styles.reminderTitle}>Сохраните резервную копию</span>
+          <span className={styles.reminderText}>Данные хранятся только на этом телефоне.</span>
+        </button>
+      )}
       {t.plan && !t.active && (
         <>
           {/* место под закреплённую кнопку, чтобы она не закрывала низ экрана */}
@@ -266,9 +299,12 @@ function planLine(i: TodayPlan['items'][number]): string {
 function metaLine(plan: TodayPlan): string {
   const n = plan.items.length
   return n
-    ? `${n} ${plural(n, 'упражнение', 'упражнения', 'упражнений')} · ~${plan.minutes} мин`
+    ? `${n} ${plural(n, 'упражнение', 'упражнения', 'упражнений')} · ~${plan.minutes} мин${plan.deload ? ' · разгрузка' : ''}`
     : 'Пока без упражнений'
 }
+
+/** Сколько упражнений плана видно сразу. */
+const PLAN_PREVIEW = 4
 
 const LOADS: { value: 'heavy' | 'light'; label: string }[] = [
   { value: 'heavy', label: 'Тяжёлая' },
@@ -292,6 +328,11 @@ function PlanList({
   light: boolean
   onLight?: (light: boolean) => void
 }) {
+  const [expanded, setExpanded] = useState(false)
+  // Длинный план не растягивает экран: первые упражнения и «ещё N»
+  const cut = !expanded && plan.items.length > PLAN_PREVIEW + 1
+  const shown = cut ? plan.items.slice(0, PLAN_PREVIEW) : plan.items
+  const hidden = plan.items.length - shown.length
   return (
     <section className={`${styles.card} ${frame.frame}`} aria-label={plan.source}>
       <div className={styles.listHead}>
@@ -331,7 +372,7 @@ function PlanList({
       )}
       {plan.items.length > 0 && (
         <ol className={styles.listPlan}>
-          {plan.items.map((i, n) => (
+          {shown.map((i, n) => (
             <li key={n}>
               <ExerciseThumb exercise={i.exercise ?? { id: '', name: i.name }} mark={n + 1} />
               <span className={styles.listText}>
@@ -342,6 +383,62 @@ function PlanList({
           ))}
         </ol>
       )}
+      {hidden > 0 && (
+        <button type="button" className={styles.more} onClick={() => setExpanded(true)}>
+          Ещё {hidden} {plural(hidden, 'упражнение', 'упражнения', 'упражнений')}
+        </button>
+      )}
+    </section>
+  )
+}
+
+/** Неделя разгрузки: подсказка после 4–6 недель роста весов или напоминание, что она идёт. */
+function DeloadCard({
+  week,
+  advice,
+  onStart,
+  onEnd,
+  onSnooze,
+}: {
+  week: DeloadWeek | null
+  advice: DeloadAdvice
+  onStart: () => void
+  onEnd: () => void
+  onSnooze: () => void
+}) {
+  if (week) {
+    return (
+      <section className={styles.deload} aria-label="Неделя разгрузки">
+        <span className={styles.reminderTitle}>Неделя разгрузки · до {shortDate(week.until)}</span>
+        <span className={styles.reminderText}>
+          Подходов на 40 % меньше, веса те же — без рекордов, пусть суставы отдохнут.
+        </span>
+        <div className={styles.deloadActions}>
+          <Button size="sm" variant="ghost" onClick={onEnd}>
+            Закончить раньше
+          </Button>
+        </div>
+      </section>
+    )
+  }
+  if (!advice) return null
+  const weeks = `${advice.weeks} ${plural(advice.weeks, 'неделю', 'недели', 'недель')}`
+  return (
+    <section className={styles.deload} aria-label="Неделя разгрузки">
+      <span className={styles.reminderTitle}>
+        {advice.level === 'due' ? 'Пора неделю разгрузки' : 'Может, неделю разгрузки?'}
+      </span>
+      <span className={styles.reminderText}>
+        Веса растут уже {weeks} подряд. Неделя с подходами −40 % снимет усталость.
+      </span>
+      <div className={styles.deloadActions}>
+        <Button size="sm" variant="ghost" onClick={onSnooze}>
+          Не сейчас
+        </Button>
+        <Button size="sm" variant="primary" onClick={onStart}>
+          Начать разгрузку
+        </Button>
+      </div>
     </section>
   )
 }

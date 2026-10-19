@@ -37,6 +37,15 @@
   letter-spacing: var(--title-spacing);
 }
 
+/* Вложенный экран (со стрелкой «Назад»): заголовок мельче и в одну строку */
+.nested {
+  overflow: hidden;
+  font-size: calc(var(--title-size) * 0.8);
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Подпись раздела: цветная черта слева и тающая линия справа */
 .label {
   display: flex;

@@ -13,12 +13,16 @@ export function manualClock(start = new Date(2026, 8, 21, 18, 0).getTime()) {
   return clock
 }
 
-/** Новая пустая база с уникальным именем для каждого теста. */
-export async function setup() {
+/**
+ * Новая пустая база с уникальным именем для каждого теста.
+ * Знакомство при первом запуске считается пройденным — иначе пустая база уводит на /welcome.
+ */
+export async function setup({ onboarded = true } = {}) {
   const clock = manualClock()
   const db = new FitnessDB(`test-${crypto.randomUUID()}`)
   const repos = createRepositories(db, clock)
   await repos.init()
+  if (onboarded) await repos.meta.set('onboarded', true)
   return { ...repos, clock }
 }
 

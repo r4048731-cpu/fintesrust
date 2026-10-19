@@ -24,7 +24,13 @@ export function Screen({ title, eyebrow, action, onBack, children }: Props) {
         )}
         <div className={styles.titles}>
           {eyebrow && <p className={styles.eyebrow}>{eyebrow}</p>}
-          <h1 className={styles.title}>{title}</h1>
+          {/* У вложенных экранов заголовок меньше и в одну строку: длинный — с многоточием */}
+          <h1
+            className={onBack ? `${styles.title} ${styles.nested}` : styles.title}
+            title={onBack ? title : undefined}
+          >
+            {title}
+          </h1>
         </div>
         {action}
       </header>

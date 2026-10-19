@@ -1,6 +1,9 @@
 // Модель данных приложения (ТЗ, раздел 3; архитектура, раздел 7.3).
 
 import type { AiMessage } from './ai'
+import type { BuilderInput } from './builder'
+import type { DeloadWeek } from './deload'
+import type { IntervalConfig, IntervalMode } from './interval'
 
 export type ID = string
 
@@ -164,6 +167,37 @@ export interface BodyWeight extends Syncable {
   timeOfDay?: WeighTime
 }
 
+/** Замеры тела, см (этап 22.3). */
+export const MEASURE_KEYS = ['waist', 'chest', 'hips', 'thigh', 'biceps'] as const
+export type MeasureKey = (typeof MEASURE_KEYS)[number]
+
+export const MEASURE_LABELS: Record<MeasureKey, string> = {
+  waist: 'Талия',
+  chest: 'Грудь',
+  hips: 'Бёдра',
+  thigh: 'Бедро',
+  biceps: 'Бицепс',
+}
+
+/** Замеры за день: одна запись на дату, незаполненные замеры отсутствуют. */
+export interface Measurement extends Syncable {
+  date: ISODate
+  values: Partial<Record<MeasureKey, number>>
+}
+
+/**
+ * Фото прогресса (этап 21.11): снимок тела за день. Картинки — JPEG в data URL:
+ * так они без перевода попадают в резервную копию. На одну дату может быть несколько снимков.
+ */
+export interface ProgressPhoto extends Syncable {
+  date: ISODate
+  /** Снимок, уменьшенный до 1280 px по длинной стороне. */
+  image: string
+  /** Миниатюра для сетки, до 360 px. */
+  thumb: string
+  createdAt: Timestamp
+}
+
 /** Калории и белки, жиры, углеводы. Калории в ккал, остальное в граммах. */
 export interface Nutrients {
   calories: number
@@ -216,6 +250,8 @@ export interface MetaValues {
   nutritionPlan: Nutrients | null
   /** Пол, возраст, рост, активность и цель для расчёта плана; null — не вводились. */
   bodyProfile: BodyProfile | null
+  /** Последние ответы в «Подобрать программу»; null — ещё не подбирали. */
+  builderInput: BuilderInput | null
   /** Любимые рецепты — id встроенных и своих, в порядке добавления. */
   favoriteRecipes: ID[]
   /** Переписка с помощником, последние сообщения. */
@@ -224,6 +260,14 @@ export interface MetaValues {
   aiUseContext: boolean
   /** Голосом на каждом километре пробежки: «1 километр, темп 5:30». */
   runVoice: boolean
+  /** Интервальный таймер: последний режим и настройки каждого; null — ещё не запускали. */
+  /** Знакомство при первом запуске пройдено или пропущено. */
+  onboarded: boolean
+  /** Последняя или идущая неделя разгрузки; null — ещё не было. */
+  deload: DeloadWeek | null
+  /** До какого дня не предлагать разгрузку («Не сейчас»). */
+  deloadSnoozedUntil: ISODate | null
+  intervalTimer: { mode: IntervalMode; configs: Record<IntervalMode, IntervalConfig> } | null
 }
 
 export type MetaKey = keyof MetaValues

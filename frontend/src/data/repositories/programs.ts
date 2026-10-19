@@ -1,7 +1,7 @@
 import { normalizeSupersets } from '../../domain/superset'
 import { newDay } from '../../domain/programs'
 import { PROGRAM_TEMPLATES } from '../../domain/templates'
-import type { ID, Program, ProgramDay, ProgramKind } from '../../domain/types'
+import type { ID, PlanItem, Program, ProgramDay, ProgramKind } from '../../domain/types'
 import type { FitnessDB } from '../db'
 import type { Clock } from './clock'
 import { metaRepo } from './meta'
@@ -20,6 +20,15 @@ export function programsRepo(db: FitnessDB, clock: Clock) {
   async function getAlive(id: ID): Promise<Program | undefined> {
     const p = await db.programs.get(id)
     return p && p.deletedAt === null ? p : undefined
+  }
+
+  /** Добавляет программу; первая созданная становится активной. */
+  async function insert(program: Program): Promise<Program> {
+    await db.transaction('rw', db.programs, db.meta, async () => {
+      await db.programs.add(program)
+      if (!(await meta.get('activeProgramId'))) await meta.set('activeProgramId', program.id)
+    })
+    return program
   }
 
   async function save(program: Program): Promise<Program> {
@@ -61,11 +70,28 @@ export function programsRepo(db: FitnessDB, clock: Clock) {
         updatedAt: clock(),
         deletedAt: null,
       }
-      await db.transaction('rw', db.programs, db.meta, async () => {
-        await db.programs.add(program)
-        if (!(await meta.get('activeProgramId'))) await meta.set('activeProgramId', program.id)
-      })
-      return program
+      return insert(program)
+    },
+
+    /** Программа из «Подобрать программу»: готовые дни, первая созданная становится активной. */
+    async createBuilt(built: {
+      name: string
+      kind: ProgramKind
+      days: { name: string; items: PlanItem[] }[]
+    }): Promise<Program> {
+      const program: Program = {
+        id: newId(),
+        name: built.name,
+        kind: built.kind,
+        days: built.days.map((d) => ({
+          id: newId(),
+          name: d.name,
+          items: d.items.map((i) => ({ ...i })),
+        })),
+        updatedAt: clock(),
+        deletedAt: null,
+      }
+      return insert(program)
     },
 
     async duplicate(id: ID): Promise<Program> {

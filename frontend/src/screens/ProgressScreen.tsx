@@ -1,8 +1,10 @@
 import { useLiveQuery } from 'dexie-react-hooks'
+import { useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { useRepos } from '../app/dataContext'
 import { LineChart, type LinePoint, type LineSeries } from '../components/charts/LineChart'
 import { EmptyState } from '../components/EmptyState'
+import { OneRMSheet } from '../components/OneRMSheet'
 import { Card, Screen, SectionLabel } from '../components/Screen'
 import { Segmented } from '../components/Segmented'
 import {
@@ -14,6 +16,7 @@ import {
   type SessionStats,
 } from '../domain/metrics'
 import { formatDecimal } from '../domain/number'
+import { best1RMSet } from '../domain/oneRM'
 import { plural } from '../domain/plural'
 import type { Exercise, ExerciseType } from '../domain/types'
 import { formatSet } from '../domain/workout'
@@ -156,6 +159,7 @@ export function ProgressScreen() {
 function WorkoutProgress() {
   const repos = useRepos()
   const [params, setParams] = useSearchParams()
+  const [calc, setCalc] = useState(false)
 
   const data = useLiveQuery(async () => {
     const workouts = await repos.workouts.listDone()
@@ -240,7 +244,12 @@ function WorkoutProgress() {
           {exercise.type === 'weight' && (
             <>
               <Tile label="Макс. вес" value={kg(records.maxWeightKg)} />
-              <Tile label="Расч. 1ПМ" value={kg(records.max1RM)} />
+              <Tile
+                label="Расч. 1ПМ"
+                value={kg(records.max1RM)}
+                hint="проценты ›"
+                onClick={() => setCalc(true)}
+              />
               <Tile label="Лучший подход" value={bestSet ? formatSet(bestSet, 'weight') : '—'} />
             </>
           )}
@@ -257,6 +266,14 @@ function WorkoutProgress() {
             </>
           )}
         </div>
+      )}
+      {exercise?.type === 'weight' && (
+        <OneRMSheet
+          open={calc}
+          onClose={() => setCalc(false)}
+          initial={best1RMSet(history.flatMap((s) => s.sets)) ?? undefined}
+          exerciseName={exercise.name}
+        />
       )}
 
       <Card framed>
@@ -326,11 +343,29 @@ function WorkoutProgress() {
   )
 }
 
-function Tile({ label, value }: { label: string; value: string }) {
-  return (
-    <div className={styles.tile}>
+function Tile({
+  label,
+  value,
+  hint,
+  onClick,
+}: {
+  label: string
+  value: string
+  hint?: string
+  onClick?: () => void
+}) {
+  const content = (
+    <>
       <span className={styles.label}>{label}</span>
       <span className={styles.tileValue}>{value}</span>
-    </div>
+      {hint && <span className={styles.tileHint}>{hint}</span>}
+    </>
+  )
+  return onClick ? (
+    <button type="button" className={`${styles.tile} ${styles.tileButton}`} onClick={onClick}>
+      {content}
+    </button>
+  ) : (
+    <div className={styles.tile}>{content}</div>
   )
 }

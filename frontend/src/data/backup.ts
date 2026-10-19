@@ -6,10 +6,12 @@ import type {
   CustomRecipe,
   Exercise,
   Meal,
+  Measurement,
   MetaKey,
   MetaRecord,
   Note,
   Program,
+  ProgressPhoto,
   Workout,
 } from '../domain/types'
 import type { Run } from '../domain/run'
@@ -43,6 +45,10 @@ export interface Backup {
   recipes: CustomRecipe[]
   /** Пробежки и прогулки; появились в схеме 6. */
   runs: Run[]
+  /** Фото прогресса; появились в схеме 7. */
+  photos: ProgressPhoto[]
+  /** Замеры тела; появились в схеме 8. */
+  measurements: Measurement[]
   meta: MetaRecord[]
 }
 
@@ -67,6 +73,8 @@ export async function createBackup(db: FitnessDB, now: number): Promise<Backup> 
       db.notes,
       db.recipes,
       db.runs,
+      db.photos,
+      db.measurements,
       db.meta,
     ],
     async () => ({
@@ -82,6 +90,8 @@ export async function createBackup(db: FitnessDB, now: number): Promise<Backup> 
       notes: await db.notes.toArray(),
       recipes: await db.recipes.toArray(),
       runs: await db.runs.toArray(),
+      photos: await db.photos.toArray(),
+      measurements: await db.measurements.toArray(),
       // Время последней копии — свойство устройства, а не данных: в файл не попадает
       meta: (await db.meta.toArray()).filter((m) => !DEVICE_ONLY.includes(m.key)),
     }),
@@ -127,6 +137,8 @@ export function parseBackup(text: string): Backup {
     'notes',
     'recipes',
     'runs',
+    'photos',
+    'measurements',
   ] as const) {
     const list = b[key] as unknown
     if (!Array.isArray(list) || !list.every(hasId)) {
@@ -153,6 +165,8 @@ function migrate(data: Record<string, unknown>): Backup {
     notes: list(data.notes),
     recipes: list(data.recipes),
     runs: list(data.runs),
+    photos: list(data.photos),
+    measurements: list(data.measurements),
   } as unknown as Backup
 }
 
@@ -172,6 +186,8 @@ export async function restoreBackup(db: FitnessDB, b: Backup): Promise<BackupCou
       db.notes,
       db.recipes,
       db.runs,
+      db.photos,
+      db.measurements,
       db.meta,
     ],
     async () => {
@@ -185,6 +201,8 @@ export async function restoreBackup(db: FitnessDB, b: Backup): Promise<BackupCou
         db.notes.clear(),
         db.recipes.clear(),
         db.runs.clear(),
+        db.photos.clear(),
+        db.measurements.clear(),
         db.meta.clear(),
       ])
       await db.exercises.bulkPut(b.exercises)
@@ -195,6 +213,8 @@ export async function restoreBackup(db: FitnessDB, b: Backup): Promise<BackupCou
       await db.notes.bulkPut(b.notes)
       await db.recipes.bulkPut(b.recipes)
       await db.runs.bulkPut(b.runs)
+      await db.photos.bulkPut(b.photos)
+      await db.measurements.bulkPut(b.measurements)
       await db.meta.bulkPut(b.meta.filter((m) => !DEVICE_ONLY.includes(m.key)))
       await db.meta.bulkPut(kept)
       // Копия без отметки о стартовом наборе иначе получила бы его второй раз при запуске
@@ -217,6 +237,8 @@ export async function wipeAll(db: FitnessDB): Promise<void> {
       db.notes,
       db.recipes,
       db.runs,
+      db.photos,
+      db.measurements,
       db.meta,
     ],
     async () => {
@@ -229,6 +251,8 @@ export async function wipeAll(db: FitnessDB): Promise<void> {
         db.notes.clear(),
         db.recipes.clear(),
         db.runs.clear(),
+        db.photos.clear(),
+        db.measurements.clear(),
         db.meta.clear(),
       ])
     },

@@ -11,6 +11,18 @@ import {
   weekStreak,
   workoutTonnage,
 } from '../../domain/metrics'
+import {
+  deloadActive,
+  deloadAdvice,
+  deloadSets,
+  endDeload,
+  startDeload,
+  trainingBlock,
+  DELOAD_SNOOZE_DAYS,
+  type DeloadAdvice,
+  type DeloadWeek,
+} from '../../domain/deload'
+import { addDays } from '../../domain/nutrition'
 import type { Exercise, PlanItem, Workout } from '../../domain/types'
 
 /** Что предложить сегодня: запланированную тренировку или следующий день программы. */
@@ -28,6 +40,8 @@ export interface TodayPlan {
   /** Дни активной программы — чтобы начать не следующий по кругу, а любой. */
   days?: { id: string; name: string }[]
   dayId?: string
+  /** Идёт неделя разгрузки: подходов в плане уже меньше. */
+  deload?: boolean
 }
 
 export interface WeekDay {
@@ -105,8 +119,12 @@ export function useToday() {
     const next = await repos.programs.nextDay(program.id)
     if (!next) return null
     const day = program.days.find((d) => d.id === pickedDayId) ?? next.day
+    const deload = deloadActive(await repos.meta.get('deload'), today)
+    const dayItems = deload
+      ? day.items.map((item) => ({ ...item, sets: deloadSets(item.sets) }))
+      : day.items
     const items = await Promise.all(
-      day.items.map(async (item) => {
+      dayItems.map(async (item) => {
         const exercise = await repos.exercises.get(item.exerciseId)
         return { name: exercise?.name ?? 'Упражнение', item, exercise, sets: item.sets }
       }),
@@ -116,7 +134,7 @@ export function useToday() {
       title: day.name,
       source: program.name,
       items,
-      minutes: estimateMinutes(day.items),
+      minutes: estimateMinutes(dayItems),
       start: (options) =>
         run(() =>
           repos.workouts.start({ programId: program.id, dayId: day.id }, { light: options?.light }),
@@ -124,8 +142,22 @@ export function useToday() {
       programId: program.id,
       days: program.days.map((d) => ({ id: d.id, name: d.name })),
       dayId: day.id,
+      deload,
     }
   }, [repos, today, pickedDayId])
+
+  /** Разгрузка: идущая неделя или подсказка, что пора. */
+  const deload = useLiveQuery(async (): Promise<{
+    week: DeloadWeek | null
+    advice: DeloadAdvice
+  }> => {
+    const last = await repos.meta.get('deload')
+    if (deloadActive(last, today)) return { week: last, advice: null }
+    const snoozed = await repos.meta.get('deloadSnoozedUntil')
+    if (snoozed && today <= snoozed) return { week: null, advice: null }
+    const block = trainingBlock(await repos.workouts.listDone(), last?.until ?? null, today)
+    return { week: null, advice: deloadAdvice(block) }
+  }, [repos, today])
 
   const week = useLiveQuery(async () => {
     const done = await repos.workouts.listDone()
@@ -170,5 +202,10 @@ export function useToday() {
     pickDay: setPickedDayId,
     startFree: () => run(() => repos.workouts.start(null)),
     repeatLast: (id: string) => run(() => repos.workouts.repeat(id)),
+    deload,
+    startDeload: () => repos.meta.set('deload', startDeload(today)),
+    endDeload: (week: DeloadWeek) => repos.meta.set('deload', endDeload(week, today)),
+    snoozeDeload: () =>
+      repos.meta.set('deloadSnoozedUntil', addDays(today, DELOAD_SNOOZE_DAYS - 1)),
   }
 }

@@ -214,3 +214,21 @@
     animation: none;
   }
 }
+
+/* Новый экран мягко проявляется */
+.pageIn {
+  animation: page-in 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Только прозрачность: сдвиг сбил бы закреплённые (position: fixed) кнопки внутри */
+@keyframes page-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pageIn {
+    animation: none;
+  }
+}

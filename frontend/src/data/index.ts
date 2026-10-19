@@ -6,8 +6,10 @@ import { bodyWeightsRepo } from './repositories/bodyWeights'
 import { systemClock, type Clock } from './repositories/clock'
 import { exercisesRepo } from './repositories/exercises'
 import { mealsRepo } from './repositories/meals'
+import { measurementsRepo } from './repositories/measurements'
 import { metaRepo } from './repositories/meta'
 import { notesRepo } from './repositories/notes'
+import { photosRepo } from './repositories/photos'
 import { programsRepo } from './repositories/programs'
 import { recipesRepo } from './repositories/recipes'
 import { runsRepo } from './repositories/runs'
@@ -27,6 +29,8 @@ export function createRepositories(db: FitnessDB, clock: Clock = systemClock) {
     notes: notesRepo(db, clock),
     recipes: recipesRepo(db, clock, meta),
     runs: runsRepo(db, clock),
+    photos: photosRepo(db, clock),
+    measurements: measurementsRepo(db, clock),
     /** Вызвать один раз при запуске приложения. */
     init: () => seedIfEmpty(db, clock()),
   }

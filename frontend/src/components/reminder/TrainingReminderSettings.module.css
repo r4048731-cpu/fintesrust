@@ -1,0 +1,22 @@
+.days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.day {
+  min-height: 40px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.day[aria-pressed='true'] {
+  border-color: transparent;
+  background: var(--gradient);
+  color: var(--accent-ink);
+}

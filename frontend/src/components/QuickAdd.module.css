@@ -93,11 +93,15 @@
 .icon[data-icon='note'] {
   --qa: #d9a404;
 }
+.icon[data-icon='timer'] {
+  --qa: #db2777;
+}
 
 .icon[data-icon='food'],
 .icon[data-icon='scale'],
 .icon[data-icon='run'],
-.icon[data-icon='note'] {
+.icon[data-icon='note'],
+.icon[data-icon='timer'] {
   background: color-mix(in srgb, var(--qa) 15%, var(--surface));
   color: color-mix(in srgb, var(--qa) 80%, var(--ink));
 }

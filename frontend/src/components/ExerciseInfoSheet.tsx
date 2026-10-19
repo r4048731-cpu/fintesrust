@@ -4,6 +4,7 @@ import { useRepos } from '../app/dataContext'
 import { exerciseHistory, parseISODate, personalRecords } from '../domain/metrics'
 import { formatDecimal } from '../domain/number'
 import { bodyImage, MUSCLE_NAMES, muscleWork, type MuscleWork } from '../domain/muscles'
+import { best1RMSet } from '../domain/oneRM'
 import { newPlanItem } from '../domain/programs'
 import {
   techniqueCues,
@@ -11,11 +12,17 @@ import {
   techniqueSearchUrl,
   type TechniqueImages,
 } from '../domain/technique'
-import { EXERCISE_TYPE_LABELS, MUSCLE_LABELS, type Exercise } from '../domain/types'
+import {
+  EXERCISE_TYPE_LABELS,
+  MUSCLE_LABELS,
+  type Exercise,
+  type WorkoutSet,
+} from '../domain/types'
 import { formatSet } from '../domain/workout'
 import { Button } from './Button'
 import { formatLongDateInline } from './dates'
 import { ExerciseFormSheet } from './ExerciseFormSheet'
+import { OneRMSheet } from './OneRMSheet'
 import { Segmented } from './Segmented'
 import { Sheet } from './Sheet'
 import styles from './ExerciseInfoSheet.module.css'
@@ -62,6 +69,8 @@ export function ExerciseInfoSheet({
   const shown = (live?.id === exercise?.id ? live : null) ?? exercise
   const [editing, setEditing] = useState(false)
   const [picking, setPicking] = useState(false)
+  /** Открыт калькулятор 1ПМ: с какого подхода начать (пусто — с примера). */
+  const [calc, setCalc] = useState<Partial<WorkoutSet> | null>(null)
   /** Сообщение «Добавлено…» — только для того упражнения, к которому оно относится. */
   const [addedFor, setAddedFor] = useState<{ id: string; text: string } | null>(null)
   const added = addedFor && addedFor.id === exercise?.id ? addedFor.text : null
@@ -104,12 +113,22 @@ export function ExerciseInfoSheet({
             {tab === 'technique' ? (
               <Technique exercise={shown} />
             ) : (
-              <History exercise={shown} excludeWorkoutId={excludeWorkoutId} />
+              <History
+                exercise={shown}
+                excludeWorkoutId={excludeWorkoutId}
+                onCalc={(best) => setCalc(best ?? {})}
+              />
             )}
           </div>
         )}
       </Sheet>
       <ExerciseFormSheet open={editing} onClose={() => setEditing(false)} exercise={shown} />
+      <OneRMSheet
+        open={calc !== null}
+        onClose={() => setCalc(null)}
+        initial={calc?.weightKg ? { weightKg: calc.weightKg, reps: calc.reps ?? 1 } : undefined}
+        exerciseName={shown?.name}
+      />
       {shown && (
         <ProgramDayPicker
           open={picking}
@@ -279,9 +298,11 @@ function MuscleMap({ work }: { work: MuscleWork }) {
 function History({
   exercise,
   excludeWorkoutId,
+  onCalc,
 }: {
   exercise: Exercise
   excludeWorkoutId?: string
+  onCalc: (best: WorkoutSet | null) => void
 }) {
   const repos = useRepos()
   const all = useLiveQuery(async () => {
@@ -322,6 +343,11 @@ function History({
           <b>{all.length}</b>
         </div>
       </div>
+      {exercise.type === 'weight' && (
+        <Button block onClick={() => onCalc(best1RMSet(all.flatMap((s) => s.sets)))}>
+          Калькулятор 1ПМ и проценты
+        </Button>
+      )}
       <ul className={styles.history} aria-label="Прошлые тренировки">
         {sessions.map((s) => (
           <li key={s.workoutId}>

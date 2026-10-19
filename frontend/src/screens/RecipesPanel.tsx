@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { useRepos } from '../app/dataContext'
 import { Button } from '../components/Button'
+import { DishArt } from '../components/DishArt'
 import { Icon } from '../components/Icon'
 import { EmptyState } from '../components/EmptyState'
 import { RecipeFormSheet } from '../components/RecipeFormSheet'
@@ -84,16 +85,17 @@ export function RecipesPanel({ onAdded }: { onAdded: () => void }) {
 
   const card = (r: RecipeView) => (
     <li key={r.id} className={styles.cardWrap}>
-      <button
-        type="button"
-        className={`${styles.card} ${styles[r.collection]}`}
-        onClick={() => setOpenId(r.id)}
-      >
+      <button type="button" className={styles.card} onClick={() => setOpenId(r.id)}>
+        <span className={`${styles.artBox} ${styles[r.collection]}`}>
+          <DishArt title={r.title} ingredients={r.ingredients} className={styles.art} />
+        </span>
         <span className={styles.kcal}>{Math.round(r.nutrients.calories)} ккал</span>
-        <span className={styles.cardTitle}>{r.title}</span>
-        <span className={styles.cardMeta}>
-          {r.minutes} мин · Б {g(r.nutrients.protein)} · Ж {g(r.nutrients.fat)} · У{' '}
-          {g(r.nutrients.carbs)}
+        <span className={styles.cardBody}>
+          <span className={styles.cardTitle}>{r.title}</span>
+          <span className={styles.cardMeta}>
+            {r.minutes} мин · Б {g(r.nutrients.protein)} · Ж {g(r.nutrients.fat)} · У{' '}
+            {g(r.nutrients.carbs)}
+          </span>
         </span>
       </button>
       {/* Отдельная кнопка поверх карточки: кнопку в кнопку вкладывать нельзя */}
@@ -264,6 +266,9 @@ function RecipeDetails({ recipe, favorite, onEdit, onAdded, onRemoved }: Details
 
   return (
     <div className={styles.details}>
+      <div className={`${styles.artBox} ${styles.artBig} ${styles[recipe.collection]}`}>
+        <DishArt title={recipe.title} ingredients={recipe.ingredients} className={styles.art} />
+      </div>
       <Button
         variant={favorite ? 'primary' : 'secondary'}
         icon="heart"

@@ -96,6 +96,23 @@
   text-align: left;
 }
 
+.deload {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--good);
+  border-radius: var(--radius-sm);
+  background: var(--good-soft);
+}
+
+.deloadActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+}
+
 .reminderTitle {
   font-weight: 600;
 }
@@ -179,6 +196,69 @@
   flex-direction: column;
   min-width: 0;
   font-size: 14.5px;
+}
+
+.more {
+  align-self: flex-start;
+  margin-top: -4px;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Бег и таймер — две маленькие плитки в ряд */
+.tools {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+.tool {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+}
+
+.toolIcon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.toolIcon[data-tone='pink'] {
+  background: color-mix(in srgb, var(--pink) 15%, var(--surface));
+  color: var(--pink);
+}
+
+.toolText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  font-size: 14px;
+}
+
+.toolText span {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .chips {
@@ -278,45 +358,6 @@
 }
 
 /* Карточка «Бег и ходьба» */
-.runCard {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--surface);
-  color: var(--ink);
-  text-align: left;
-}
-
-.runIcon {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: var(--accent-soft);
-  color: var(--accent);
-}
-
-.runText {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.runText span {
-  color: var(--muted);
-  font-size: 13px;
-}
-
 /* Сетка в правом верхнем углу карточки плана */
 .card::before {
   position: absolute;
@@ -329,16 +370,4 @@
   background-size: 16px 16px;
   content: '';
   mask-image: radial-gradient(100% 100% at 100% 0%, #000 20%, transparent 75%);
-}
-
-/* Точечная сетка справа в карточке бега — как подложка карты */
-.runCard::before {
-  position: absolute;
-  inset: 0 0 0 auto;
-  z-index: -1;
-  width: 55%;
-  background-image: var(--pattern-dots);
-  background-size: 10px 10px;
-  content: '';
-  mask-image: linear-gradient(to left, #000, transparent);
 }

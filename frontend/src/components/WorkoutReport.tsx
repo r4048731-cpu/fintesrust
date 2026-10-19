@@ -49,8 +49,13 @@ export function WorkoutReport({ data }: { data: WorkoutReportData }) {
         <>
           <SectionLabel>Новые рекорды</SectionLabel>
           <ul className={styles.records}>
-            {records.map((r) => (
-              <li key={r.exerciseId} className={styles.record}>
+            {records.map((r, i) => (
+              <li
+                key={r.exerciseId}
+                className={styles.record}
+                // рекорды появляются по очереди, по каждому пробегает блик
+                style={{ animationDelay: `${200 + i * 140}ms` }}
+              >
                 <span className={styles.recordText}>
                   <span className={styles.recordName}>{exercises.get(r.exerciseId)?.name}</span>
                   <span className={styles.recordWas}>

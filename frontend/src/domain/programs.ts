@@ -32,6 +32,26 @@ export function newPlanItem(exercise: Pick<Exercise, 'id' | 'type'>): PlanItem {
   }
 }
 
+/**
+ * Замена упражнения в плане: подходы, отдых и суперсет остаются, вес сбрасывается —
+ * у другого упражнения он свой. Если меняется «на время» ↔ «на повторы», повторы — по умолчанию.
+ */
+export function replacePlanItem(
+  item: PlanItem,
+  from: Pick<Exercise, 'type'>,
+  to: Pick<Exercise, 'id' | 'type'>,
+): PlanItem {
+  const sameKind = (from.type === 'time') === (to.type === 'time')
+  const fresh = newPlanItem(to)
+  return {
+    ...item,
+    exerciseId: to.id,
+    repsMin: sameKind ? item.repsMin : fresh.repsMin,
+    repsMax: sameKind ? item.repsMax : fresh.repsMax,
+    weightKg: 0,
+  }
+}
+
 /** Переставляет элемент на соседнее место. За границы не выходит. */
 export function move<T>(list: T[], index: number, direction: -1 | 1): T[] {
   const target = index + direction

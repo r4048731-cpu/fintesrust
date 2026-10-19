@@ -1,10 +1,12 @@
 import { useState } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router'
+import { NavLink, Outlet, useLocation, useMatches } from 'react-router'
 import { AiSheet } from '../components/AiSheet'
 import { Icon, type IconName } from '../components/Icon'
 import { MoreMenu } from '../components/MoreMenu'
 import { QuickAdd } from '../components/QuickAdd'
+import { TrainingReminderSync } from '../components/reminder/TrainingReminderSync'
 import { ThemeToggle } from '../components/ThemeToggle'
+import { isAndroidApp } from '../native/steps'
 import styles from './Layout.module.css'
 
 interface Tab {
@@ -36,6 +38,9 @@ function slideDirection(to: string, from: string) {
 /** Каркас приложения: верхняя панель, содержимое вкладки и нижняя панель навигации. */
 export function Layout() {
   const { pathname } = useLocation()
+  // Ключ анимации — маршрут, а не адрес: другая программа в том же редакторе не пересоздаёт экран
+  const matches = useMatches()
+  const routeKey = matches[matches.length - 1]?.id
   const [aiOpen, setAiOpen] = useState(false)
 
   const tab = (t: Tab) => (
@@ -60,6 +65,7 @@ export function Layout() {
 
   return (
     <>
+      {isAndroidApp() && <TrainingReminderSync />}
       <header className={styles.topbar}>
         <div className={styles.topbarInner}>
           <span className={styles.brand}>Фитнес</span>
@@ -70,7 +76,10 @@ export function Layout() {
         </div>
       </header>
       <main className={styles.main}>
-        <Outlet />
+        {/* Новый экран мягко проявляется; смена вкладки внутри экрана (?view=) — без анимации */}
+        <div key={routeKey} className={styles.pageIn}>
+          <Outlet />
+        </div>
       </main>
       <QuickAdd />
       <nav className={styles.tabbar} aria-label="Разделы">

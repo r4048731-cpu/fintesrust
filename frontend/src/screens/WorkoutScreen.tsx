@@ -328,6 +328,27 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
           }}
         />
         <div className={styles.restInner}>
+          {/* Кольцо тает по мере отдыха; на последних секундах пульсирует */}
+          <svg
+            className={[styles.restRing, left > 0 && left <= 3 && styles.restSoon]
+              .filter(Boolean)
+              .join(' ')}
+            viewBox="0 0 44 44"
+            aria-hidden="true"
+          >
+            <circle cx="22" cy="22" r="18" className={styles.restTrack} />
+            <circle
+              cx="22"
+              cy="22"
+              r="18"
+              pathLength={100}
+              className={styles.restArc}
+              style={{
+                strokeDashoffset:
+                  100 - Math.min(100, Math.max(0, (100 * left) / (w.restTotalSec || 1))),
+              }}
+            />
+          </svg>
           <div className={styles.restText}>
             <span className={styles.restLabel}>{left > 0 ? 'Отдых' : 'Отдых окончен'}</span>
             <span className={styles.restTime}>
@@ -597,6 +618,7 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
       <ExercisePicker
         open={swapIndex !== null}
         title="Заменить на"
+        similarTo={swapIndex !== null ? exerciseOf(w.entries[swapIndex].exerciseId) : undefined}
         onClose={() => setSwapIndex(null)}
         onPick={async (ex) => {
           const ei = swapIndex

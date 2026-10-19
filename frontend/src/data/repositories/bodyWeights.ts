@@ -87,3 +87,25 @@ export function weightDays(rows: BodyWeight[]): WeightDay[] {
     }))
     .reverse()
 }
+
+/** Сколько дней от снимка ещё считаются «тем же весом». */
+const PHOTO_WEIGHT_DAYS = 7
+
+/**
+ * Вес на дату снимка: запись за этот день или ближайшая не дальше недели
+ * (при равном расстоянии — более ранняя). Дальше недели — null: такой вес вводил бы в заблуждение.
+ */
+export function weightNear(rows: BodyWeight[], date: ISODate): BodyWeight | null {
+  const day = (iso: ISODate) => Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10))
+  const target = day(date)
+  let best: BodyWeight | null = null
+  let bestDist = Infinity
+  for (const r of rows) {
+    const dist = Math.abs(day(r.date) - target) / 86_400_000
+    if (dist <= PHOTO_WEIGHT_DAYS && dist < bestDist) {
+      best = r
+      bestDist = dist
+    }
+  }
+  return best
+}

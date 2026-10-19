@@ -10,3 +10,23 @@ export function formatLongDate(d: Date): string {
 export function formatLongDateInline(d: Date): string {
   return longDate.format(d)
 }
+
+const MONTHS_SHORT = [
+  'янв',
+  'фев',
+  'мар',
+  'апр',
+  'мая',
+  'июн',
+  'июл',
+  'авг',
+  'сен',
+  'окт',
+  'ноя',
+  'дек',
+]
+
+/** «25 сен» из «2026-09-25». */
+export function shortDate(iso: string): string {
+  return `${Number(iso.slice(8, 10))} ${MONTHS_SHORT[Number(iso.slice(5, 7)) - 1]}`
+}

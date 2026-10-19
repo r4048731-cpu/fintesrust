@@ -161,3 +161,17 @@
   color: var(--accent-ink);
   box-shadow: 0 4px 14px rgb(124 58 237 / 30%);
 }
+
+.emptyActions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.template.builder {
+  border-color: transparent;
+  background:
+    linear-gradient(var(--bg), var(--bg)) padding-box,
+    var(--gradient) border-box;
+  border-width: 2px;
+}

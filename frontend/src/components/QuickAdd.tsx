@@ -95,6 +95,15 @@ export function QuickAdd() {
       },
     },
     {
+      icon: 'timer',
+      title: 'Интервальный таймер',
+      text: 'Табата, EMOM, круговая — со звуком',
+      onClick: () => {
+        setOpen(null)
+        navigate('/interval')
+      },
+    },
+    {
       icon: 'note',
       title: 'Заметка',
       text: 'Записать мысль, план или настройку',

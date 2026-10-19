@@ -9,13 +9,15 @@ import type {
   CustomRecipe,
   Exercise,
   Meal,
+  Measurement,
   MetaRecord,
   Note,
   Program,
+  ProgressPhoto,
   Workout,
 } from '../domain/types'
 
-export const SCHEMA_VERSION = 6
+export const SCHEMA_VERSION = 8
 
 export class FitnessDB extends Dexie {
   exercises!: EntityTable<Exercise, 'id'>
@@ -27,6 +29,8 @@ export class FitnessDB extends Dexie {
   notes!: EntityTable<Note, 'id'>
   recipes!: EntityTable<CustomRecipe, 'id'>
   runs!: EntityTable<Run, 'id'>
+  photos!: EntityTable<ProgressPhoto, 'id'>
+  measurements!: EntityTable<Measurement, 'id'>
 
   constructor(name = 'fitnes') {
     super(name)
@@ -55,6 +59,14 @@ export class FitnessDB extends Dexie {
     // Версия 6: пробежки и прогулки по GPS. Новая таблица, старые данные не трогаются.
     this.version(6).stores({
       runs: 'id, status, startedAt',
+    })
+    // Версия 7: фото прогресса. Новая таблица, старые данные не трогаются.
+    this.version(7).stores({
+      photos: 'id, date',
+    })
+    // Версия 8: замеры тела. Новая таблица, старые данные не трогаются.
+    this.version(8).stores({
+      measurements: 'id, date',
     })
   }
 }

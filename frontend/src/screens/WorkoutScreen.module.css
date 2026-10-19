@@ -1,4 +1,5 @@
 .page {
+  animation: page-in 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
   min-height: 100dvh;
 }
 
@@ -323,6 +324,46 @@
   max-width: var(--content-max);
   margin: 0 auto;
   padding: 10px var(--gutter);
+}
+
+.restRing {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  rotate: -90deg;
+}
+
+.restTrack,
+.restArc {
+  fill: none;
+  stroke-width: 5;
+}
+
+.restTrack {
+  stroke: var(--line);
+}
+
+.restArc {
+  stroke: var(--violet);
+  stroke-dasharray: 100 100;
+  stroke-linecap: round;
+  transition:
+    stroke-dashoffset 0.3s linear,
+    stroke 0.3s;
+}
+
+.restOver .restArc {
+  stroke: var(--pink);
+}
+
+.restSoon {
+  animation: rest-pulse 1s ease-in-out infinite;
+}
+
+@keyframes rest-pulse {
+  50% {
+    scale: 1.12;
+  }
 }
 
 .restText {
@@ -699,6 +740,7 @@
 /* Новый рекорд: плашка поверх шапки шторки, выскакивает и сама уходит */
 .recordFlash {
   position: absolute;
+  overflow: hidden;
   top: 10px;
   right: 12px;
   left: 12px;
@@ -721,6 +763,7 @@
 }
 
 .recordIcon {
+  position: relative;
   display: grid;
   flex: none;
   place-items: center;
@@ -729,6 +772,42 @@
   border-radius: 11px;
   background: linear-gradient(135deg, #f59e0b, #f97316);
   color: #fff;
+}
+
+/* Вспышка: от кубка расходится кольцо, по плашке пробегает блик */
+.recordIcon::before {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 0 0 rgb(249 115 22 / 60%);
+  content: '';
+  animation: record-burst 900ms ease-out 2;
+}
+
+.recordFlash::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(105deg, transparent 30%, rgb(255 255 255 / 45%) 48%, transparent 66%);
+  content: '';
+  translate: -110% 0;
+  animation: record-shine 900ms ease-out 300ms;
+}
+
+@keyframes record-burst {
+  to {
+    box-shadow: 0 0 0 9px rgb(249 115 22 / 0%);
+  }
+}
+
+@keyframes record-shine {
+  from {
+    translate: -110% 0;
+  }
+
+  to {
+    translate: 110% 0;
+  }
 }
 
 @keyframes record-in {
@@ -743,5 +822,30 @@
   to {
     opacity: 0;
     translate: 0 -10px;
+  }
+}
+
+/* Только прозрачность: сдвиг сбил бы закреплённые (position: fixed) кнопки внутри */
+@keyframes page-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .restArc {
+    transition: none;
+  }
+
+  .restSoon,
+  .recordIcon::before,
+  .recordFlash::after {
+    animation: none;
   }
 }

@@ -17,6 +17,7 @@ import {
   move,
   moveDay,
   newPlanItem,
+  replacePlanItem,
   PLAN_LIMITS,
   removeDay,
   updatePlanItem,
@@ -37,6 +38,8 @@ export function ProgramEditScreen() {
   const [saving, setSaving] = useState<'idle' | 'pending' | 'saved'>('idle')
   const [expanded, setExpanded] = useState<string | null>(null)
   const [pickerDay, setPickerDay] = useState<string | null>(null)
+  /** Какое упражнение дня заменяем. */
+  const [swap, setSwap] = useState<{ dayId: string; index: number } | null>(null)
   /** Карточка упражнения из дня: техника и история. */
   const [card, setCard] = useState<{ exercise: Exercise; tab: 'technique' | 'history' } | null>(
     null,
@@ -94,6 +97,9 @@ export function ProgramEditScreen() {
     )
   }
 
+  const swapped = swap
+    ? program.days.find((d) => d.id === swap.dayId)?.items[swap.index]
+    : undefined
   const exerciseOf = (id: string): Exercise =>
     exercises.get(id) ?? {
       id,
@@ -352,6 +358,14 @@ export function ProgramEditScreen() {
                         />
                         <Button
                           size="sm"
+                          icon="swap"
+                          onClick={() => setSwap({ dayId: day.id, index: ii })}
+                          aria-label={`Заменить «${ex.name}»`}
+                        >
+                          Заменить
+                        </Button>
+                        <Button
+                          size="sm"
                           variant="danger"
                           className={styles.pushRight}
                           onClick={() => {
@@ -469,6 +483,25 @@ export function ProgramEditScreen() {
           const day = program.days.find((d) => d.id === dayId)
           changeDay(dayId, (d) => ({ ...d, items: [...d.items, newPlanItem(ex)] }))
           if (day) setExpanded(`${dayId}:${day.items.length}`)
+        }}
+      />
+
+      <ExercisePicker
+        open={swap !== null}
+        title="Заменить на"
+        similarTo={swapped && exercises.get(swapped.exerciseId)}
+        onClose={() => setSwap(null)}
+        onPick={(ex) => {
+          const target = swap
+          setSwap(null)
+          if (!target || !swapped) return
+          const from = exercises.get(swapped.exerciseId) ?? ex
+          changeDay(target.dayId, (d) => ({
+            ...d,
+            items: d.items.map((it, j) =>
+              j === target.index ? replacePlanItem(it, from, ex) : it,
+            ),
+          }))
         }}
       />
     </Screen>
