@@ -36,6 +36,8 @@ jobs:
       - run: npm run build
         env:
           VITE_APP_VERSION: ${{ github.sha }}
+      # Android-приложение для страницы установки (собирается на компьютере: npm run apk)
+      - run: cp apk/fitnes.apk dist/fitnes.apk
       - uses: actions/upload-pages-artifact@v3
         with:
           path: frontend/dist

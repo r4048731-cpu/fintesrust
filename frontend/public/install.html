@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+    <meta name="theme-color" content="#f7f6fb" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#09080d" media="(prefers-color-scheme: dark)" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Установить Фитнес</title>
+    <!-- Страница по ссылке: Android — скачать APK, iPhone — добавить сайт на экран «Домой» -->
+    <style>
+      :root {
+        --bg: #f7f6fb;
+        --card: #ffffff;
+        --text: #17151f;
+        --muted: #6b6680;
+        --line: #e4e1ee;
+        --gradient: linear-gradient(120deg, #3563e9 0%, #7c3aed 50%, #db2777 100%);
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #09080d;
+          --card: #14121b;
+          --text: #f3f1f8;
+          --muted: #9d98b0;
+          --line: #2a2636;
+          --gradient: linear-gradient(120deg, #4f6ef7 0%, #8b5cf6 50%, #e0447f 100%);
+          color-scheme: dark;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          16px/1.5 system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+      }
+      main {
+        max-width: 440px;
+        margin: 0 auto;
+        padding: calc(32px + env(safe-area-inset-top, 0px)) 16px 40px;
+      }
+      .logo {
+        display: block;
+        width: 72px;
+        height: 72px;
+        margin-bottom: 16px;
+        border-radius: 18px;
+      }
+      h1 {
+        margin: 0 0 6px;
+        font-size: 28px;
+        line-height: 1.15;
+        background: var(--gradient);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .lead {
+        margin: 0 0 24px;
+        color: var(--muted);
+      }
+      section {
+        margin-bottom: 14px;
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        background: var(--card);
+      }
+      section.mine {
+        border-color: transparent;
+        background:
+          linear-gradient(var(--card), var(--card)) padding-box,
+          var(--gradient) border-box;
+        border-width: 2px;
+      }
+      h2 {
+        margin: 0 0 10px;
+        font-size: 18px;
+      }
+      ol {
+        margin: 0;
+        padding-left: 20px;
+      }
+      li + li {
+        margin-top: 6px;
+      }
+      .btn {
+        display: block;
+        margin: 4px 0 12px;
+        padding: 14px;
+        border-radius: 14px;
+        background: var(--gradient);
+        color: #fff;
+        font-weight: 600;
+        text-align: center;
+        text-decoration: none;
+      }
+      .note {
+        margin: 10px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .open {
+        display: block;
+        margin-top: 20px;
+        color: var(--muted);
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img class="logo" src="./icon-192.png" alt="" />
+      <h1>Фитнес</h1>
+      <p class="lead">
+        Программы тренировок, подходы, веса, бег и питание. Бесплатно, без регистрации — все данные
+        хранятся только на вашем телефоне.
+      </p>
+
+      <section id="android">
+        <h2>Android</h2>
+        <a class="btn" href="./fitnes.apk" download="fitnes.apk">Скачать приложение</a>
+        <ol>
+          <li>Скачайте файл; если Chrome предупредит — «Всё равно скачать».</li>
+          <li>Откройте скачанный <b>fitnes.apk</b>.</li>
+          <li>
+            Если телефон не даёт ставить — «Настройки» → разрешите установку из этого источника и
+            вернитесь назад.
+          </li>
+          <li>«Установить». На предупреждение Play Защиты — «Всё равно установить».</li>
+        </ol>
+      </section>
+
+      <section id="ios">
+        <h2>iPhone</h2>
+        <ol>
+          <li>Откройте эту страницу в <b>Safari</b>.</li>
+          <li>Нажмите «Поделиться» — квадрат со стрелкой вверх.</li>
+          <li>Выберите «На экран "Домой"» → «Добавить».</li>
+          <li>Запускайте с появившейся иконки — работает и без интернета.</li>
+        </ol>
+        <p class="note">
+          На iPhone во время бега экран должен быть включён: при погасшем экране iOS останавливает
+          GPS. Шаги за день есть только на Android.
+        </p>
+      </section>
+
+      <a class="open" href="./">Открыть в браузере →</a>
+    </main>
+    <script>
+      // Свой телефон — первым и с рамкой
+      const ua = navigator.userAgent
+      const ios =
+        /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)
+      const mine = ios ? 'ios' : /Android/.test(ua) ? 'android' : null
+      if (mine) {
+        const el = document.getElementById(mine)
+        el.classList.add('mine')
+        el.parentNode.insertBefore(el, document.getElementById('android'))
+      }
+    </script>
+  </body>
+</html>

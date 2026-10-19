@@ -14,6 +14,14 @@ export const RUN_KINDS: { value: RunKind; label: string }[] = [
 export type RunGoal =
   { type: 'free' } | { type: 'distance'; meters: number } | { type: 'time'; sec: number }
 
+/** Интервалы «бег / шаг»: разминка шагом, потом бег и шаг по очереди. Время — в секундах. */
+export interface RunIntervals {
+  warmupSec: number
+  runSec: number
+  walkSec: number
+  rounds: number
+}
+
 /** Точка маршрута: [широта, долгота, время, высота | null]. Массив — компактнее в базе. */
 export type TrackPoint = [lat: number, lon: number, t: Timestamp, alt: number | null]
 
@@ -34,6 +42,8 @@ export interface Run extends Syncable {
   climbM: number
   /** Вес тела на момент пробежки — для калорий. */
   bodyKg: number
+  /** Интервалы бег/шаг; нет — обычная пробежка. */
+  intervals?: RunIntervals
 }
 
 export interface GpsFix {

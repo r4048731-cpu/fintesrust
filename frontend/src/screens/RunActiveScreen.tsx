@@ -21,8 +21,19 @@ import {
   type GpsFix,
   type Run,
 } from '../domain/run'
+import {
+  formatSpan,
+  phaseCue,
+  RUN_PHASE_LABELS,
+  runPhaseAt,
+  runPhases,
+  START_GRACE_MS,
+  upcomingCues,
+  type RunPhaseKind,
+} from '../domain/runIntervals'
 import { formatClock } from '../domain/workout'
 import { gpsAvailable } from '../app/gps'
+import { intervalSignal } from '../app/signal'
 import { RunTracker } from '../native/runTracker'
 import { isAndroidApp } from '../native/steps'
 import styles from './RunActiveScreen.module.css'
@@ -41,6 +52,14 @@ function say(text: string) {
   }
 }
 
+/** Сигнал смены фазы: бег — длинный, шаг — два коротких, конец — три. */
+const PHASE_VIBRATION: Record<RunPhaseKind | 'finish', number[]> = {
+  run: [350],
+  walk: [150, 80, 150],
+  warmup: [150, 80, 150],
+  finish: [300, 120, 300, 120, 500],
+}
+
 /** Экран во время бега: таймер, километры, темп, калории, карта; пауза и завершение. */
 export function RunActiveScreen() {
   const repos = useRepos()
@@ -53,6 +72,13 @@ export function RunActiveScreen() {
   const lastSave = useRef(0)
   const announcedKm = useRef(0)
   const announcedGoal = useRef(false)
+  /** Номер фазы интервалов, о которой уже сказали. */
+  const announcedPhase = useRef(-1)
+  /** Последнее состояние пробежки — для службы записи, не перезапуская её на каждую точку. */
+  const runRef = useRef<Run | null>(null)
+  useEffect(() => {
+    runRef.current = run ?? null
+  }, [run])
 
   const now = useNow(1000, !!run)
   useWakeLock(run?.resumedAt != null)
@@ -61,6 +87,10 @@ export function RunActiveScreen() {
     void repos.runs.getActive().then((r) => {
       setRun(r)
       if (r) announcedKm.current = Math.floor(r.distanceM / 1000)
+      // вернулись на экран посреди фазы — её не объявляем заново
+      if (r?.intervals && movingTime(r, Date.now()) > START_GRACE_MS) {
+        announcedPhase.current = runPhaseAt(runPhases(r.intervals), movingTime(r, Date.now())).index
+      }
     })
   }, [repos])
 
@@ -82,10 +112,21 @@ export function RunActiveScreen() {
     setRun((r) => (r ? fixes.reduce(addFix, r) : r))
   }, [])
 
-  // Android-версия: точки пишет служба телефона — и при выключенном экране, и когда экран бега свёрнут
+  // Android-версия: точки пишет служба телефона — и при выключенном экране, и когда экран бега свёрнут.
+  // Смену фаз интервалов тоже объявляет служба: страница при погасшем экране спит.
   useEffect(() => {
     if (!moving || !isAndroidApp()) return
-    RunTracker.start({ title: kind === 'walk' ? 'Идёт ходьба' : 'Идёт бег' }).catch((err) =>
+    const current = runRef.current
+    const now = Date.now()
+    const done = current ? movingTime(current, now) : 0
+    const cues = current?.intervals
+      ? upcomingCues(current.intervals, done).map((c) => ({
+          at: now + c.atMs - done,
+          text: voice ? c.text : '',
+          pattern: PHASE_VIBRATION[c.kind],
+        }))
+      : []
+    RunTracker.start({ title: kind === 'walk' ? 'Идёт ходьба' : 'Идёт бег', cues }).catch((err) =>
       setGpsError(
         err?.code === 'NO_LOCATION'
           ? 'Нет доступа к геолокации — разрешите её приложению в настройках телефона.'
@@ -101,7 +142,7 @@ export function RunActiveScreen() {
         .catch(() => {})
     const id = setInterval(pull, 1000)
     return () => clearInterval(id)
-  }, [moving, kind, applyFixes])
+  }, [moving, kind, applyFixes, voice])
 
   useEffect(() => {
     if (!moving || isAndroidApp() || !gpsAvailable()) return
@@ -153,10 +194,22 @@ export function RunActiveScreen() {
         )
       }
     }
+    // интервалы: в браузере говорит страница, в Android-версии — служба записи
+    if (run.intervals && run.resumedAt !== null && !isAndroidApp()) {
+      const pos = runPhaseAt(runPhases(run.intervals), movingTime(run, now))
+      if (pos.index > announcedPhase.current) {
+        announcedPhase.current = pos.index
+        intervalSignal(pos.done ? 'finish' : pos.phase!.kind === 'run' ? 'work' : 'rest')
+        if (voice) say(phaseCue(pos.phase, run.intervals.rounds))
+      }
+    }
     if (!announcedGoal.current && goalReached(run, now)) {
       announcedGoal.current = true
-      navigator.vibrate?.([400, 150, 400])
-      if (voice) say('Цель выполнена!')
+      // у интервалов цель — их конец, о нём уже сказано
+      if (!run.intervals) {
+        navigator.vibrate?.([400, 150, 400])
+        if (voice) say('Цель выполнена!')
+      }
     }
   }, [run, now, voice])
 
@@ -176,6 +229,8 @@ export function RunActiveScreen() {
   const ms = movingTime(r, now)
   const pace = paceSecPerKm(r.distanceM, ms)
   const progress = goalProgress(r, now)
+  const phases = r.intervals ? runPhases(r.intervals) : null
+  const pos = phases ? runPhaseAt(phases, ms) : null
 
   /** Android-версия: остановить службу записи и добавить точки, которые она ещё не отдала. */
   async function stopTracking(current: Run): Promise<Run> {
@@ -216,6 +271,46 @@ export function RunActiveScreen() {
           {voice ? 'Голос вкл' : 'Голос выкл'}
         </button>
       </header>
+
+      {r.intervals && pos && (
+        <section
+          className={styles.phase}
+          data-kind={pos.done ? 'done' : pos.phase!.kind}
+          aria-label="Интервалы"
+        >
+          {pos.done ? (
+            <>
+              <b aria-live="polite">Интервалы выполнены</b>
+              <span>Пройдитесь шагом и завершайте</span>
+            </>
+          ) : (
+            <>
+              <div className={styles.phaseHead}>
+                <b aria-live="polite">{RUN_PHASE_LABELS[pos.phase!.kind]}</b>
+                <span className={styles.phaseClock} role="timer" aria-label="До смены">
+                  {formatClock(pos.remainingMs / 1000)}
+                </span>
+              </div>
+              <span>
+                {pos.phase!.kind === 'warmup'
+                  ? `Шагом · потом ${r.intervals.rounds} × бег ${formatSpan(r.intervals.runSec)}`
+                  : `Повтор ${pos.phase!.round} из ${r.intervals.rounds} · ${
+                      pos.next
+                        ? `дальше ${RUN_PHASE_LABELS[pos.next.kind].toLowerCase()} ${formatSpan(pos.next.durationSec)}`
+                        : 'последний'
+                    }`}
+              </span>
+              <div className={styles.phaseBar} aria-hidden="true">
+                <span
+                  style={{
+                    width: `${100 - (pos.remainingMs / 1000 / pos.phase!.durationSec) * 100}%`,
+                  }}
+                />
+              </div>
+            </>
+          )}
+        </section>
+      )}
 
       <section className={styles.board} aria-label="Показатели">
         <div className={styles.clock} role="timer" aria-label="Время в движении">

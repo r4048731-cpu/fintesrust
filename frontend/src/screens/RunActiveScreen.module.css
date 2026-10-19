@@ -135,3 +135,72 @@
     animation: none;
   }
 }
+
+/* Интервалы: бег — фирменный градиент, шаг и разминка — спокойная карточка */
+.phase {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  transition: background 300ms ease;
+}
+
+.phase b {
+  font: 700 26px/1.1 var(--title-font);
+}
+
+.phase > span {
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.phase[data-kind='run'] {
+  background: var(--gradient);
+  color: #fff;
+}
+
+.phase[data-kind='run'] > span {
+  color: rgb(255 255 255 / 85%);
+}
+
+.phase[data-kind='done'] b {
+  font-size: 20px;
+}
+
+.phaseHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.phaseClock {
+  font: 700 34px/1 var(--num-font);
+  font-variant-numeric: tabular-nums;
+}
+
+.phaseBar {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: var(--surface-2);
+}
+
+.phase[data-kind='run'] .phaseBar {
+  background: rgb(255 255 255 / 25%);
+}
+
+.phaseBar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 1s linear;
+}
+
+.phase[data-kind='run'] .phaseBar span {
+  background: #fff;
+}

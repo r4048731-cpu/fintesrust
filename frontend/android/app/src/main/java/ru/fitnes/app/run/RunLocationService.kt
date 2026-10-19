@@ -15,17 +15,24 @@ import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
+import android.speech.tts.TextToSpeech
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import ru.fitnes.app.MainActivity
 import ru.fitnes.app.R
+import ru.fitnes.app.workout.RestAlarm
+import java.util.Locale
 
 /** Точка GPS — как `GpsFix` в веб-приложении. */
 data class Fix(val lat: Double, val lon: Double, val accuracy: Float, val alt: Double?, val t: Long)
+
+/** Сигнал интервалов: когда (мс эпохи), что сказать (пусто — только вибрация) и как вибрировать. */
+data class Cue(val at: Long, val text: String, val pattern: LongArray)
 
 /**
  * Служба переднего плана на время бега: пишет точки GPS и при выключенном экране,
@@ -34,6 +41,11 @@ data class Fix(val lat: Double, val lon: Double, val accuracy: Float, val alt: D
 class RunLocationService : Service(), LocationListener {
     private var wakeLock: PowerManager.WakeLock? = null
     private var listening = false
+    private val handler = Handler(Looper.getMainLooper())
+    private var tts: TextToSpeech? = null
+    private var ttsReady = false
+    /** Фраза, пришедшая раньше, чем голос успел запуститься (первая фаза — сразу на старте). */
+    private var pendingSpeech: String? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -46,7 +58,40 @@ class RunLocationService : Service(), LocationListener {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0,
         )
         if (!listening) listen()
+        scheduleCues()
         return START_NOT_STICKY
+    }
+
+    /**
+     * Смена фаз интервалов: страница при выключенном экране спит, поэтому голос и вибрацию
+     * подаёт служба. Каждый новый `start` заменяет расписание (пауза, возврат на экран, голос вкл/выкл).
+     */
+    private fun scheduleCues() {
+        handler.removeCallbacksAndMessages(null)
+        val list = cues
+        if (list.any { it.text.isNotEmpty() } && tts == null) {
+            tts = TextToSpeech(this) { status ->
+                ttsReady = status == TextToSpeech.SUCCESS
+                if (ttsReady) {
+                    tts?.language = Locale.forLanguageTag("ru-RU")
+                    pendingSpeech?.let { tts?.speak(it, TextToSpeech.QUEUE_FLUSH, null, "run-cue") }
+                }
+                pendingSpeech = null
+            }
+        }
+        val now = System.currentTimeMillis()
+        for (cue in list) {
+            // опоздали меньше чем на 2 с — сказать сейчас, иначе сигнал уже не к месту
+            if (cue.at < now - 2000) continue
+            handler.postDelayed({ fire(cue) }, maxOf(0L, cue.at - now))
+        }
+    }
+
+    private fun fire(cue: Cue) {
+        if (cue.pattern.isNotEmpty()) RestAlarm.vibrate(this, cue.pattern)
+        if (cue.text.isEmpty()) return
+        if (ttsReady) tts?.speak(cue.text, TextToSpeech.QUEUE_FLUSH, null, "run-cue")
+        else pendingSpeech = cue.text
     }
 
     @SuppressLint("WakelockTimeout")
@@ -77,6 +122,9 @@ class RunLocationService : Service(), LocationListener {
     }
 
     override fun onDestroy() {
+        handler.removeCallbacksAndMessages(null)
+        tts?.shutdown()
+        tts = null
         if (listening) getSystemService(LocationManager::class.java).removeUpdates(this)
         listening = false
         running = false
@@ -114,6 +162,9 @@ class RunLocationService : Service(), LocationListener {
         private val buffer = ArrayList<Fix>()
 
         @Volatile
+        private var cues: List<Cue> = emptyList()
+
+        @Volatile
         var running = false
             private set
 
@@ -124,7 +175,8 @@ class RunLocationService : Service(), LocationListener {
             out
         }
 
-        fun start(context: Context, title: String) {
+        fun start(context: Context, title: String, cues: List<Cue> = emptyList()) {
+            this.cues = cues
             ContextCompat.startForegroundService(
                 context,
                 Intent(context, RunLocationService::class.java).putExtra(EXTRA_TITLE, title),

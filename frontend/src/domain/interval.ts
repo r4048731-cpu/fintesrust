@@ -120,7 +120,11 @@ export interface IntervalPosition {
   done: boolean
 }
 
-export function intervalPosition(phases: IntervalPhase[], elapsedMs: number): IntervalPosition {
+/** Подходит любой список фаз с длительностью — им пользуются и интервалы в беге. */
+export function intervalPosition(
+  phases: readonly { durationSec: number }[],
+  elapsedMs: number,
+): IntervalPosition {
   let start = 0
   const total = phases.reduce((n, p) => n + p.durationSec * 1000, 0)
   for (let i = 0; i < phases.length; i++) {

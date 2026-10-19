@@ -102,3 +102,79 @@
       0 8px 28px rgb(219 39 119 / 40%);
   }
 }
+
+.intervals {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Готовые интервалы — лента карточек, прокручивается вбок до краёв карточки */
+.presets {
+  display: flex;
+  gap: 8px;
+  margin-inline: -14px;
+  padding-inline: 14px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.presets::-webkit-scrollbar {
+  display: none;
+}
+
+.preset {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+}
+
+.preset b {
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.preset span {
+  color: var(--muted);
+  font: 600 12.5px var(--num-font);
+  white-space: nowrap;
+}
+
+.preset[aria-pressed='true'] {
+  border-color: transparent;
+  background: var(--gradient);
+  color: #fff;
+}
+
+.preset[aria-pressed='true'] span {
+  color: rgb(255 255 255 / 85%);
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+  gap: 12px 10px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}

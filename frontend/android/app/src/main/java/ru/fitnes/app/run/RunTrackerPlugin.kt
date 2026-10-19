@@ -50,10 +50,24 @@ class RunTrackerPlugin : Plugin() {
 
     private fun startService(call: PluginCall) {
         try {
-            RunLocationService.start(context, call.getString("title") ?: "Идёт запись маршрута")
+            RunLocationService.start(context, call.getString("title") ?: "Идёт запись маршрута", cues(call))
             call.resolve()
         } catch (e: Exception) {
             call.reject("Не удалось начать запись маршрута: ${e.message}")
+        }
+    }
+
+    /** Сигналы интервалов из `start({ cues })`: [{ at, text, pattern }]. */
+    private fun cues(call: PluginCall): List<Cue> {
+        val arr = call.getArray("cues") ?: return emptyList()
+        return (0 until arr.length()).map { i ->
+            val o = arr.getJSONObject(i)
+            val p = o.optJSONArray("pattern")
+            Cue(
+                at = o.getLong("at"),
+                text = o.optString("text", ""),
+                pattern = LongArray(p?.length() ?: 0) { p!!.getLong(it) },
+            )
         }
     }
 

@@ -1,5 +1,11 @@
 import { newId } from '../../domain/id'
-import { finishRun, type Run, type RunGoal, type RunKind } from '../../domain/run'
+import {
+  finishRun,
+  type Run,
+  type RunGoal,
+  type RunIntervals,
+  type RunKind,
+} from '../../domain/run'
 import type { ID } from '../../domain/types'
 import type { FitnessDB } from '../db'
 import type { Clock } from './clock'
@@ -36,7 +42,8 @@ export function runsRepo(db: FitnessDB, clock: Clock) {
       return rows.filter((r) => r.deletedAt === null).sort((a, b) => b.startedAt - a.startedAt)
     },
 
-    async start(kind: RunKind, goal: RunGoal): Promise<Run> {
+    /** Начать; с интервалами цель — их общее время (её ставит экран). */
+    async start(kind: RunKind, goal: RunGoal, intervals?: RunIntervals): Promise<Run> {
       if (await getActive()) throw new ActiveRunExistsError()
       const weights = await db.bodyWeights.orderBy('date').reverse().toArray()
       const bodyKg = weights.find((w) => w.deletedAt === null)?.weightKg ?? DEFAULT_BODY_KG
@@ -54,6 +61,7 @@ export function runsRepo(db: FitnessDB, clock: Clock) {
         distanceM: 0,
         climbM: 0,
         bodyKg,
+        ...(intervals ? { intervals } : {}),
         updatedAt: now,
         deletedAt: null,
       }

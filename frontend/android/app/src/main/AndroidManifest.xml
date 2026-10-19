@@ -91,5 +91,9 @@
     <!-- Чтобы найти установленный Health Connect -->
     <queries>
         <package android:name="com.google.android.apps.healthdata" />
+        <!-- голосовой движок: им служба бега объявляет смену интервалов -->
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
     </queries>
 </manifest>

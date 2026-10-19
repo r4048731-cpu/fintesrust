@@ -8,6 +8,7 @@ import { Card, Screen, SectionLabel } from '../components/Screen'
 import { formatLongDate } from '../components/dates'
 import { formatDecimal } from '../domain/number'
 import { formatKm, formatPace, paceSecPerKm, runCalories, splits } from '../domain/run'
+import { describeIntervals, formatSpan } from '../domain/runIntervals'
 import { formatClock } from '../domain/workout'
 import styles from './RunDetailScreen.module.css'
 
@@ -58,6 +59,15 @@ export function RunDetailScreen() {
 
       <Card>
         <dl className={styles.facts}>
+          {run.intervals && (
+            <>
+              <dt>Интервалы</dt>
+              <dd>
+                {describeIntervals(run.intervals)}
+                {run.intervals.warmupSec > 0 && `, разминка ${formatSpan(run.intervals.warmupSec)}`}
+              </dd>
+            </>
+          )}
           <dt>Средняя скорость</dt>
           <dd>{formatDecimal(Math.round(speed * 10) / 10)} км/ч</dd>
           <dt>Калории</dt>
