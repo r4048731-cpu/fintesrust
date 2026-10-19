@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+    <!-- на Android «Установить» отсюда тоже ставит само приложение (start_url манифеста) -->
+    <link rel="manifest" href="./manifest.webmanifest" />
     <meta name="theme-color" content="#f7f6fb" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#09080d" media="(prefers-color-scheme: dark)" />
     <meta name="robots" content="noindex, nofollow" />
@@ -144,12 +146,21 @@
 
       <section id="ios">
         <h2>iPhone</h2>
+        <!-- iPhone кладёт на экран ту страницу, где нажали «Поделиться», — значит, само приложение -->
+        <a class="btn" href="./">Открыть приложение</a>
         <ol>
-          <li>Откройте эту страницу в <b>Safari</b>.</li>
-          <li>Нажмите «Поделиться» — квадрат со стрелкой вверх.</li>
+          <li>Нажмите кнопку выше — откроется приложение. Это должно быть в <b>Safari</b>.</li>
+          <li>
+            Уже в приложении нажмите «Поделиться» — квадрат со стрелкой вверх (внизу экрана или за
+            «⋯»).
+          </li>
           <li>Выберите «На экран "Домой"» → «Добавить».</li>
           <li>Запускайте с появившейся иконки — работает и без интернета.</li>
         </ol>
+        <p class="note">
+          Если иконка открывает эту страницу с инструкцией — удалите её и добавьте заново из
+          приложения.
+        </p>
         <p class="note">
           На iPhone во время бега экран должен быть включён: при погасшем экране iOS останавливает
           GPS. Шаги за день есть только на Android.
