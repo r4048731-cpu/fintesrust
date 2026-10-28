@@ -36,7 +36,7 @@ export default defineConfig({
       },
       workbox: {
         // Кадры техники (webp, ~2,5 МБ) тоже кэшируются: в зале они нужны и без интернета
-        globPatterns: ['**/*.{js,css,html,svg,png,webp,woff,woff2}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,webp,woff,woff2,wasm}'],
         navigateFallback: 'index.html',
         // Страница установки и APK по ссылке — не подменять их приложением
         navigateFallbackDenylist: [/install\.html$/, /\.apk$/],

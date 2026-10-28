@@ -75,7 +75,7 @@ function NoteForm({ note, onClose, onDeleted }: Omit<Props, 'open'>) {
           setError(null)
         }}
       />
-      <Button type="submit" variant="primary" block>
+      <Button type="submit" icon="check" variant="primary" block>
         {note ? 'Сохранить' : 'Добавить заметку'}
       </Button>
       {note && onDeleted && (

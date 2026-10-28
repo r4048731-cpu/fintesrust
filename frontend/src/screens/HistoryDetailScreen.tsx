@@ -49,6 +49,7 @@ export function HistoryDetailScreen() {
       <WorkoutReport data={data} />
 
       <Button
+        icon="play"
         variant="primary"
         block
         disabled={hasActive !== false}

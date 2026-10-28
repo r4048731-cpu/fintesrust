@@ -24,7 +24,7 @@
 }
 
 .option[aria-pressed='true'] {
-  background: var(--gradient);
+  background: var(--accent-fill);
   color: var(--accent-ink);
-  box-shadow: 0 3px 10px rgb(124 58 237 / 25%);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--accent-fill) 30%, transparent);
 }

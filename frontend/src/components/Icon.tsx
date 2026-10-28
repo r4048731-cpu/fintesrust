@@ -1,72 +1,120 @@
-const PATHS = {
-  today: 'M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11',
-  programs:
-    'M6.5 3.5h11a2.5 2.5 0 0 1 2.5 2.5v12a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 18V6a2.5 2.5 0 0 1 2.5-2.5ZM8 8.5h8M8 12.5h8M8 16.5h5',
-  history: 'M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17ZM12 7.5V12l3 2',
-  progress: 'M4 19.5h16M5 15l4.5-4.5 3.5 3L19.5 7',
-  plus: 'M12 5v14M5 12h14',
-  minus: 'M5 12h14',
-  close: 'M6 6l12 12M18 6 6 18',
-  back: 'M15 5l-7 7 7 7',
-  up: 'M6 14l6-6 6 6',
-  down: 'M6 10l6 6 6-6',
-  chevron: 'M9 5l7 7-7 7',
-  check: 'M5 12.5l4.5 4.5L19 7.5',
-  scale:
-    'M5 4.5h14a1.5 1.5 0 0 1 1.5 1.5v12a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 18V6A1.5 1.5 0 0 1 5 4.5ZM8.5 10a3.5 3.5 0 0 1 7 0M12 10l1.3-1.8',
-  body: 'M12 3.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5ZM5 11h14M12 11v4.5M8.5 20.5l3.5-5 3.5 5',
-  food: 'M3.5 11.5h17a8.5 8.5 0 0 1-17 0ZM9 4c-1 1.2 1 2.3 0 3.8M15 4c-1 1.2 1 2.3 0 3.8',
-  swap: 'M7 4.5 4 7.5l3 3M4 7.5h13M17 13.5l3 3-3 3M20 16.5H7',
-  ai: 'M11 3.5l1.9 5.1 5.1 1.9-5.1 1.9L11 17.5l-1.9-5.1L4 10.5l5.1-1.9ZM18 15l.8 2.2 2.2.8-2.2.8L18 21l-.8-2.2-2.2-.8 2.2-.8Z',
-  note: 'M6 3.5h8.5L19 8v12.5H6ZM14 3.5V8.5h5M9 12.5h7M9 16h5',
-  heart:
-    'M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.2a4.3 4.3 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20Z',
-  camera:
-    'M4.5 7.5h3l1.5-2.5h6l1.5 2.5h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1ZM12 10a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z',
-  share: 'M12 14.5V4M8 8l4-4 4 4M6 11.5H5v8.5h14v-8.5h-1',
-  link: 'M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 1 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 1 0 5.66 5.66l1-1',
-  run: 'M13.5 3.5a2 2 0 1 0 0 4 2 2 0 0 0 0-4ZM7 21l3.5-6 3 2.5V21M6 12.5l3.5-3.5 4 1.5 2 3 3 1M10.5 9.5 9 15',
-  info: 'M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17ZM12 11v5M12 7.75v.01',
-  menu: 'M4.5 7h15M4.5 12h15M4.5 17h15',
-  timer: 'M12 6.5a7 7 0 1 0 0 14 7 7 0 0 0 0-14ZM12 10v3.5l2.2 1.6M10 3h4M18 6.5l1.5-1.5',
-  trophy:
-    'M8 4.5h8v4.5a4 4 0 0 1-8 0ZM8 6.5H5.5a2.5 2.5 0 0 0 2.6 3.4M16 6.5h2.5a2.5 2.5 0 0 1-2.6 3.4M12 13v3.5M8.5 19.5h7M10 16.5h4v3h-4Z',
-  flame:
-    'M12 21c-3.6 0-6.5-2.6-6.5-6.2 0-2.6 1.6-4.4 3-5.8.4 1.6 1.3 2.6 2.4 3 0-3.4 1.4-6.2 4.1-8.5-.3 2.8.7 4.6 2.1 6.3 1 1.2 1.4 2.8 1.4 4.4 0 3.9-2.9 6.8-6.5 6.8Z',
-  save: 'M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14',
-  shield: 'M12 3.5 19 6v5.5c0 4.4-3 7.7-7 9-4-1.3-7-4.6-7-9V6ZM9 12l2 2 4-4',
-  phone:
-    'M8 3.5h8a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H8A1.5 1.5 0 0 1 6.5 19V5A1.5 1.5 0 0 1 8 3.5ZM11 17.5h2',
-  trash: 'M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13M10 11v5.5M14 11v5.5',
-  help: 'M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17ZM9.6 9.4a2.5 2.5 0 1 1 3.6 2.3c-.7.3-1.2 1-1.2 1.8v.4M12 16.9v.01',
-  settings: 'M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4',
-  sun: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4',
-  moon: 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z',
-} as const
+import {
+  ScanBarcode,
+  Apple,
+  ArrowLeftRight,
+  ArrowRight,
+  BedDouble,
+  BookOpen,
+  Calendar,
+  Camera,
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  CircleHelp,
+  ClipboardList,
+  Coffee,
+  Download,
+  Droplet,
+  Dumbbell,
+  Flame,
+  Footprints,
+  Heart,
+  History,
+  Hourglass,
+  Info,
+  Link,
+  Menu,
+  Minus,
+  Moon,
+  NotebookPen,
+  PersonStanding,
+  Play,
+  Plus,
+  Ruler,
+  Salad,
+  Settings,
+  Share,
+  ShieldCheck,
+  Smartphone,
+  Soup,
+  Sparkles,
+  Sun,
+  Timer,
+  Trash2,
+  TrendingUp,
+  Trophy,
+  User,
+  UtensilsCrossed,
+  Weight,
+  X,
+  type LucideIcon,
+} from 'lucide-react'
 
-export type IconName = keyof typeof PATHS
+const ICONS = {
+  today: Dumbbell,
+  dumbbell: Dumbbell,
+  programs: ClipboardList,
+  history: History,
+  progress: TrendingUp,
+  plus: Plus,
+  minus: Minus,
+  close: X,
+  back: ChevronLeft,
+  up: ChevronUp,
+  down: ChevronDown,
+  chevron: ChevronRight,
+  arrow: ArrowRight,
+  check: Check,
+  play: Play,
+  scale: Weight,
+  body: PersonStanding,
+  food: UtensilsCrossed,
+  swap: ArrowLeftRight,
+  ai: Sparkles,
+  note: NotebookPen,
+  heart: Heart,
+  camera: Camera,
+  barcode: ScanBarcode,
+  share: Share,
+  link: Link,
+  run: Footprints,
+  info: Info,
+  menu: Menu,
+  timer: Timer,
+  trophy: Trophy,
+  flame: Flame,
+  save: Download,
+  shield: ShieldCheck,
+  phone: Smartphone,
+  trash: Trash2,
+  help: CircleHelp,
+  settings: Settings,
+  user: User,
+  coffee: Coffee,
+  apple: Apple,
+  soup: Soup,
+  salad: Salad,
+  water: Droplet,
+  sleep: BedDouble,
+  calendar: Calendar,
+  ruler: Ruler,
+  hourglass: Hourglass,
+  book: BookOpen,
+  sun: Sun,
+  moon: Moon,
+} satisfies Record<string, LucideIcon>
+
+export type IconName = keyof typeof ICONS
 
 interface Props {
   name: IconName
   size?: number
 }
 
-/** Линейная иконка 24×24, цвет берёт от текста (currentColor). Декоративная: подпись даёт кнопка. */
-export function Icon({ name, size = 22 }: Props) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path d={PATHS[name]} />
-    </svg>
-  )
+/** Тонкая линейная иконка из lucide-react (обводка 1.5), цвет берёт от текста. Декоративная: подпись даёт кнопка. */
+export function Icon({ name, size = 24 }: Props) {
+  const Glyph = ICONS[name]
+  return <Glyph size={size} strokeWidth={1.5} aria-hidden="true" focusable="false" />
 }

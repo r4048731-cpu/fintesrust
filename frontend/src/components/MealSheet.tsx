@@ -4,9 +4,12 @@ import { useRepos } from '../app/dataContext'
 import { foodsFromMeals, searchFoods, type Food } from '../domain/foods'
 import { caloriesFromMacros, NUTRIENT_KEYS, scaleNutrients } from '../domain/nutrition'
 import { formatDecimal, parseDecimal } from '../domain/number'
-import type { ISODate, Meal, Nutrients } from '../domain/types'
+import { MEAL_SLOTS, MEAL_SLOT_LABELS, mealSlot, slotByTime } from '../domain/mealSlots'
+import type { BarcodeFood, ISODate, Meal, MealSlot, Nutrients } from '../domain/types'
 import { Button } from './Button'
+import { BarcodeScanner } from './nutrition/BarcodeScanner'
 import { TextField } from './Field'
+import { Segmented } from './Segmented'
 import { Sheet } from './Sheet'
 import styles from './MealSheet.module.css'
 
@@ -17,13 +20,24 @@ interface Props {
   date: ISODate
   /** Что правим; null — новая запись. */
   meal: Meal | null
+  /** Приём пищи новой записи — «+» на плитке «Завтрак»; без него — по времени. */
+  slot?: MealSlot
 }
 
-/** Добавление и правка приёма пищи: название, вес порции, калории и Б/Ж/У. */
-export function MealSheet({ open, onClose, date, meal }: Props) {
+/** Добавление и правка приёма пищи: приём, название, вес порции, калории и Б/Ж/У. */
+export function MealSheet({ open, onClose, date, meal, slot }: Props) {
+  const title = meal ? 'Изменить' : slot ? `${MEAL_SLOT_LABELS[slot]}: добавить` : 'Добавить еду'
   return (
-    <Sheet open={open} onClose={onClose} title={meal ? 'Изменить' : 'Добавить еду'}>
-      {open && <MealForm key={meal?.id ?? 'new'} date={date} meal={meal} onClose={onClose} />}
+    <Sheet open={open} onClose={onClose} title={title}>
+      {open && (
+        <MealForm
+          key={meal?.id ?? `new-${slot ?? ''}`}
+          date={date}
+          meal={meal}
+          slot={slot}
+          onClose={onClose}
+        />
+      )}
     </Sheet>
   )
 }
@@ -73,10 +87,12 @@ function baseOf(m: Pick<Meal, 'grams'> & Nutrients): Base | null {
 function MealForm({
   date,
   meal,
+  slot: initialSlot,
   onClose,
 }: {
   date: ISODate
   meal: Meal | null
+  slot?: MealSlot
   onClose: () => void
 }) {
   const repos = useRepos()
@@ -85,11 +101,15 @@ function MealForm({
   const own = useMemo(() => foodsFromMeals(history ?? []), [history])
   const [t, setT] = useState<Texts>(meal ? toTexts(meal) : EMPTY)
   const [base, setBase] = useState<Base | null>(meal ? baseOf(meal) : null)
+  const [slot, setSlot] = useState<MealSlot>(() =>
+    meal ? mealSlot(meal) : (initialSlot ?? slotByTime(Date.now())),
+  )
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   /** Подсказки показываются, пока название набирают, и прячутся после выбора. */
   const [suggest, setSuggest] = useState(false)
   const foods = suggest ? searchFoods(t.name, own) : []
+  const [scanning, setScanning] = useState(false)
 
   function pick(m: Meal) {
     setT(toTexts(m))
@@ -97,10 +117,16 @@ function MealForm({
     setError(null)
   }
 
+  /** Продукт по штрихкоду: вес — порция с упаковки, если она указана. */
+  function pickScanned(f: BarcodeFood) {
+    setScanning(false)
+    pickFood({ name: f.name, per100: f.per100 }, f.servingG)
+  }
+
   /** Продукт из справочника или своих: КБЖУ считаются на введённый вес, без веса — на 100 г. */
-  function pickFood(f: Food) {
+  function pickFood(f: Pick<Food, 'name' | 'per100'>, serving: number | null = null) {
     const typed = parseDecimal(t.grams)
-    const grams = typed !== null && typed > 0 ? typed : 100
+    const grams = typed !== null && typed > 0 ? typed : (serving ?? 100)
     const scaled = scaleNutrients(f.per100, 100, grams)
     const texts = Object.fromEntries(NUTRIENT_KEYS.map((k) => [k, num(scaled[k])]))
     setT({ ...t, ...texts, name: f.name, grams: num(grams) } as Texts)
@@ -145,7 +171,7 @@ function MealForm({
     if (grams === null && t.grams.trim() !== '') return setError('Вес порции — числом, в граммах')
     setBusy(true)
     try {
-      const input = { name: t.name, grams, ...nutrients }
+      const input = { name: t.name, grams, slot, ...nutrients }
       if (meal) await repos.meals.update(meal.id, input)
       else await repos.meals.add(input, date)
       onClose()
@@ -161,8 +187,18 @@ function MealForm({
     onClose()
   }
 
+  if (scanning) {
+    return <BarcodeScanner onFound={pickScanned} onCancel={() => setScanning(false)} />
+  }
+
   return (
     <div className={styles.form}>
+      <Segmented label="Приём пищи" options={MEAL_SLOTS} value={slot} onChange={setSlot} />
+      {!meal && (
+        <Button icon="barcode" block onClick={() => setScanning(true)}>
+          Сканировать штрихкод
+        </Button>
+      )}
       {recent && recent.length > 0 && (
         <div className={styles.recentBlock}>
           <span className={styles.label}>Недавние</span>
@@ -251,7 +287,7 @@ function MealForm({
         </p>
       )}
 
-      <Button variant="primary" block disabled={busy} onClick={save}>
+      <Button icon="check" variant="primary" block disabled={busy} onClick={save}>
         {meal ? 'Сохранить' : 'Добавить'}
       </Button>
       {meal && (

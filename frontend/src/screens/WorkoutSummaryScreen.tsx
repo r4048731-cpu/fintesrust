@@ -27,7 +27,7 @@ export function WorkoutSummaryScreen() {
     <Screen title="Готово!" eyebrow={data.workout.name}>
       <Confetti />
       <WorkoutReport data={data} />
-      <Button variant="primary" block onClick={() => navigate('/', { replace: true })}>
+      <Button icon="check" variant="primary" block onClick={() => navigate('/', { replace: true })}>
         Готово
       </Button>
     </Screen>

@@ -7,6 +7,7 @@
 .heading {
   margin: 0;
   font: 600 16px/1.2 var(--title-font);
+  color: var(--ink);
 }
 
 .fields {
@@ -65,6 +66,7 @@
 
 .num {
   font: 600 13px var(--num-font);
+  color: var(--ink);
 }
 
 .step[aria-checked='true'] {
@@ -73,7 +75,7 @@
 
 .step[aria-checked='true'] .dot {
   background: var(--gradient);
-  box-shadow: 0 3px 10px rgb(124 58 237 / 35%);
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--accent-fill) 35%, transparent);
   transform: scale(1.35);
 }
 
@@ -120,6 +122,7 @@
   margin: -6px 0 0;
   font: 600 34px/1.1 var(--num-font);
   font-variant-numeric: tabular-nums;
+  color: var(--ink);
 }
 
 .big span,
@@ -145,4 +148,5 @@
 
 .macro b {
   font: 600 20px var(--num-font);
+  color: var(--ink);
 }

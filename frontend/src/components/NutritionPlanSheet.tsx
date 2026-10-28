@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useRepos } from '../app/dataContext'
+import { toISODate } from '../domain/metrics'
 import { caloriesFromMacros, roundNutrients } from '../domain/nutrition'
 import { formatDecimal, parseDecimal } from '../domain/number'
 import type { Nutrients } from '../domain/types'
@@ -70,11 +71,14 @@ function PlanForm({
       'nutritionPlan',
       roundNutrients({ calories, protein: p, fat: f, carbs: c }),
     )
+    // введён руками — веса расчёта нет, но темп веса считается с этого дня
+    await repos.meta.set('planBasis', { setAt: toISODate(new Date()) })
     onClose()
   }
 
   async function clear() {
     await repos.meta.set('nutritionPlan', null)
+    await repos.meta.set('planBasis', null)
     onClose()
   }
 
@@ -104,7 +108,7 @@ function PlanForm({
           {error}
         </p>
       )}
-      <Button variant="primary" block onClick={save}>
+      <Button icon="check" variant="primary" block onClick={save}>
         Сохранить
       </Button>
       {plan && (

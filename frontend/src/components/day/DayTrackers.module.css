@@ -1,0 +1,105 @@
+.trackers {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 16px 20px;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  text-align: left;
+}
+
+.text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.label {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.text b {
+  color: var(--ink);
+  font: 800 20px/1.2 var(--num-font);
+  font-variant-numeric: tabular-nums;
+}
+
+.text b span {
+  color: var(--muted);
+  font: 600 13px var(--font-body);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.chevron {
+  color: var(--muted);
+}
+
+/* Кольцо с иконкой: вода — голубая, сон — фиолетовый */
+.ring {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+}
+
+.ring[data-tone='water'] {
+  color: #38bdf8;
+}
+
+.ring[data-tone='sleep'] {
+  color: var(--violet);
+}
+
+.ringSvg {
+  position: absolute;
+  inset: 0;
+  rotate: -90deg;
+}
+
+.track,
+.arc {
+  fill: none;
+  stroke-width: 5;
+}
+
+.track {
+  stroke: color-mix(in srgb, currentColor 16%, transparent);
+}
+
+.arc {
+  stroke: currentColor;
+  stroke-linecap: round;
+  transition: stroke-dasharray 400ms ease;
+}
+
+.sleepForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}

@@ -24,6 +24,8 @@ interface StepsPlugin {
   status(): Promise<StepsStatus>
   requestAccess(): Promise<{ steps: boolean; background: boolean }>
   daily(options: { days: number }): Promise<{ days: DaySteps[] }>
+  /** Шаги сегодня по часам: 24 числа, с полуночи. В старых сборках APK метода нет. */
+  hourly(): Promise<{ hours: number[] }>
   setReminder(options: {
     enabled: boolean
     hour: number

@@ -15,6 +15,7 @@
   font: 700 15px/1.2 var(--title-font);
   letter-spacing: 0.02em;
   text-transform: uppercase;
+  color: var(--ink);
 }
 
 .count {
@@ -54,10 +55,11 @@
   display: flex;
   flex-direction: column;
   width: 168px;
-  height: 214px;
+  height: 100%;
+  min-height: 214px;
   padding: 0;
   overflow: hidden;
-  border: 1px solid var(--line);
+  border: 1px solid var(--card-border);
   border-radius: var(--radius);
   background: var(--surface);
   color: var(--ink);
@@ -136,7 +138,7 @@
   position: absolute;
   top: 8px;
   left: 8px;
-  color: #ffffff;
+  color: var(--accent-ink);
   padding: 4px 10px;
   border-radius: 99px;
   background: rgb(0 0 0 / 28%);
@@ -151,7 +153,7 @@
   font-weight: 700;
   line-height: 1.2;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
 }
 
 .cardMeta {
@@ -182,6 +184,7 @@
 
 .tile b {
   font: 600 18px var(--num-font);
+  color: var(--ink);
 }
 
 .tile b span {
@@ -203,6 +206,7 @@
 .section {
   margin: 4px 0 0;
   font: 600 15px var(--title-font);
+  color: var(--ink);
 }
 
 .ingredients {
@@ -257,7 +261,7 @@
   border: 0;
   border-radius: 50%;
   background: rgb(0 0 0 / 28%);
-  color: #ffffff;
+  color: var(--accent-ink);
   backdrop-filter: blur(4px);
 }
 
@@ -362,4 +366,83 @@
   .art {
     transition: none;
   }
+}
+
+/* Чипы БЖУ под названием рецепта */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.chip {
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font: 700 11px/1.5 var(--num-font);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Вкладки «Всё меню / Мои / Любимые»: закреплены под шапкой и переключателем раздела */
+.menuBar {
+  position: sticky;
+  top: calc(var(--screen-head-h) + var(--pinned-bar-h) + env(safe-area-inset-top, 0px));
+  z-index: 13;
+  margin-inline: calc(-1 * var(--page-gutter, 0px));
+  padding-inline: var(--page-gutter, 0px);
+  background: var(--bg);
+}
+
+/* Фото блюда во всю плашку картинки; поверх — бейдж калорий и кнопки */
+.artBox:has(.photo) {
+  overflow: hidden;
+}
+
+.photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: scale 0.25s;
+}
+
+.card:active .photo {
+  scale: 1.04;
+}
+
+/* Затемнение сверху — бейдж и кнопки читаются на светлом фото */
+.artBox:has(.photo)::after {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 56px;
+  background: linear-gradient(rgb(0 0 0 / 35%), transparent);
+  content: '';
+  pointer-events: none;
+}
+
+.artBox:has(.photo) {
+  position: relative;
+}
+
+.photoFigure {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+}
+
+.artBig:has(.photo) {
+  height: 220px;
+}
+
+.credit {
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
+.credit a {
+  color: inherit;
 }

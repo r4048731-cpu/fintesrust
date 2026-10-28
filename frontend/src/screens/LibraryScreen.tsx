@@ -39,7 +39,7 @@ export function LibraryScreen() {
             mode="edit"
             onSelect={(exercise) => setCard({ exercise, tab: 'technique' })}
             renderEmpty={(query) => (
-              <Button variant="primary" onClick={() => setCreating(query)}>
+              <Button icon="plus" variant="primary" onClick={() => setCreating(query)}>
                 {query ? `Создать «${query}»` : 'Создать упражнение'}
               </Button>
             )}

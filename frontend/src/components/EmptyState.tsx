@@ -17,7 +17,7 @@ export function EmptyState({ title, icon, children, action }: Props) {
     <section className={styles.empty}>
       {icon && (
         <span className={styles.icon} aria-hidden="true">
-          <Icon name={icon} size={22} />
+          <Icon name={icon} size={24} />
         </span>
       )}
       <h2 className={styles.title}>{title}</h2>

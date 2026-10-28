@@ -183,7 +183,7 @@ export function WelcomeScreen() {
       <footer className={styles.actions}>
         {step > 0 ? <Button onClick={() => setStep(step - 1)}>Назад</Button> : <span />}
         {step < STEPS.length - 1 ? (
-          <Button variant="primary" onClick={() => setStep(step + 1)}>
+          <Button iconAfter="arrow" variant="primary" onClick={() => setStep(step + 1)}>
             Дальше
           </Button>
         ) : (
@@ -195,7 +195,7 @@ export function WelcomeScreen() {
             >
               Без веса
             </Button>
-            <Button variant="primary" disabled={busy} onClick={() => void finish(a)}>
+            <Button icon="check" variant="primary" disabled={busy} onClick={() => void finish(a)}>
               Готово
             </Button>
           </div>

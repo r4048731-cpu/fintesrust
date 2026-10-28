@@ -8,7 +8,7 @@ export type ThemeChoice = Theme | 'system'
 const KEY = 'fitnes.theme'
 const AMOLED_KEY = 'fitnes.amoled'
 const EVENT = 'fitnes:theme'
-const THEME_COLOR = { light: '#f7f6fb', dark: '#09080d', black: '#000000' }
+const THEME_COLOR = { light: '#f8fafc', dark: '#09090b', black: '#000000' }
 
 function read(key: string): string | null {
   try {

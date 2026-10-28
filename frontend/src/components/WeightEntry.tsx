@@ -92,7 +92,7 @@ export function WeightEntry({
           decimal
           onChange={setMeasured}
         />
-        <Button variant="primary" onClick={save}>
+        <Button icon="check" variant="primary" onClick={save}>
           {row ? 'Сохранить' : todays ? 'Обновить' : 'Записать'}
         </Button>
       </div>

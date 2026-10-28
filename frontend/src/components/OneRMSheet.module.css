@@ -75,6 +75,7 @@
   padding: 8px 6px;
   border-top: 1px solid var(--line);
   font-family: var(--num-font);
+  color: var(--ink);
 }
 
 .table tr[data-zone='max'] td {

@@ -219,7 +219,7 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
             {editing ? 'Тренировка не найдена' : 'Нет активной тренировки'}
           </h1>
           <p className={styles.muted}>Начните тренировку на экране «Сегодня».</p>
-          <Button variant="primary" onClick={() => navigate('/')}>
+          <Button iconAfter="arrow" variant="primary" onClick={() => navigate('/')}>
             На экран «Сегодня»
           </Button>
         </div>
@@ -369,7 +369,7 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
           >
             +15
           </Button>
-          <Button size="sm" variant="primary" onClick={() => change(stopRest(w))}>
+          <Button size="sm" icon="check" variant="primary" onClick={() => change(stopRest(w))}>
             Готов
           </Button>
         </div>
@@ -389,7 +389,7 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
               </span>
               <span className={styles.progress}>Сохраняется сразу</span>
             </div>
-            <Button variant="primary" size="sm" onClick={saveEdit}>
+            <Button icon="check" variant="primary" size="sm" onClick={saveEdit}>
               Готово
             </Button>
           </div>
@@ -406,6 +406,7 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
               </span>
             </div>
             <Button
+              icon="check"
               variant="primary"
               size="sm"
               onClick={() => setFinishOpen(true)}
@@ -651,7 +652,7 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
                   <span className={styles.nextName}>
                     Далее: {exerciseOf(w.entries[shown.ei + 1].exerciseId).name}
                   </span>
-                  <Icon name="chevron" size={18} />
+                  <Icon name="chevron" size={20} />
                 </Button>
               ) : (
                 <Button
@@ -709,7 +710,7 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
                     onClick={() => setInfo({ exercise: ex, tab: 'technique' })}
                     aria-label={`Техника: ${ex.name}`}
                   >
-                    <Icon name="info" size={18} />
+                    <Icon name="info" size={20} />
                     Техника
                   </button>
                   <button
@@ -718,7 +719,7 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
                     onClick={() => setInfo({ exercise: ex, tab: 'history' })}
                     aria-label={`История: ${ex.name}`}
                   >
-                    <Icon name="history" size={18} />
+                    <Icon name="history" size={20} />
                     История
                   </button>
                   <button
@@ -727,7 +728,7 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
                     onClick={() => setSwapIndex(ei)}
                     aria-label={`Заменить «${ex.name}»`}
                   >
-                    <Icon name="swap" size={18} />
+                    <Icon name="swap" size={20} />
                     Заменить
                   </button>
                 </div>
@@ -872,7 +873,7 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
                           }}
                         >
                           {set.done ? (
-                            <Icon name="check" size={22} />
+                            <Icon name="check" size={24} />
                           ) : set.warmup ? (
                             'Р'
                           ) : (
@@ -1028,7 +1029,7 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
             {sets.done < sets.total && (
               <p className={styles.muted}>Неотмеченные подходы не сохранятся.</p>
             )}
-            <Button block variant="primary" onClick={finish}>
+            <Button block icon="check" variant="primary" onClick={finish}>
               Завершить
             </Button>
             <Button block onClick={() => setFinishOpen(false)}>

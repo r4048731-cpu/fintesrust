@@ -11,14 +11,18 @@ interface Props {
   action?: ReactNode
   /** Кнопка «Назад» слева от заголовка, для вложенных экранов. */
   onBack?: () => void
+  /** Шапка над заголовком — на «Сегодня» это полоса с историями. */
+  top?: ReactNode
   children: ReactNode
 }
 
 /** Экран вкладки: заголовок и колонка содержимого с одинаковыми отступами. */
-export function Screen({ title, eyebrow, action, onBack, children }: Props) {
+export function Screen({ title, eyebrow, action, onBack, top, children }: Props) {
   return (
     <div className={styles.screen}>
-      <header className={styles.head}>
+      {top}
+      {/* Шапка раздела закреплена сверху; если над ней своя шапка (top) — обычная */}
+      <header className={top ? `${styles.head} ${styles.plain}` : styles.head}>
         {onBack && (
           <IconButton icon="back" label="Назад" onClick={onBack} className={styles.back} />
         )}
@@ -37,6 +41,11 @@ export function Screen({ title, eyebrow, action, onBack, children }: Props) {
       {children}
     </div>
   )
+}
+
+/** Переключатель разделов под шапкой экрана: закреплён сразу под ней и не уходит при прокрутке. */
+export function PinnedBar({ children }: { children: ReactNode }) {
+  return <div className={styles.pinned}>{children}</div>
 }
 
 /** Подпись раздела внутри экрана. */

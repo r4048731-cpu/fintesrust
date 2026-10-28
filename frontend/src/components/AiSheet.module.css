@@ -25,6 +25,7 @@
 .title {
   margin: 4px 0 -4px;
   font: 600 15px/1.2 var(--title-font);
+  color: var(--ink);
 }
 
 .list {

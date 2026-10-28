@@ -19,10 +19,11 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  border: 1px solid var(--line);
+  border: 1px solid var(--card-border);
   border-radius: var(--radius);
   background: var(--surface);
   overflow: hidden;
+  box-shadow: var(--shadow);
 }
 
 .list li + li {
@@ -57,6 +58,7 @@
 
 .day {
   font: 600 17px/1 var(--num-font);
+  color: var(--ink);
 }
 
 .weekday {
@@ -94,6 +96,7 @@
 .tonnageValue {
   font: 600 15px/1.1 var(--num-font);
   font-variant-numeric: tabular-nums;
+  color: var(--ink);
 }
 
 .chevron {
@@ -117,4 +120,21 @@
   color: var(--muted);
   font-size: 13.5px;
   font-weight: 600;
+}
+
+/* Последние пробежки над списком тренировок */
+.runs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.runsHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.runsHead h2 {
+  margin: 0;
 }

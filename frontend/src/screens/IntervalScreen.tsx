@@ -153,7 +153,7 @@ function IntervalTimer({ saved }: { saved: Saved | null }) {
           Всего <b>{formatClock(intervalTotalSec(phases))}</b> и{' '}
           {formatClock(phases[0].durationSec)} на подготовку
         </p>
-        <Button variant="primary" block onClick={start}>
+        <Button icon="play" variant="primary" block onClick={start}>
           Старт
         </Button>
         <p className={styles.hint}>
@@ -228,7 +228,7 @@ function Running({
           <Button block onClick={onStop}>
             К настройкам
           </Button>
-          <Button variant="primary" block onClick={onRestart}>
+          <Button icon="play" variant="primary" block onClick={onRestart}>
             Ещё раз
           </Button>
         </div>

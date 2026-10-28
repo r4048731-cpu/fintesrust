@@ -43,7 +43,6 @@
   margin: 0;
   color: var(--muted);
   font-size: 12px;
-  text-align: center;
 }
 
 /* Шапка карточки: значок, название, метка состояния */
@@ -68,6 +67,7 @@
   flex: 1;
   margin: 0;
   font: 600 15px/1.2 var(--title-font);
+  color: var(--ink);
 }
 
 .pill {

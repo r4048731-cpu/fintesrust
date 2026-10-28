@@ -174,7 +174,9 @@ describe('боты', () => {
     expect(within(bots).getByText('Скоро')).toBeInTheDocument()
     expect(within(bots).getByRole('button', { name: 'Telegram — скоро' })).toBeDisabled()
     expect(within(bots).getByRole('button', { name: 'MAX — скоро' })).toBeDisabled()
-    await user.click(screen.getByRole('button', { name: 'Ещё' }))
+    // меню «Ещё» живёт в шапке, а шапка есть только на «Сегодня»
+    await user.click(screen.getByRole('link', { name: 'Сегодня' }))
+    await user.click(await screen.findByRole('button', { name: 'Ещё' }))
     const more = screen.getByRole('dialog', { name: 'Ещё' })
     expect(within(more).getByRole('region', { name: 'Боты' })).toBeInTheDocument()
     await user.click(within(more).getByRole('button', { name: /^Настройки/ }))

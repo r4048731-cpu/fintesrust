@@ -37,7 +37,7 @@
   margin-right: 4px;
   padding: 2px 10px;
   border-radius: 99px;
-  background: var(--gradient);
+  background: var(--accent-fill);
   color: var(--accent-ink);
   font-size: 12px;
   font-weight: 600;
@@ -48,7 +48,8 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 12px;
+  padding: 20px;
+  border: 1px solid var(--card-border);
   border-radius: var(--radius);
   background: var(--surface);
   box-shadow: var(--shadow);
@@ -65,6 +66,7 @@
   background: var(--bg);
   font-family: var(--title-font);
   font-weight: 600;
+  color: var(--ink);
 }
 
 .emptyDay {

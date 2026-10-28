@@ -103,7 +103,9 @@ describe('заметки', () => {
     await waitFor(async () => expect(await r.notes.list()).toHaveLength(1))
 
     await user.click(screen.getByRole('button', { name: 'Ещё' }))
-    await user.click(screen.getByRole('button', { name: /^Заметки/ }))
+    await user.click(
+      within(screen.getByRole('dialog', { name: 'Ещё' })).getByRole('button', { name: /^Заметки/ }),
+    )
     await waitFor(() => expect(router.state.location.pathname).toBe('/notes'))
     expect(await screen.findByRole('button', { name: /^Быстрая/ })).toBeInTheDocument()
   })

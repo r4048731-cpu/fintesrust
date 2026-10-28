@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router'
 import { useRepos } from '../app/dataContext'
 import { Button } from '../components/Button'
 import { DishArt } from '../components/DishArt'
+import { RECIPE_PHOTOS, recipePhotoUrl } from '../domain/recipePhotos'
 import { Icon } from '../components/Icon'
 import { EmptyState } from '../components/EmptyState'
 import { RecipeFormSheet } from '../components/RecipeFormSheet'
@@ -87,14 +88,17 @@ export function RecipesPanel({ onAdded }: { onAdded: () => void }) {
     <li key={r.id} className={styles.cardWrap}>
       <button type="button" className={styles.card} onClick={() => setOpenId(r.id)}>
         <span className={`${styles.artBox} ${styles[r.collection]}`}>
-          <DishArt title={r.title} ingredients={r.ingredients} className={styles.art} />
+          <RecipeArt recipe={r} />
         </span>
         <span className={styles.kcal}>{Math.round(r.nutrients.calories)} ккал</span>
         <span className={styles.cardBody}>
           <span className={styles.cardTitle}>{r.title}</span>
-          <span className={styles.cardMeta}>
-            {r.minutes} мин · Б {g(r.nutrients.protein)} · Ж {g(r.nutrients.fat)} · У{' '}
-            {g(r.nutrients.carbs)}
+          <span className={styles.cardMeta}>{r.minutes} мин</span>
+          {/* БЖУ — чипами, как на карточках рецептов в приложениях питания */}
+          <span className={styles.chips}>
+            <span className={styles.chip}>Б {g(r.nutrients.protein)}</span>
+            <span className={styles.chip}>Ж {g(r.nutrients.fat)}</span>
+            <span className={styles.chip}>У {g(r.nutrients.carbs)}</span>
           </span>
         </span>
       </button>
@@ -106,7 +110,7 @@ export function RecipesPanel({ onAdded }: { onAdded: () => void }) {
         aria-label={`«${r.title}» в любимые`}
         onClick={() => repos.recipes.toggleFavorite(r.id)}
       >
-        <Icon name="heart" size={18} />
+        <Icon name="heart" size={20} />
       </button>
       <button
         type="button"
@@ -114,7 +118,7 @@ export function RecipesPanel({ onAdded }: { onAdded: () => void }) {
         aria-label={`«${r.title}» в дневник`}
         onClick={() => quickAdd(r)}
       >
-        <Icon name="plus" size={18} />
+        <Icon name="plus" size={20} />
       </button>
     </li>
   )
@@ -140,25 +144,28 @@ export function RecipesPanel({ onAdded }: { onAdded: () => void }) {
         enterKeyHint="search"
       />
 
-      <Tabs
-        label="Меню рецептов"
-        options={MENUS.map((m) => ({
-          ...m,
-          count:
-            m.value === 'all'
-              ? BUILTIN_VIEWS.length
-              : m.value === 'mine'
-                ? mine.length
-                : favoriteViews.length,
-        }))}
-        value={menu}
-        onChange={(m) => {
-          const next = new URLSearchParams(params)
-          if (m === 'all') next.delete('menu')
-          else next.set('menu', m)
-          setParams(next, { replace: true })
-        }}
-      />
+      {/* Вкладки меню прилипают под шапкой «Питание» и переключателем «Дневник / Рецепты» */}
+      <div className={styles.menuBar}>
+        <Tabs
+          label="Меню рецептов"
+          options={MENUS.map((m) => ({
+            ...m,
+            count:
+              m.value === 'all'
+                ? BUILTIN_VIEWS.length
+                : m.value === 'mine'
+                  ? mine.length
+                  : favoriteViews.length,
+          }))}
+          value={menu}
+          onChange={(m) => {
+            const next = new URLSearchParams(params)
+            if (m === 'all') next.delete('menu')
+            else next.set('menu', m)
+            setParams(next, { replace: true })
+          }}
+        />
+      </div>
 
       {added && (
         <div className={styles.undo} role="status">
@@ -266,9 +273,19 @@ function RecipeDetails({ recipe, favorite, onEdit, onAdded, onRemoved }: Details
 
   return (
     <div className={styles.details}>
-      <div className={`${styles.artBox} ${styles.artBig} ${styles[recipe.collection]}`}>
-        <DishArt title={recipe.title} ingredients={recipe.ingredients} className={styles.art} />
-      </div>
+      <figure className={styles.photoFigure}>
+        <div className={`${styles.artBox} ${styles.artBig} ${styles[recipe.collection]}`}>
+          <RecipeArt recipe={recipe} />
+        </div>
+        {RECIPE_PHOTOS[recipe.id] && (
+          <figcaption className={styles.credit}>
+            Фото: {RECIPE_PHOTOS[recipe.id].author} · {RECIPE_PHOTOS[recipe.id].license} ·{' '}
+            <a href={RECIPE_PHOTOS[recipe.id].source} target="_blank" rel="noreferrer">
+              Викисклад
+            </a>
+          </figcaption>
+        )}
+      </figure>
       <Button
         variant={favorite ? 'primary' : 'secondary'}
         icon="heart"
@@ -350,4 +367,13 @@ function RecipeDetails({ recipe, favorite, onEdit, onAdded, onRemoved }: Details
         ))}
     </div>
   )
+}
+
+/** Картинка рецепта: фото блюда у встроенных рецептов, рисунок — у своих. */
+function RecipeArt({ recipe }: { recipe: Pick<RecipeView, 'id' | 'title' | 'ingredients'> }) {
+  const photo = recipePhotoUrl(recipe.id)
+  if (photo) {
+    return <img className={styles.photo} src={photo} alt="" loading="lazy" decoding="async" />
+  }
+  return <DishArt title={recipe.title} ingredients={recipe.ingredients} className={styles.art} />
 }

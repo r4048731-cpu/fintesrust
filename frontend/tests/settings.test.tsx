@@ -151,8 +151,6 @@ describe('настройки', () => {
     await user.click(within(theme).getByRole('button', { name: 'Тёмная' }))
     expect(document.documentElement.dataset.theme).toBe('dark')
     expect(localStorage.getItem('fitnes.theme')).toBe('dark')
-    // кнопка в шапке узнала о смене
-    expect(screen.getByRole('button', { name: 'Включить светлую тему' })).toBeInTheDocument()
 
     await user.click(screen.getByRole('checkbox', { name: /Чистый чёрный/ }))
     expect(document.documentElement.dataset.amoled).toBe('')

@@ -60,7 +60,21 @@ async function withHistory() {
 describe('прогресс', () => {
   it('без тренировок и веса — пояснение', async () => {
     renderAt('/progress?view=charts', await setup())
-    expect(await screen.findByText('Графиков пока нет')).toBeInTheDocument()
+    expect(await screen.findByText('Графиков упражнений пока нет')).toBeInTheDocument()
+  })
+
+  it('«Графики» собирают все графики: без тренировок, но с весом — график веса', async () => {
+    const r = await setup()
+    r.clock.set(new Date())
+    await r.bodyWeights.record(82)
+    r.clock.advance(DAY)
+    await r.bodyWeights.record(81)
+    renderAt('/progress?view=charts', r)
+    expect(await screen.findByRole('heading', { name: 'Тело' })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: /^Вес тела, кг: 2 точек/ })).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Период графиков' })).toHaveDisplayValue(
+      'Всё время',
+    )
   })
 
   it('по умолчанию самое частое упражнение: рекорды, «Рабочий вес», таблица', async () => {
@@ -77,7 +91,7 @@ describe('прогресс', () => {
       within(switcher)
         .getAllByRole('button')
         .map((b) => b.textContent),
-    ).toEqual(['Рабочий вес', 'Подходы'])
+    ).toEqual(['Рабочий вес', '1ПМ', 'Подходы'])
     expect(within(switcher).getByRole('button', { name: 'Рабочий вес' })).toHaveAttribute(
       'aria-pressed',
       'true',
@@ -85,8 +99,10 @@ describe('прогресс', () => {
     expect(
       screen.getByRole('img', { name: /Рабочий вес, кг, Жим штанги лёжа: 3 точки/ }),
     ).toBeInTheDocument()
-    // тоннажа по неделям больше нет
-    expect(screen.queryByText(/Тоннаж по неделям/)).not.toBeInTheDocument()
+    // ниже — все остальные графики, в том числе тоннаж по неделям
+    expect(
+      await screen.findByRole('heading', { name: 'Тоннаж по неделям, кг' }),
+    ).toBeInTheDocument()
 
     const rows = within(screen.getByRole('table')).getAllByRole('row').slice(1)
     expect(rows.map((r) => r.textContent)).toEqual([
@@ -121,14 +137,14 @@ describe('прогресс', () => {
     expect(tip).toHaveTextContent('2 подхода: 10, 8')
   })
 
-  it('раздел «Вес тела» — панель веса, выбор хранится в адресе', async () => {
+  it('раздел «Тело» — панель веса, выбор хранится в адресе', async () => {
     const r = await withHistory()
     r.clock.set(ago(3).date)
     await r.bodyWeights.record(81)
     r.clock.set(ago(1).date)
     await r.bodyWeights.record(82, 'later')
     const { user, router } = renderAt('/progress', r)
-    await user.click(await screen.findByRole('button', { name: 'Вес тела' }))
+    await user.click(await screen.findByRole('button', { name: 'Тело' }))
     expect(router.state.location.search).toContain('view=weight')
     expect(await screen.findByRole('img', { name: /Вес тела по 2 записям/ })).toBeInTheDocument()
     expect(screen.getByRole('list', { name: 'Вес по дням' })).toBeInTheDocument()
@@ -154,7 +170,7 @@ describe('прогресс', () => {
     await r.bodyWeights.record(79.5)
     renderAt('/progress', r)
     expect(await screen.findByRole('img', { name: /Вес тела по 2 записям/ })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Вес тела' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Тело' })).toHaveAttribute('aria-pressed', 'true')
   })
 
   it('общая статистика', async () => {

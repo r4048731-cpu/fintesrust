@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useRepos } from '../app/dataContext'
-import { Button } from '../components/Button'
+import { Button, IconButton } from '../components/Button'
 import { EmptyState } from '../components/EmptyState'
 import { Icon } from '../components/Icon'
 import { ProgramBuilderSheet } from '../components/ProgramBuilderSheet'
@@ -36,15 +36,26 @@ export function ProgramsScreen() {
   }
 
   return (
-    <Screen title="Программы">
-      <div className={styles.links}>
-        <Button icon="programs" onClick={() => navigate('/programs/exercises')}>
-          Упражнения
-        </Button>
-        <Button icon="note" onClick={() => navigate('/notes')}>
-          Заметки
-        </Button>
-      </div>
+    <Screen
+      title="Программы"
+      action={
+        // Справочник и заметки — значками у заголовка, а не отдельной строкой кнопок
+        <div className={styles.links}>
+          <IconButton
+            icon="dumbbell"
+            variant="secondary"
+            label="Упражнения"
+            onClick={() => navigate('/programs/exercises')}
+          />
+          <IconButton
+            icon="note"
+            variant="secondary"
+            label="Заметки"
+            onClick={() => navigate('/notes')}
+          />
+        </div>
+      }
+    >
       {programs?.length === 0 && (
         <EmptyState
           title="Программ пока нет"

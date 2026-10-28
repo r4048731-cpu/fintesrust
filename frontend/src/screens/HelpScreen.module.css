@@ -5,6 +5,7 @@
 }
 
 .topic {
+  border: 1px solid var(--card-border);
   border-radius: var(--radius);
   background: var(--surface);
   box-shadow: var(--shadow);
@@ -20,6 +21,7 @@
   font: 600 16px/1.2 var(--title-font);
   list-style: none;
   cursor: pointer;
+  color: var(--ink);
 }
 
 .summary::-webkit-details-marker {

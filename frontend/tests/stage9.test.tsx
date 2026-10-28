@@ -151,10 +151,12 @@ describe('экран «Сегодня»', () => {
     const { user, router } = renderAt('/', r)
     const plan = await screen.findByRole('region', { name: 'Верх / Низ' })
     expect(within(plan).getByRole('heading', { name: 'Верх' })).toBeInTheDocument()
-    // длинный план свёрнут: 4 упражнения и «ещё»
-    expect(within(plan).getAllByRole('listitem')).toHaveLength(4)
-    await user.click(within(plan).getByRole('button', { name: 'Ещё 2 упражнения' }))
+    // план свёрнут: 2 упражнения и выпадающий список, который сворачивается обратно
+    expect(within(plan).getAllByRole('listitem')).toHaveLength(2)
+    await user.click(within(plan).getByRole('button', { name: 'Ещё 4 упражнения' }))
     expect(within(plan).getAllByRole('listitem')).toHaveLength(6)
+    await user.click(within(plan).getByRole('button', { name: 'Свернуть' }))
+    expect(within(plan).getAllByRole('listitem')).toHaveLength(2)
     expect(screen.getByRole('button', { name: /^Начать:/ })).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: 'Свободная тренировка без плана' }),

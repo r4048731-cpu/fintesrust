@@ -13,11 +13,19 @@ import styles from './QuickAdd.module.css'
 
 type Open = 'menu' | 'meal' | 'weight' | 'note' | null
 
+interface Props {
+  /** Классы кнопки и кружка с «+»: кнопка стоит в центре панели вкладок. */
+  className?: string
+  iconClassName?: string
+  /** Открыть ИИ-помощника — первый пункт меню. */
+  onAi: () => void
+}
+
 /**
- * Плавающая кнопка «+» над панелью вкладок: самые частые действия с любого экрана —
- * тренировка, еда, вес. Еда и вес вводятся прямо в шторке, без перехода.
+ * Кнопка «+» в центре панели вкладок: самые частые действия с любого экрана —
+ * ИИ, тренировка, еда, вес. Еда и вес вводятся прямо в шторке, без перехода.
  */
-export function QuickAdd() {
+export function QuickAdd({ className, iconClassName, onAi }: Props) {
   const repos = useRepos()
   const navigate = useNavigate()
   const [open, setOpen] = useState<Open>(null)
@@ -43,7 +51,17 @@ export function QuickAdd() {
     navigate('/workout')
   }
 
-  const actions: { icon: IconName; title: string; text: string; onClick: () => void }[] = []
+  const actions: { icon: IconName; title: string; text: string; onClick: () => void }[] = [
+    {
+      icon: 'ai',
+      title: 'Спросить ИИ',
+      text: 'Тренировки, питание, восстановление',
+      onClick: () => {
+        setOpen(null)
+        onAi()
+      },
+    },
+  ]
   if (state?.active) {
     actions.push({
       icon: 'today',
@@ -115,14 +133,17 @@ export function QuickAdd() {
     <>
       <button
         type="button"
-        className={styles.fab}
+        className={className}
         aria-label="Быстро добавить"
+        aria-haspopup="dialog"
         onClick={() => {
           setError(null)
           setOpen('menu')
         }}
       >
-        <Icon name="plus" size={26} />
+        <span className={iconClassName}>
+          <Icon name="plus" size={24} />
+        </span>
       </button>
 
       <Sheet open={open === 'menu'} onClose={() => setOpen(null)} title="Быстро добавить">

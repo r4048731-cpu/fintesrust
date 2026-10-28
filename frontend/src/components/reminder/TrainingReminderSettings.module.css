@@ -17,6 +17,6 @@
 
 .day[aria-pressed='true'] {
   border-color: transparent;
-  background: var(--gradient);
+  background: var(--accent-fill);
   color: var(--accent-ink);
 }

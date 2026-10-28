@@ -1,0 +1,162 @@
+.calendar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: var(--card-pad);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.month {
+  font-size: 22px;
+  text-transform: uppercase;
+}
+
+.month span {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.nav {
+  display: flex;
+  gap: 8px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  row-gap: 4px;
+}
+
+.weekday {
+  padding-bottom: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.day {
+  position: relative;
+  display: grid;
+  place-items: center;
+  justify-self: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink);
+  font: 600 15px var(--num-font);
+  font-variant-numeric: tabular-nums;
+}
+
+.day[data-outside] {
+  color: var(--muted);
+  opacity: 0.5;
+}
+
+.day:disabled {
+  color: var(--muted);
+  opacity: 0.35;
+  cursor: default;
+}
+
+.day[data-done] {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.day[data-today] {
+  box-shadow: inset 0 0 0 1.5px var(--muted);
+}
+
+.day[aria-pressed='true'] {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+/* Точки под числом: розовая — тренировка, фиолетовая — пробежка */
+.marks {
+  position: absolute;
+  bottom: 4px;
+  display: flex;
+  gap: 2px;
+}
+
+.marks i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.marks i[data-kind='run'] {
+  background: var(--violet);
+}
+
+.picked {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.pickedTitle {
+  font-size: 15px;
+}
+
+.none {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 8px 12px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-weight: 700;
+  text-align: left;
+}
+
+.item span {
+  flex: 1;
+  min-width: 0;
+}
+
+.item svg:first-child {
+  color: var(--accent);
+}
+
+.item svg:last-child {
+  color: var(--muted);
+}

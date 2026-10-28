@@ -20,6 +20,7 @@
 .title h2 {
   margin: 0;
   font: 600 18px/1.2 var(--title-font);
+  color: var(--ink);
 }
 
 .eyebrow {
@@ -90,6 +91,7 @@
   font: 600 15px/1.2 var(--num-font);
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: var(--ink);
 }
 
 .records {
@@ -115,7 +117,7 @@
   height: 30px;
   border-radius: 10px;
   background: linear-gradient(135deg, #fbbf24, #f97316);
-  color: #fff;
+  color: var(--accent-ink);
 }
 
 .recText,
@@ -149,6 +151,7 @@
 .recValue b {
   font: 600 14px/1.3 var(--num-font);
   white-space: nowrap;
+  color: var(--ink);
 }
 
 .records .more {

@@ -70,10 +70,14 @@ export const ACTIVITY_FACTORS: Record<Activity, number> = {
 }
 
 /** Изменение веса в неделю для цели: худеем на 0,5 кг, набираем на 0,25 кг. */
-const GOAL_KG_PER_WEEK: Record<NutritionGoal, number> = { lose: -0.5, maintain: 0, gain: 0.25 }
+export const GOAL_KG_PER_WEEK: Record<NutritionGoal, number> = {
+  lose: -0.5,
+  maintain: 0,
+  gain: 0.25,
+}
 
 /** Килокалорий в килограмме жира. */
-const KCAL_PER_KG = 7700
+export const KCAL_PER_KG = 7700
 
 /** Белок на килограмм веса: на сушке и наборе больше, чтобы сохранять и строить мышцы. */
 const PROTEIN_PER_KG: Record<NutritionGoal, number> = { lose: 1.8, maintain: 1.6, gain: 1.8 }
@@ -83,6 +87,29 @@ export interface PlanEstimate extends Nutrients {
   bmr: number
   /** Расход с учётом активности — столько нужно, чтобы вес стоял. */
   maintenance: number
+  /** От какого веса считается белок. */
+  proteinKg: number
+}
+
+/** Нижняя граница калорий: ниже без врача не стоит. */
+export const caloriesFloor = (sex: BodyProfile['sex'] | undefined) => (sex === 'male' ? 1500 : 1200)
+
+/**
+ * Вес, от которого считается белок. На сушке — от целевого, если он ниже текущего:
+ * при большом лишнем весе белок от текущего завышен. Без цели при ИМТ выше 30 — от веса при ИМТ 25.
+ */
+export function proteinWeightKg(p: BodyProfile, weightKg: number): number {
+  if (p.targetKg && p.goal === 'lose') return Math.min(weightKg, p.targetKg)
+  const m = p.heightCm / 100
+  if (!p.targetKg && weightKg / (m * m) > 30) return Math.round(25 * m * m)
+  return weightKg
+}
+
+/** Жиры — 30 % калорий, углеводы — остаток после белка и жиров. */
+export function splitMacros(calories: number, protein: number): Pick<Nutrients, 'fat' | 'carbs'> {
+  const fat = Math.round((calories * 0.3) / 9)
+  const carbs = Math.max(Math.round((calories - protein * 4 - fat * 9) / 4), 0)
+  return { fat, carbs }
 }
 
 /**
@@ -93,17 +120,15 @@ export function estimatePlan(p: BodyProfile, weightKg: number): PlanEstimate {
   const bmr = 10 * weightKg + 6.25 * p.heightCm - 5 * p.age + (p.sex === 'male' ? 5 : -161)
   const maintenance = bmr * ACTIVITY_FACTORS[p.activity]
   const delta = (GOAL_KG_PER_WEEK[p.goal] * KCAL_PER_KG) / 7
-  const floor = p.sex === 'male' ? 1500 : 1200
-  const calories = Math.max(Math.round((maintenance + delta) / 10) * 10, floor)
-  const protein = Math.round(weightKg * PROTEIN_PER_KG[p.goal])
-  const fat = Math.round((calories * 0.3) / 9)
-  const carbs = Math.max(Math.round((calories - protein * 4 - fat * 9) / 4), 0)
+  const calories = Math.max(Math.round((maintenance + delta) / 10) * 10, caloriesFloor(p.sex))
+  const proteinKg = proteinWeightKg(p, weightKg)
+  const protein = Math.round(proteinKg * PROTEIN_PER_KG[p.goal])
   return {
     calories,
     protein,
-    fat,
-    carbs,
+    ...splitMacros(calories, protein),
     bmr: Math.round(bmr),
     maintenance: Math.round(maintenance),
+    proteinKg,
   }
 }

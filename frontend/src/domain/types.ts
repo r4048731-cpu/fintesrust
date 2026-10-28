@@ -168,8 +168,28 @@ export interface BodyWeight extends Syncable {
 }
 
 /** Замеры тела, см (этап 22.3). */
-export const MEASURE_KEYS = ['waist', 'chest', 'hips', 'thigh', 'biceps'] as const
+/** Порядок — как в форме и списке; новые замеры (плечи, живот) дописаны в конец, чтобы не сдвигать старые. */
+export const MEASURE_KEYS = [
+  'waist',
+  'chest',
+  'hips',
+  'thigh',
+  'biceps',
+  'shoulders',
+  'belly',
+] as const
 export type MeasureKey = (typeof MEASURE_KEYS)[number]
+
+/** Замеры сверху вниз — как точки на фигуре в «Прогресс» → «Тело». */
+export const FIGURE_ORDER: MeasureKey[] = [
+  'shoulders',
+  'chest',
+  'biceps',
+  'waist',
+  'belly',
+  'hips',
+  'thigh',
+]
 
 export const MEASURE_LABELS: Record<MeasureKey, string> = {
   waist: 'Талия',
@@ -177,6 +197,8 @@ export const MEASURE_LABELS: Record<MeasureKey, string> = {
   hips: 'Бёдра',
   thigh: 'Бедро',
   biceps: 'Бицепс',
+  shoulders: 'Плечи',
+  belly: 'Живот',
 }
 
 /** Замеры за день: одна запись на дату, незаполненные замеры отсутствуют. */
@@ -207,8 +229,13 @@ export interface Nutrients {
 }
 
 /** Приём пищи (вкладка «Тело» → «Питание»). Значения — на всю порцию, а не на 100 г. */
+/** Приём пищи в дневнике: плитки «Завтрак / Перекус / Обед / Ужин». */
+export type MealSlot = 'breakfast' | 'snack' | 'lunch' | 'dinner'
+
 export interface Meal extends Syncable, Nutrients {
   date: ISODate
+  /** Какой приём пищи; у старых записей нет — берётся по времени добавления (domain/mealSlots). */
+  slot?: MealSlot
   name: string
   /** Вес порции; null — не указан. По нему пересчитываются значения при повторе. */
   grams: number | null
@@ -228,6 +255,28 @@ export interface BodyProfile {
   heightCm: number
   activity: Activity
   goal: NutritionGoal
+  /** Целевой вес, кг; от него считается белок на сушке. Необязателен. */
+  targetKg?: number
+}
+
+/** Продукт, найденный по штрихкоду. */
+export interface BarcodeFood {
+  code: string
+  name: string
+  /** КБЖУ на 100 г. */
+  per100: Nutrients
+  /** Вес порции с упаковки, г; null — не указан. */
+  servingG: number | null
+}
+
+/** С чего посчитан текущий план питания — чтобы подсказать пересчёт и поправку по весу. */
+export interface PlanBasis {
+  /** Когда план задан или поправлен. */
+  setAt?: ISODate
+  /** Вес на момент расчёта; нет — план введён вручную. */
+  weightKg?: number
+  /** До какого дня не предлагать поправку («Не сейчас»). */
+  snoozedUntil?: ISODate
 }
 
 /** Записи таблицы meta: настройки и служебные указатели. */
@@ -250,6 +299,8 @@ export interface MetaValues {
   nutritionPlan: Nutrients | null
   /** Пол, возраст, рост, активность и цель для расчёта плана; null — не вводились. */
   bodyProfile: BodyProfile | null
+  /** С какого веса и когда задан план; null — плана нет или он из старой версии. */
+  planBasis: PlanBasis | null
   /** Последние ответы в «Подобрать программу»; null — ещё не подбирали. */
   builderInput: BuilderInput | null
   /** Любимые рецепты — id встроенных и своих, в порядке добавления. */
@@ -268,6 +319,18 @@ export interface MetaValues {
   /** До какого дня не предлагать разгрузку («Не сейчас»). */
   deloadSnoozedUntil: ISODate | null
   intervalTimer: { mode: IntervalMode; configs: Record<IntervalMode, IntervalConfig> } | null
+  /** Вода и сон по дням (дневник питания); дни без записей отсутствуют. */
+  dayTrackers: Record<ISODate, DayTracker>
+  /** Шаги по дням, сохранённые из Health Connect: там хранится только 30 дней. */
+  stepsHistory: Record<ISODate, number>
+  /** Продукты, уже найденные по штрихкоду: второй раз — без интернета. */
+  barcodeFoods: Record<string, BarcodeFood>
+}
+
+/** Вода и сон за день. */
+export interface DayTracker {
+  waterMl?: number
+  sleepMin?: number
 }
 
 export type MetaKey = keyof MetaValues

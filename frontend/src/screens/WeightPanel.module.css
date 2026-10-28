@@ -10,7 +10,8 @@
   flex-direction: column;
   gap: 4px;
   min-width: 0;
-  padding: 12px;
+  padding: 16px;
+  border: 1px solid var(--card-border);
   border-radius: var(--radius-sm);
   background: var(--surface);
   box-shadow: var(--shadow);
@@ -28,21 +29,24 @@
 }
 
 .value {
-  font: 600 16px/1.2 var(--num-font);
+  font: 800 16px/1.2 var(--num-font);
   font-variant-numeric: tabular-nums;
+  color: var(--accent); /* текущий вес — главная цифра раздела */
 }
 
 .cardTitle {
   font: 600 15px/1.2 var(--title-font);
+  color: var(--ink);
 }
 
 .list {
   margin: 0;
   padding: 0 4px 0 12px;
   list-style: none;
-  border: 1px solid var(--line);
+  border: 1px solid var(--card-border);
   border-radius: var(--radius);
   background: var(--surface);
+  box-shadow: var(--shadow);
 }
 
 .row {
@@ -126,4 +130,24 @@
   border-radius: 0 0 3px 3px;
   background: var(--gradient);
   content: '';
+}
+
+/* Заголовок графика и выбор периода в одну строку */
+.chartHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.chartHead h2 {
+  margin: 0;
+}
+
+.noData {
+  margin: 0;
+  padding: 32px 0;
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
 }

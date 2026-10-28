@@ -76,7 +76,7 @@ function AddWorkoutForm({ onClose }: { onClose: () => void }) {
           ? 'Будущая дата — тренировка запланируется и появится на «Сегодня» в этот день.'
           : 'Тренировка сразу попадёт в историю, подходы можно поправить.'}
       </p>
-      <Button variant="primary" block disabled={busy} onClick={create}>
+      <Button icon="plus" variant="primary" block disabled={busy} onClick={create}>
         {planned ? 'Запланировать' : 'Добавить'}
       </Button>
     </div>

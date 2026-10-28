@@ -120,12 +120,18 @@ export function ProgramBuilderSheet({ open, onClose, onSaved }: Props) {
         built ? (
           <div className={styles.actions}>
             <Button onClick={() => setPreview(false)}>Параметры</Button>
-            <Button variant="primary" block onClick={() => void save()}>
+            <Button icon="check" variant="primary" block onClick={() => void save()}>
               Сохранить
             </Button>
           </div>
         ) : (
-          <Button variant="primary" block disabled={!input} onClick={() => void compose()}>
+          <Button
+            icon="ai"
+            variant="primary"
+            block
+            disabled={!input}
+            onClick={() => void compose()}
+          >
             Составить программу
           </Button>
         )

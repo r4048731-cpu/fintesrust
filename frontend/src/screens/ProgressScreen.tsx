@@ -5,14 +5,17 @@ import { useRepos } from '../app/dataContext'
 import { LineChart, type LinePoint, type LineSeries } from '../components/charts/LineChart'
 import { EmptyState } from '../components/EmptyState'
 import { OneRMSheet } from '../components/OneRMSheet'
-import { Card, Screen, SectionLabel } from '../components/Screen'
+import { Card, PinnedBar, Screen, SectionLabel } from '../components/Screen'
 import { Segmented } from '../components/Segmented'
+import { PeriodSelect } from '../components/charts/PeriodSelect'
+import { inPeriod, type Period } from '../domain/period'
 import {
   activitySummary,
   exerciseHistory,
   exerciseUsage,
   parseISODate,
   personalRecords,
+  toISODate,
   type SessionStats,
 } from '../domain/metrics'
 import { formatDecimal } from '../domain/number'
@@ -20,7 +23,7 @@ import { best1RMSet } from '../domain/oneRM'
 import { plural } from '../domain/plural'
 import type { Exercise, ExerciseType } from '../domain/types'
 import { formatSet } from '../domain/workout'
-import { RunHistory } from '../components/run/RunHistory'
+import { AllCharts } from './AllCharts'
 import { HistoryPanel } from './HistoryPanel'
 import { WeightPanel } from './WeightPanel'
 import styles from './ProgressScreen.module.css'
@@ -47,22 +50,22 @@ const kg = (v: number) => `${formatDecimal(Math.round(v * 2) / 2)} кг`
 const TABLE_ROWS = 12
 
 /** Какой график показан (ТЗ 9.6). Хранится в адресе: ?chart=working|sets. */
-type ChartKind = 'working' | 'sets'
+type ChartKind = 'working' | 'e1rm' | 'sets'
 
-/** Раздел вкладки. Хранится в адресе: ?view=history|charts|weight|runs. */
-type View = 'history' | 'charts' | 'weight' | 'runs'
+/** Раздел вкладки. Хранится в адресе: ?view=history|charts|weight. */
+type View = 'history' | 'charts' | 'weight'
 
 const VIEWS: { value: View; label: string }[] = [
   { value: 'history', label: 'История' },
   { value: 'charts', label: 'Графики' },
-  { value: 'weight', label: 'Вес тела' },
-  { value: 'runs', label: 'Бег' },
+  { value: 'weight', label: 'Тело' },
 ]
 
-/** Адрес раздела; старое ?view=workouts — это нынешние «Графики». */
+/** Адрес раздела; старое ?view=workouts — это «Графики», ?view=runs — пробежки теперь в «Истории». */
 function viewOf(requested: string | null, hasWorkouts: boolean, hasWeights: boolean): View {
   if (requested === 'workouts' || requested === 'charts') return 'charts'
-  if (requested === 'history' || requested === 'weight' || requested === 'runs') return requested
+  if (requested === 'runs') return 'history'
+  if (requested === 'history' || requested === 'weight') return requested
   return !hasWorkouts && hasWeights ? 'weight' : 'history'
 }
 
@@ -82,11 +85,7 @@ function setsSummary(s: SessionStats, type: ExerciseType): string {
   return `${n} ${plural(n, 'подход', 'подхода', 'подходов')}: ${values}`
 }
 
-function exerciseChart(
-  kind: 'working' | 'sets',
-  history: SessionStats[],
-  type: ExerciseType,
-): ChartSpec {
+function exerciseChart(kind: ChartKind, history: SessionStats[], type: ExerciseType): ChartSpec {
   if (kind === 'working') {
     return {
       title: 'Рабочий вес, кг',
@@ -95,6 +94,19 @@ function exerciseChart(
       points: history.map((s) => ({
         label: shortDate(s.date),
         values: { v: s.workingWeightKg },
+        detail: s.sets.map((x) => formatSet(x, type)).join(', '),
+      })),
+      empty: 'Линия появится после второй тренировки.',
+    }
+  }
+  if (kind === 'e1rm') {
+    return {
+      title: 'Расчётный 1ПМ, кг',
+      series: { key: 'v', name: '1ПМ', color: 'var(--chart-2)' },
+      format: (v) => formatDecimal(Math.round(v * 2) / 2),
+      points: history.map((s) => ({
+        label: shortDate(s.date),
+        values: { v: s.best1RM },
         detail: s.sets.map((x) => formatSet(x, type)).join(', '),
       })),
       empty: 'Линия появится после второй тренировки.',
@@ -132,22 +144,22 @@ export function ProgressScreen() {
 
   return (
     <Screen title="Прогресс">
-      <Segmented
-        label="Раздел"
-        options={VIEWS}
-        value={view}
-        onChange={(v) => {
-          const next = new URLSearchParams(params)
-          next.set('view', v)
-          setParams(next, { replace: true })
-        }}
-      />
+      <PinnedBar>
+        <Segmented
+          label="Раздел"
+          options={VIEWS}
+          value={view}
+          onChange={(v) => {
+            const next = new URLSearchParams(params)
+            next.set('view', v)
+            setParams(next, { replace: true })
+          }}
+        />
+      </PinnedBar>
       {view === 'history' ? (
         <HistoryPanel />
       ) : view === 'weight' ? (
         <WeightPanel />
-      ) : view === 'runs' ? (
-        <RunHistory />
       ) : (
         <WorkoutProgress />
       )}
@@ -160,6 +172,7 @@ function WorkoutProgress() {
   const repos = useRepos()
   const [params, setParams] = useSearchParams()
   const [calc, setCalc] = useState(false)
+  const [period, setPeriod] = useState<Period>('all')
 
   const data = useLiveQuery(async () => {
     const workouts = await repos.workouts.listDone()
@@ -175,14 +188,6 @@ function WorkoutProgress() {
   if (!data) return null
   const { workouts, usage, exercises } = data
 
-  if (workouts.length === 0) {
-    return (
-      <EmptyState title="Графиков пока нет" icon="progress">
-        <p>Графики и рекорды появятся после первых тренировок.</p>
-      </EmptyState>
-    )
-  }
-
   const options = [...usage.entries()]
     .filter(([id]) => exercises.has(id))
     .sort(
@@ -197,14 +202,21 @@ function WorkoutProgress() {
 
   // «Рабочий вес» есть только у упражнений с весом
   const chartOptions: { value: ChartKind; label: string }[] = [
-    ...(exercise?.type === 'weight' ? [{ value: 'working' as const, label: 'Рабочий вес' }] : []),
+    ...(exercise?.type === 'weight'
+      ? [
+          { value: 'working' as const, label: 'Рабочий вес' },
+          { value: 'e1rm' as const, label: '1ПМ' },
+        ]
+      : []),
     { value: 'sets', label: 'Подходы' },
   ]
   const requestedChart = params.get('chart') as ChartKind | null
   const chartKind = chartOptions.some((o) => o.value === requestedChart)
     ? requestedChart!
     : chartOptions[0].value
-  const chart = exerciseChart(chartKind, history, exercise?.type ?? 'weight')
+  const today = toISODate(new Date())
+  const shownHistory = inPeriod(history, period, today)
+  const chart = exerciseChart(chartKind, shownHistory, exercise?.type ?? 'weight')
 
   const setParam = (key: string, value: string) => {
     const next = new URLSearchParams(params)
@@ -222,6 +234,18 @@ function WorkoutProgress() {
 
   return (
     <>
+      {/* Один период на все графики раздела */}
+      <div className={styles.periodRow}>
+        <span className={styles.label}>Период</span>
+        <PeriodSelect value={period} onChange={setPeriod} label="Период графиков" />
+      </div>
+
+      {workouts.length === 0 && (
+        <EmptyState title="Графиков упражнений пока нет" icon="progress">
+          <p>Графики упражнений и рекорды появятся после первых тренировок.</p>
+        </EmptyState>
+      )}
+
       {exercise && (
         <label className={styles.pickerField}>
           <span className={styles.label}>Упражнение</span>
@@ -276,27 +300,31 @@ function WorkoutProgress() {
         />
       )}
 
-      <Card framed>
-        {chartOptions.length > 1 && (
-          <Segmented
-            label="График"
-            options={chartOptions}
-            value={chartKind}
-            onChange={(v) => setParam('chart', v)}
-          />
-        )}
-        <h2 className={styles.cardTitle}>{chart.title}</h2>
-        {chart.points.length >= 2 ? (
-          <LineChart
-            points={chart.points}
-            series={[chart.series]}
-            format={chart.format}
-            ariaLabel={`${chart.title}, ${exercise?.name}: ${chart.points.length} ${plural(chart.points.length, 'точка', 'точки', 'точек')}`}
-          />
-        ) : (
-          <p className={styles.muted}>{chart.empty}</p>
-        )}
-      </Card>
+      {exercise && (
+        <Card framed>
+          {chartOptions.length > 1 && (
+            <Segmented
+              label="График"
+              options={chartOptions}
+              value={chartKind}
+              onChange={(v) => setParam('chart', v)}
+            />
+          )}
+          <h2 className={styles.cardTitle}>{chart.title}</h2>
+          {chart.points.length >= 2 ? (
+            <LineChart
+              points={chart.points}
+              series={[chart.series]}
+              format={chart.format}
+              ariaLabel={`${chart.title}, ${exercise?.name}: ${chart.points.length} ${plural(chart.points.length, 'точка', 'точки', 'точек')}`}
+            />
+          ) : (
+            <p className={styles.muted}>
+              {history.length >= 2 && period !== 'all' ? 'Нет данных за этот период.' : chart.empty}
+            </p>
+          )}
+        </Card>
+      )}
 
       {exercise && (
         <Card>
@@ -333,12 +361,18 @@ function WorkoutProgress() {
         </Card>
       )}
 
-      <SectionLabel>Все тренировки</SectionLabel>
-      <div className={styles.tiles}>
-        <Tile label="За 7 дней" value={`${summary.last7}`} />
-        <Tile label="За 30 дней" value={`${summary.last30}`} />
-        <Tile label="Всего" value={`${summary.total}`} />
-      </div>
+      {workouts.length > 0 && (
+        <>
+          <SectionLabel>Все тренировки</SectionLabel>
+          <div className={styles.tiles}>
+            <Tile label="За 7 дней" value={`${summary.last7}`} />
+            <Tile label="За 30 дней" value={`${summary.last30}`} />
+            <Tile label="Всего" value={`${summary.total}`} />
+          </div>
+        </>
+      )}
+
+      <AllCharts period={period} />
     </>
   )
 }

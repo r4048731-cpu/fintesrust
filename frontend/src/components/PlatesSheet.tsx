@@ -104,6 +104,7 @@ function PlatesForm({ initialKg, step, onApply, onClose }: Omit<Props, 'open'>) 
 
       {onApply && (
         <Button
+          icon="check"
           variant="primary"
           block
           onClick={() => {

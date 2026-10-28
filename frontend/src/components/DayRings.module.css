@@ -2,7 +2,8 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 14px 14px 14px 16px;
+  padding: var(--card-pad);
+  border: 1px solid var(--card-border);
   border-radius: var(--radius);
   background: var(--surface);
   box-shadow: var(--shadow);

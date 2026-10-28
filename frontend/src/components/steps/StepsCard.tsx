@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Steps, DEFAULT_STEPS_GOAL, type DaySteps, type StepsStatus } from '../../native/steps'
 import { Button } from '../Button'
+import { Segmented } from '../Segmented'
 import frame from '../frame.module.css'
 import styles from './Steps.module.css'
 
@@ -14,13 +15,23 @@ const fmt = (n: number) => n.toLocaleString('ru-RU')
 export function StepsCard() {
   const [status, setStatus] = useState<StepsStatus | null>(null)
   const [days, setDays] = useState<DaySteps[] | null>(null)
+  /** Шаги сегодня по часам; null — нет данных или старая сборка APK без этого метода. */
+  const [hours, setHours] = useState<number[] | null>(null)
+  const [view, setView] = useState<'day' | 'week'>('day')
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     try {
       const st = await Steps.status()
       setStatus(st)
-      if (st.health === 'available' && st.steps) setDays((await Steps.daily({ days: 7 })).days)
+      if (st.health === 'available' && st.steps) {
+        setDays((await Steps.daily({ days: 7 })).days)
+        setHours(
+          await Steps.hourly()
+            .then((r) => r.hours)
+            .catch(() => null),
+        )
+      }
       setError(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Не удалось прочитать шаги')
@@ -99,7 +110,19 @@ export function StepsCard() {
           <span>{Math.round(share * 100)}%</span>
         </div>
       </div>
-      {days && (
+      {hours && (
+        <Segmented
+          label="Диаграмма шагов"
+          options={[
+            { value: 'day', label: 'Сегодня по часам' },
+            { value: 'week', label: 'Неделя' },
+          ]}
+          value={view}
+          onChange={setView}
+        />
+      )}
+      {hours && view === 'day' && <HourBars hours={hours} />}
+      {days && (!hours || view === 'week') && (
         <ol className={styles.week} aria-label="Шаги за неделю">
           {days.map((d) => {
             const wd = WEEKDAYS[new Date(`${d.date}T12:00`).getDay()]
@@ -119,5 +142,45 @@ export function StepsCard() {
       )}
       {error && <p className={styles.error}>{error}</p>}
     </section>
+  )
+}
+
+/** Диаграмма дня: 24 столбика по часам, текущий час выделен, будущие — бледные. */
+function HourBars({ hours }: { hours: number[] }) {
+  const now = new Date().getHours()
+  const max = Math.max(...hours, 1)
+  const peak = hours.indexOf(Math.max(...hours))
+  return (
+    <figure className={styles.hours}>
+      <ol className={styles.hourBars} aria-label="Шаги сегодня по часам">
+        {hours.map((n, h) => (
+          <li
+            key={h}
+            aria-label={`${h}:00 — ${fmt(n)}`}
+            data-now={h === now || undefined}
+            data-future={h > now || undefined}
+          >
+            <span className={styles.barBox}>
+              <span
+                className={n > 0 ? styles.barDone : styles.bar}
+                style={{ height: `${Math.max(4, (n / max) * 100)}%` }}
+              />
+            </span>
+          </li>
+        ))}
+      </ol>
+      <div className={styles.hourAxis} aria-hidden="true">
+        <span>0</span>
+        <span>6</span>
+        <span>12</span>
+        <span>18</span>
+        <span>24</span>
+      </div>
+      {hours[peak] > 0 && (
+        <figcaption className={styles.muted}>
+          Больше всего — с {peak}:00 до {peak + 1}:00: {fmt(hours[peak])} шагов
+        </figcaption>
+      )}
+    </figure>
   )
 }

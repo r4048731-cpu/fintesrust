@@ -42,7 +42,7 @@ export function ExercisePicker({
             onSelect={onPick}
             suggested={similarTo && similarExercises(similarTo, exercises)}
             renderEmpty={(query) => (
-              <Button variant="primary" onClick={() => setCreateName(query)}>
+              <Button icon="plus" variant="primary" onClick={() => setCreateName(query)}>
                 {query ? `Создать «${query}»` : 'Создать упражнение'}
               </Button>
             )}

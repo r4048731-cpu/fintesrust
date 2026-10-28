@@ -109,7 +109,7 @@ function ExerciseForm({ exercise, defaults, onClose, onSaved }: Props) {
         onChange={(e) => setNote(e.target.value)}
         placeholder="Техника, настройки тренажёра, хват"
       />
-      <Button type="submit" variant="primary" block disabled={busy}>
+      <Button type="submit" icon="check" variant="primary" block disabled={busy}>
         {exercise ? 'Сохранить' : 'Добавить в справочник'}
       </Button>
 

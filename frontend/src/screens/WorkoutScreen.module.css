@@ -34,6 +34,7 @@
 .clock {
   font: 600 20px/1.1 var(--num-font);
   font-variant-numeric: tabular-nums;
+  color: var(--ink);
 }
 
 .progress {
@@ -58,6 +59,7 @@
 
 .title {
   font: 600 22px/1.2 var(--title-font);
+  color: var(--ink);
 }
 
 .muted {
@@ -81,6 +83,7 @@
   border-bottom: 1px dashed var(--line);
   background: transparent;
   font: 600 22px/1.2 var(--title-font);
+  color: var(--ink);
 }
 
 /* Карточка упражнения */
@@ -88,7 +91,8 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 10px 10px 8px;
+  padding: 16px 16px 12px;
+  border: 1px solid var(--card-border);
   border-radius: var(--radius);
   background: var(--surface);
   box-shadow: var(--shadow);
@@ -108,6 +112,7 @@
 
 .exName {
   font: 600 16px/1.25 var(--title-font);
+  color: var(--ink);
 }
 
 .meta {
@@ -381,6 +386,7 @@
 .restTime {
   font: 600 28px/1.05 var(--num-font);
   font-variant-numeric: tabular-nums;
+  color: var(--ink);
 }
 
 .restOver .restTime {
@@ -393,6 +399,7 @@
 
 .editTitle {
   font: 600 16px/1.2 var(--title-font);
+  color: var(--ink);
 }
 
 .dateInput {
@@ -408,9 +415,9 @@
 /* Следующий подход: подсвечен, чтобы в зале сразу было видно, какой делать */
 .next .doneBtn {
   border-color: transparent;
-  background: var(--gradient);
+  background: var(--accent-fill);
   color: var(--accent-ink);
-  box-shadow: 0 4px 14px rgb(124 58 237 / 30%);
+  box-shadow: var(--accent-shadow);
 }
 
 .next > div:not(.doneBtn) {
@@ -516,7 +523,7 @@
   background:
     linear-gradient(var(--surface), var(--surface)) padding-box,
     var(--gradient) border-box;
-  box-shadow: 0 8px 24px rgb(124 58 237 / 12%);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--accent-fill) 12%, transparent);
 }
 
 /* Низ шторки упражнения: «назад» и «далее» */
@@ -558,39 +565,6 @@
 }
 
 /* ——— Украшения экрана тренировки ——— */
-
-/* Фон: сетка и цветное свечение за верхом, как на остальных экранах */
-.page::before,
-.page::after {
-  position: fixed;
-  inset: 0 0 auto;
-  height: 520px;
-  pointer-events: none;
-  content: '';
-}
-
-.page::before {
-  z-index: -1;
-  background-image: var(--pattern-grid);
-  background-position: center -1px;
-  background-size: 28px 28px;
-  mask-image: radial-gradient(130% 100% at 50% 0%, #000 25%, transparent 72%);
-}
-
-.page::after {
-  z-index: -2;
-  background:
-    radial-gradient(
-      60% 55% at 12% 0%,
-      color-mix(in srgb, var(--blue) 14%, transparent),
-      transparent
-    ),
-    radial-gradient(
-      55% 50% at 92% 8%,
-      color-mix(in srgb, var(--pink) 12%, transparent),
-      transparent
-    );
-}
 
 /* Часы: точка «идёт запись» и цифры градиентом */
 .clock {
@@ -644,7 +618,7 @@
   50% {
     box-shadow:
       0 0 0 5px color-mix(in srgb, var(--violet) 25%, transparent),
-      0 6px 18px rgb(124 58 237 / 35%);
+      0 6px 18px color-mix(in srgb, var(--accent-fill) 35%, transparent);
   }
 }
 
@@ -672,7 +646,7 @@
   background:
     linear-gradient(var(--surface), var(--surface)) padding-box,
     var(--gradient) border-box;
-  box-shadow: 0 6px 18px rgb(124 58 237 / 14%);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--accent-fill) 14%, transparent);
 }
 
 /* Сделанное упражнение: зелёная галочка и зелёная полоска */
@@ -755,7 +729,7 @@
   background:
     linear-gradient(var(--surface), var(--surface)) padding-box,
     var(--gradient) border-box;
-  box-shadow: 0 10px 30px rgb(124 58 237 / 30%);
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--accent-fill) 30%, transparent);
   font-size: 14px;
   animation:
     record-in 420ms cubic-bezier(0.3, 1.5, 0.5, 1),
@@ -771,7 +745,7 @@
   height: 36px;
   border-radius: 11px;
   background: linear-gradient(135deg, #f59e0b, #f97316);
-  color: #fff;
+  color: var(--accent-ink);
 }
 
 /* Вспышка: от кубка расходится кольцо, по плашке пробегает блик */

@@ -146,7 +146,7 @@ export function ProgressPhotos({ weights }: { weights: BodyWeight[] }) {
         onClose={() => setDraft(null)}
         title="Новое фото"
         footer={
-          <Button variant="primary" block onClick={() => void save()}>
+          <Button icon="check" variant="primary" block onClick={() => void save()}>
             Сохранить
           </Button>
         }

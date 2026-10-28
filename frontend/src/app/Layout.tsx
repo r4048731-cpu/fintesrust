@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { NavLink, Outlet, useLocation, useMatches } from 'react-router'
 import { AiSheet } from '../components/AiSheet'
 import { Icon, type IconName } from '../components/Icon'
-import { MoreMenu } from '../components/MoreMenu'
 import { QuickAdd } from '../components/QuickAdd'
 import { TrainingReminderSync } from '../components/reminder/TrainingReminderSync'
-import { ThemeToggle } from '../components/ThemeToggle'
+import { StepsSync } from '../components/steps/StepsSync'
+import { WaterReminderSync } from '../components/reminder/WaterReminderSync'
 import { isAndroidApp } from '../native/steps'
 import styles from './Layout.module.css'
 
@@ -65,38 +65,27 @@ export function Layout() {
 
   return (
     <>
-      {isAndroidApp() && <TrainingReminderSync />}
-      <header className={styles.topbar}>
-        <div className={styles.topbarInner}>
-          <span className={styles.brand}>Фитнес</span>
-          <div className={styles.topActions}>
-            <MoreMenu />
-            <ThemeToggle />
-          </div>
-        </div>
-      </header>
+      {isAndroidApp() && (
+        <>
+          <TrainingReminderSync />
+          <StepsSync />
+          <WaterReminderSync />
+        </>
+      )}
       <main className={styles.main}>
         {/* Новый экран мягко проявляется; смена вкладки внутри экрана (?view=) — без анимации */}
         <div key={routeKey} className={styles.pageIn}>
           <Outlet />
         </div>
       </main>
-      <QuickAdd />
       <nav className={styles.tabbar} aria-label="Разделы">
         <div className={styles.tabs}>
           {LEFT.map(tab)}
-          <button
-            type="button"
-            className={styles.aiTab}
-            aria-label="ИИ-помощник"
-            aria-haspopup="dialog"
-            onClick={() => setAiOpen(true)}
-          >
-            <span className={styles.aiIcon}>
-              <Icon name="ai" />
-            </span>
-            <span>ИИ</span>
-          </button>
+          <QuickAdd
+            className={styles.addTab}
+            iconClassName={styles.addIcon}
+            onAi={() => setAiOpen(true)}
+          />
           {RIGHT.map(tab)}
         </div>
       </nav>

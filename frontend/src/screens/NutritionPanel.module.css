@@ -8,13 +8,7 @@
 .day {
   font: 600 16px/1.2 var(--title-font);
   text-align: center;
-}
-
-.calHead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: -4px -6px -8px 0;
+  color: var(--ink);
 }
 
 .label {
@@ -23,32 +17,6 @@
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-}
-
-.big {
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  font: 600 30px/1.1 var(--num-font);
-  font-variant-numeric: tabular-nums;
-  text-align: left;
-}
-
-.big svg {
-  align-self: center;
-  margin-left: auto;
-  color: var(--muted);
-}
-
-.big span {
-  color: var(--muted);
-  font: 500 14px var(--font-body);
 }
 
 /* Полоска «съедено против плана» */
@@ -86,12 +54,6 @@
   background: var(--violet);
 }
 
-.left {
-  margin: -6px 0 0;
-  color: var(--muted);
-  font-size: 13px;
-}
-
 .macros {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -111,6 +73,7 @@
   font: 600 15px/1.2 var(--num-font);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+  color: var(--ink);
 }
 
 .macro b span {
@@ -120,15 +83,17 @@
 
 .cardTitle {
   font: 600 15px/1.2 var(--title-font);
+  color: var(--ink);
 }
 
 .list {
   margin: 0;
   padding: 0 4px 0 0;
   list-style: none;
-  border: 1px solid var(--line);
+  border: 1px solid var(--card-border);
   border-radius: var(--radius);
   background: var(--surface);
+  box-shadow: var(--shadow);
 }
 
 .list li {
@@ -284,4 +249,168 @@
 .dot.carbs::before,
 .split .carbs {
   background: var(--violet);
+}
+
+/* ——— Кольцо калорий: норма · съедено · осталось ——— */
+.hero {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: center;
+}
+
+.side b {
+  color: var(--ink);
+  font: 800 20px/1.1 var(--num-font);
+  font-variant-numeric: tabular-nums;
+}
+
+.side span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+button.side span {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.overText {
+  color: var(--danger) !important;
+}
+
+.ring {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 136px;
+  height: 136px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+}
+
+.ring svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  rotate: -90deg;
+}
+
+.ringTrack,
+.ringArc {
+  fill: none;
+  stroke-width: 9;
+}
+
+.ringTrack {
+  stroke: var(--surface-2);
+}
+
+.ringArc {
+  stroke: url(#kcalRing);
+  stroke-linecap: round;
+  transition: stroke-dasharray 600ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.ringOver {
+  stroke: var(--danger);
+}
+
+.ringValue {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--accent);
+  font: 800 28px/1 var(--num-font);
+  font-variant-numeric: tabular-nums;
+}
+
+.ringValue > span:last-child {
+  margin-top: 4px;
+  color: var(--muted);
+  font: 600 13px var(--font-body);
+}
+
+/* ——— Плитки приёмов пищи 2×2 ——— */
+.slots {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.slot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 118px;
+  padding: 16px;
+  overflow: hidden;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  text-align: left;
+}
+
+.slotHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.slotHead b {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.slotPlus {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.slotKcal {
+  font: 800 22px/1 var(--num-font);
+  font-variant-numeric: tabular-nums;
+}
+
+.slotKcal span {
+  color: var(--muted);
+  font: 600 12px var(--font-body);
+}
+
+/* Значок в углу плитки — вместо фото блюда */
+.slotIcon {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--muted);
 }

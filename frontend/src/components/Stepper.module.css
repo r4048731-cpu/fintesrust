@@ -32,6 +32,7 @@
   font: 600 20px/1 var(--num-font);
   font-variant-numeric: tabular-nums;
   padding: 0;
+  color: var(--ink);
 }
 
 .compact {

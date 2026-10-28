@@ -2,12 +2,14 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useRepos } from '../app/dataContext'
-import { ActivityHeatmap } from '../components/ActivityHeatmap'
 import { AddWorkoutSheet } from '../components/AddWorkoutSheet'
 import { Button } from '../components/Button'
 import { EmptyState } from '../components/EmptyState'
 import { Icon } from '../components/Icon'
+import { MonthCalendar } from '../components/MonthCalendar'
 import { MonthSummaryCard } from '../components/MonthSummaryCard'
+import { RunHistory } from '../components/run/RunHistory'
+import { SectionLabel } from '../components/Screen'
 import { doneSetCount, parseISODate, toISODate, workoutTonnage } from '../domain/metrics'
 import { formatInteger } from '../domain/number'
 import { plural } from '../domain/plural'
@@ -55,12 +57,14 @@ function byMonth(workouts: Workout[]): [string, Workout[]][] {
   return [...groups.entries()]
 }
 
-/** «Прогресс» → «История» (ТЗ 2.4): тренировки по месяцам — дата, название, длительность, тоннаж. */
+/** «Прогресс» → «История» (ТЗ 2.4): тренировки по месяцам — дата, название, длительность, тоннаж;
+ *  выше них — последние пробежки и прогулки (раньше это был отдельный раздел «Бег»). */
 export function HistoryPanel() {
   const repos = useRepos()
   const navigate = useNavigate()
   const workouts = useLiveQuery(() => repos.workouts.listDone(), [repos])
   const planned = useLiveQuery(() => repos.workouts.listPlanned(), [repos])
+  const runCount = useLiveQuery(async () => (await repos.runs.list()).length, [repos]) ?? 0
   const [adding, setAdding] = useState(false)
   const today = toISODate(new Date())
 
@@ -76,7 +80,7 @@ export function HistoryPanel() {
           Добавить
         </Button>
       </div>
-      {workouts && workouts.length > 0 && <ActivityHeatmap workouts={workouts} />}
+      {workouts && workouts.length > 0 && <MonthCalendar workouts={workouts} />}
       {workouts && workouts.length > 0 && <MonthSummaryCard workouts={workouts} />}
       {planned && planned.length > 0 && (
         <section className={styles.month} aria-label="Запланировано">
@@ -110,13 +114,32 @@ export function HistoryPanel() {
                       </span>
                     </span>
                     <span className={styles.chevron}>
-                      <Icon name="chevron" size={18} />
+                      <Icon name="chevron" size={20} />
                     </span>
                   </button>
                 </li>
               )
             })}
           </ul>
+        </section>
+      )}
+
+      {runCount > 0 && (
+        <section className={styles.runs} aria-label="Бег и ходьба">
+          <div className={styles.runsHead}>
+            <SectionLabel>Бег и ходьба</SectionLabel>
+            {runCount > 3 && (
+              <Button
+                size="sm"
+                variant="ghost"
+                iconAfter="chevron"
+                onClick={() => navigate('/run')}
+              >
+                Все
+              </Button>
+            )}
+          </div>
+          <RunHistory limit={3} hideEmpty />
         </section>
       )}
 
@@ -167,7 +190,7 @@ export function HistoryPanel() {
                           <span className={styles.meta}>кг</span>
                         </span>
                         <span className={styles.chevron}>
-                          <Icon name="chevron" size={18} />
+                          <Icon name="chevron" size={20} />
                         </span>
                       </button>
                     </li>

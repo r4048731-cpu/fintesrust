@@ -2,10 +2,11 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  border: 1px solid var(--line);
+  border: 1px solid var(--card-border);
   border-radius: var(--radius);
   background: var(--surface);
   overflow: hidden;
+  box-shadow: var(--shadow);
 }
 
 .list li + li {
@@ -42,7 +43,7 @@
   margin-left: 8px;
   padding: 2px 8px;
   border-radius: 99px;
-  background: var(--gradient);
+  background: var(--accent-fill);
   color: var(--accent-ink);
   font-size: 11px;
   font-weight: 600;
@@ -106,6 +107,7 @@
 
 .templateName {
   font: 600 16px/1.2 var(--title-font);
+  color: var(--ink);
 }
 
 .templateDays {
@@ -120,8 +122,7 @@
 }
 
 .links {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
   gap: 8px;
 }
 
@@ -157,9 +158,9 @@
 }
 
 .badgeActive {
-  background: var(--gradient);
+  background: var(--accent-fill);
   color: var(--accent-ink);
-  box-shadow: 0 4px 14px rgb(124 58 237 / 30%);
+  box-shadow: var(--accent-shadow);
 }
 
 .emptyActions {

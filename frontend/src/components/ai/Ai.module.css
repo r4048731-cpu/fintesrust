@@ -30,7 +30,7 @@
 .user {
   align-self: flex-end;
   border-bottom-right-radius: 4px;
-  background: var(--gradient);
+  background: var(--accent-fill);
   color: var(--accent-ink);
   white-space: pre-wrap;
 }

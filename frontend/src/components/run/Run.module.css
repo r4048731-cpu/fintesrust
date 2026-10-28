@@ -28,6 +28,7 @@
 
 .total b {
   font: 600 16px/1.1 var(--num-font);
+  color: var(--ink);
 }
 
 .total span {
@@ -39,10 +40,11 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  border: 1px solid var(--line);
+  border: 1px solid var(--card-border);
   border-radius: var(--radius);
   background: var(--surface);
   overflow: hidden;
+  box-shadow: var(--shadow);
 }
 
 .list li + li {
@@ -82,6 +84,7 @@
 
 .rowHead b {
   font: 600 16px var(--num-font);
+  color: var(--ink);
 }
 
 .rowHead span,

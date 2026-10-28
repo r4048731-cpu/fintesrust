@@ -5,6 +5,7 @@ import { BodyMeasurements } from '../components/BodyMeasurements'
 import { Button } from '../components/Button'
 import { ProgressPhotos } from '../components/ProgressPhotos'
 import { LineChart } from '../components/charts/LineChart'
+import { PeriodSelect } from '../components/charts/PeriodSelect'
 import { shortDate } from '../components/dates'
 import { Card, SectionLabel } from '../components/Screen'
 import { Sheet } from '../components/Sheet'
@@ -12,6 +13,7 @@ import { WeightEntry } from '../components/WeightEntry'
 import { bodyWeightChange, LATER_CORRECTION_KG, weightDays } from '../data/repositories/bodyWeights'
 import { parseISODate, toISODate } from '../domain/metrics'
 import { formatDecimal } from '../domain/number'
+import { inPeriod, type Period } from '../domain/period'
 import type { BodyWeight } from '../domain/types'
 import styles from './WeightPanel.module.css'
 
@@ -41,6 +43,7 @@ export function WeightPanel() {
   const repos = useRepos()
   const rows = useLiveQuery(() => repos.bodyWeights.list(), [repos])
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [period, setPeriod] = useState<Period>('all')
   if (!rows) return null
   const editing = rows.find((r) => r.id === editingId)
 
@@ -48,6 +51,7 @@ export function WeightPanel() {
   const first = rows[0]
   const last = rows[rows.length - 1]
   const change30 = bodyWeightChange(rows, 30, today)
+  const chartRows = inPeriod(rows, period, today)
   const total = rows.length >= 2 ? Math.round((last.weightKg - first.weightKg) * 10) / 10 : null
 
   return (
@@ -77,13 +81,23 @@ export function WeightPanel() {
 
       {rows.length >= 2 && (
         <Card framed>
-          <h2 className={styles.cardTitle}>Итоговый вес, кг</h2>
-          <LineChart
-            points={rows.map((r) => ({ label: shortDate(r.date), values: { kg: r.weightKg } }))}
-            series={[{ key: 'kg', name: 'Вес', color: 'var(--chart-1)' }]}
-            format={(v) => formatDecimal(Math.round(v * 10) / 10)}
-            ariaLabel={`Вес тела по ${rows.length} записям, последний ${kg(last.weightKg)}`}
-          />
+          <div className={styles.chartHead}>
+            <h2 className={styles.cardTitle}>Итоговый вес, кг</h2>
+            <PeriodSelect value={period} onChange={setPeriod} label="Период графика веса" />
+          </div>
+          {chartRows.length >= 2 ? (
+            <LineChart
+              points={chartRows.map((r) => ({
+                label: shortDate(r.date),
+                values: { kg: r.weightKg },
+              }))}
+              series={[{ key: 'kg', name: 'Вес', color: 'var(--chart-1)' }]}
+              format={(v) => formatDecimal(Math.round(v * 10) / 10)}
+              ariaLabel={`Вес тела по ${chartRows.length} записям, последний ${kg(last.weightKg)}`}
+            />
+          ) : (
+            <p className={styles.noData}>Нет данных за этот период.</p>
+          )}
         </Card>
       )}
 

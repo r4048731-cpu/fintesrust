@@ -5,6 +5,7 @@ import com.getcapacitor.BridgeActivity;
 import ru.fitnes.app.run.RunTrackerPlugin;
 import ru.fitnes.app.share.ShareImagePlugin;
 import ru.fitnes.app.steps.StepsPlugin;
+import ru.fitnes.app.water.WaterPlugin;
 import ru.fitnes.app.workout.WorkoutAlertsPlugin;
 
 public class MainActivity extends BridgeActivity {
@@ -15,6 +16,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(RunTrackerPlugin.class);
         registerPlugin(WorkoutAlertsPlugin.class);
         registerPlugin(ShareImagePlugin.class);
+        registerPlugin(WaterPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

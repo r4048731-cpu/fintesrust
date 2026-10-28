@@ -13,6 +13,7 @@ export const META_DEFAULTS: MetaValues = {
   lastExportAt: null,
   nutritionPlan: null,
   bodyProfile: null,
+  planBasis: null,
   builderInput: null,
   favoriteRecipes: [],
   aiChat: [],
@@ -22,6 +23,9 @@ export const META_DEFAULTS: MetaValues = {
   deload: null,
   deloadSnoozedUntil: null,
   intervalTimer: null,
+  dayTrackers: {},
+  stepsHistory: {},
+  barcodeFoods: {},
 }
 
 export function metaRepo(db: FitnessDB) {

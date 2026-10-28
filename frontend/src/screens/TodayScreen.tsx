@@ -19,9 +19,11 @@ import { needsOnboarding } from '../domain/onboarding'
 import { formatPlan } from '../domain/programs'
 import { formatKm } from '../domain/run'
 import { StepsCard } from '../components/steps/StepsCard'
+import { StepsWebCard } from '../components/steps/StepsWebCard'
 import { isAndroidApp } from '../native/steps'
 import { countSets, formatClock } from '../domain/workout'
 import { useToday, type TodayPlan, type WeekDay } from './today/useToday'
+import { Stories } from './today/Stories'
 import { WeekStrip } from './today/WeekStrip'
 import { DayRings } from '../components/DayRings'
 import { ExerciseThumb } from '../components/ExerciseThumb'
@@ -119,7 +121,7 @@ export function TodayScreen() {
     <EmptyState
       title="Составьте первую программу"
       action={
-        <Button variant="primary" onClick={() => navigate('/programs')}>
+        <Button iconAfter="arrow" variant="primary" onClick={() => navigate('/programs')}>
           Перейти к программам
         </Button>
       }
@@ -144,7 +146,12 @@ export function TodayScreen() {
   const editPlan = () => t.plan?.programId && navigate(`/programs/${t.plan.programId}`)
 
   return (
-    <Screen title="Сегодня" eyebrow={formatLongDate(new Date())}>
+    <Screen
+      title="Сегодня"
+      eyebrow={formatLongDate(new Date())}
+      top={<Stories plan={t.plan} active={!!t.active} light={t.light} />}
+    >
+      <Shortcuts hideRun={!!activeRun} />
       {activeBanner}
       {activeRun && (
         <LiveCard
@@ -181,7 +188,7 @@ export function TodayScreen() {
               onClick={q.onClick}
               aria-label={q.aria}
             >
-              <Icon name={q.icon} size={18} />
+              <Icon name={q.icon} size={20} />
               {q.label}
             </button>
           ))}
@@ -207,29 +214,8 @@ export function TodayScreen() {
         active={liveSets}
         doneToday={t.week.days.find((d) => d.today)?.workouts.length ?? 0}
       />
-      {isAndroidApp() && <StepsCard />}
-      <div className={styles.tools}>
-        {!activeRun && (
-          <button type="button" className={styles.tool} onClick={() => navigate('/run')}>
-            <span className={styles.toolIcon}>
-              <Icon name="run" size={20} />
-            </span>
-            <span className={styles.toolText}>
-              <b>Бег и ходьба</b>
-              <span>Маршрут по GPS</span>
-            </span>
-          </button>
-        )}
-        <button type="button" className={styles.tool} onClick={() => navigate('/interval')}>
-          <span className={styles.toolIcon} data-tone="pink">
-            <Icon name="timer" size={20} />
-          </span>
-          <span className={styles.toolText}>
-            <b>Таймер</b>
-            <span>Табата, EMOM</span>
-          </span>
-        </button>
-      </div>
+      {/* В браузере шагов нет — карточка объясняет, где их смотреть */}
+      {isAndroidApp() ? <StepsCard /> : <StepsWebCard />}
       {t.week.backupDue && !t.active && (
         <button type="button" className={styles.reminder} onClick={() => navigate('/settings')}>
           <span className={styles.reminderTitle}>Сохраните резервную копию</span>
@@ -241,7 +227,12 @@ export function TodayScreen() {
           {/* место под закреплённую кнопку, чтобы она не закрывала низ экрана */}
           <div className={styles.startBarSpace} aria-hidden="true" />
           <div className={styles.startBar} data-start-bar data-pinned>
-            <Button variant="primary" block onClick={() => void t.plan!.start({ light: t.light })}>
+            <Button
+              icon="play"
+              variant="primary"
+              block
+              onClick={() => void t.plan!.start({ light: t.light })}
+            >
               Начать: {t.plan.title}
               {t.plan.kind === 'program' && t.light ? ' · лёгкий' : ''}
             </Button>
@@ -304,7 +295,8 @@ function metaLine(plan: TodayPlan): string {
 }
 
 /** Сколько упражнений плана видно сразу. */
-const PLAN_PREVIEW = 4
+/** Сколько упражнений плана видно в свёрнутом виде; остальные — в выпадающем списке. */
+const PLAN_PREVIEW = 2
 
 const LOADS: { value: 'heavy' | 'light'; label: string }[] = [
   { value: 'heavy', label: 'Тяжёлая' },
@@ -329,10 +321,9 @@ function PlanList({
   onLight?: (light: boolean) => void
 }) {
   const [expanded, setExpanded] = useState(false)
-  // Длинный план не растягивает экран: первые упражнения и «ещё N»
-  const cut = !expanded && plan.items.length > PLAN_PREVIEW + 1
-  const shown = cut ? plan.items.slice(0, PLAN_PREVIEW) : plan.items
-  const hidden = plan.items.length - shown.length
+  // План не растягивает экран: видно два упражнения, остальные раскрываются списком и сворачиваются обратно
+  const extra = Math.max(0, plan.items.length - PLAN_PREVIEW)
+  const shown = expanded ? plan.items : plan.items.slice(0, PLAN_PREVIEW)
   return (
     <section className={`${styles.card} ${frame.frame}`} aria-label={plan.source}>
       <div className={styles.listHead}>
@@ -383,9 +374,19 @@ function PlanList({
           ))}
         </ol>
       )}
-      {hidden > 0 && (
-        <button type="button" className={styles.more} onClick={() => setExpanded(true)}>
-          Ещё {hidden} {plural(hidden, 'упражнение', 'упражнения', 'упражнений')}
+      {extra > 0 && (
+        <button
+          type="button"
+          className={styles.more}
+          aria-expanded={expanded}
+          onClick={() => setExpanded(!expanded)}
+        >
+          {expanded
+            ? 'Свернуть'
+            : `Ещё ${extra} ${plural(extra, 'упражнение', 'упражнения', 'упражнений')}`}
+          <span className={styles.moreIcon} data-open={expanded || undefined}>
+            <Icon name="down" size={20} />
+          </span>
         </button>
       )}
     </section>
@@ -435,7 +436,7 @@ function DeloadCard({
         <Button size="sm" variant="ghost" onClick={onSnooze}>
           Не сейчас
         </Button>
-        <Button size="sm" variant="primary" onClick={onStart}>
+        <Button size="sm" icon="play" variant="primary" onClick={onStart}>
           Начать разгрузку
         </Button>
       </div>
@@ -484,5 +485,31 @@ function DayWorkouts({ day, onOpen }: { day: WeekDay; onOpen: (path: string) => 
         </li>
       ))}
     </ul>
+  )
+}
+
+const SHORTCUTS: { to: string; icon: IconName; label: string; run?: boolean }[] = [
+  { to: '/run', icon: 'run', label: 'Бег', run: true },
+  { to: '/interval', icon: 'timer', label: 'Таймер' },
+  { to: '/progress?view=weight', icon: 'scale', label: 'Вес' },
+  { to: '/food?tab=recipes', icon: 'food', label: 'Рецепты' },
+  { to: '/programs/exercises', icon: 'dumbbell', label: 'Упражнения' },
+  { to: '/notes', icon: 'note', label: 'Заметки' },
+]
+
+/** Ряд круглых ярлыков под историями: быстрый переход в разделы, листается вбок. */
+function Shortcuts({ hideRun }: { hideRun: boolean }) {
+  const navigate = useNavigate()
+  return (
+    <nav className={styles.shortcuts} aria-label="Быстрые разделы">
+      {SHORTCUTS.filter((s) => !(s.run && hideRun)).map((s) => (
+        <button key={s.to} type="button" className={styles.shortcut} onClick={() => navigate(s.to)}>
+          <span className={styles.shortcutIcon}>
+            <Icon name={s.icon} size={24} />
+          </span>
+          <span>{s.label}</span>
+        </button>
+      ))}
+    </nav>
   )
 }

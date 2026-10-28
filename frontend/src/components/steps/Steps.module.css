@@ -2,7 +2,8 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 14px;
+  padding: var(--card-pad);
+  border: 1px solid var(--card-border);
   border-radius: var(--radius);
   background: var(--surface);
   box-shadow: var(--shadow);
@@ -32,6 +33,7 @@
 .big {
   font: 700 32px/1.1 var(--num-font);
   font-variant-numeric: tabular-nums;
+  color: var(--ink);
 }
 
 .muted {
@@ -52,20 +54,24 @@
   display: grid;
   flex: none;
   place-items: center;
-  width: 72px;
-  height: 72px;
+  width: 96px;
+  height: 96px;
   border-radius: 50%;
-  background: conic-gradient(var(--accent) var(--p), var(--surface-2) 0);
+  /* дуга — фирменный градиент до доли от цели, остальное — серая дорожка */
+  background:
+    conic-gradient(transparent var(--p), var(--surface-2) 0),
+    conic-gradient(var(--pink), var(--violet), var(--pink));
 }
 
 .ring span {
   display: grid;
   place-items: center;
-  width: 56px;
-  height: 56px;
+  width: 78px;
+  height: 78px;
   border-radius: 50%;
   background: var(--surface);
-  font: 600 14px var(--num-font);
+  font: 800 18px var(--num-font);
+  color: var(--ink);
 }
 
 .week {
@@ -143,4 +149,78 @@
   background: var(--surface);
   color: var(--ink);
   font-size: 16px;
+}
+
+/* График шагов в «Прогресс» → «Графики» */
+.chartTitle {
+  font-size: 17px;
+}
+
+.chartNote {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.chartNote b {
+  color: var(--accent);
+}
+
+/* ——— Диаграмма дня по часам ——— */
+.hours {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+}
+
+.hourBars {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hourBars .barBox {
+  height: 72px;
+}
+
+.hourBars .bar,
+.hourBars .barDone {
+  border-radius: 3px;
+}
+
+.hourBars li[data-future] .bar {
+  opacity: 0.4;
+}
+
+.hourBars li[data-now] .barDone,
+.hourBars li[data-now] .bar {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.hourAxis {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font: 600 11px var(--num-font);
+}
+
+/* Ссылка на Android-приложение в карточке шагов браузерной версии */
+.install {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: var(--btn-radius);
+  background: var(--accent-fill);
+  box-shadow: var(--accent-shadow);
+  color: var(--accent-ink);
+  font-weight: 700;
+  text-decoration: none;
 }

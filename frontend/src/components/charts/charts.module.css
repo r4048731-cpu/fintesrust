@@ -58,7 +58,7 @@
   white-space: nowrap;
   transform: translate(-50%, calc(-100% - 10px));
   pointer-events: none;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-float);
 }
 
 .tipRow {

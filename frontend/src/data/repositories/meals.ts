@@ -1,6 +1,7 @@
 import { newId } from '../../domain/id'
+import { isMealSlot } from '../../domain/mealSlots'
 import { roundNutrients } from '../../domain/nutrition'
-import type { ID, ISODate, Meal, Nutrients } from '../../domain/types'
+import type { ID, ISODate, Meal, MealSlot, Nutrients } from '../../domain/types'
 import type { FitnessDB } from '../db'
 import type { Clock } from './clock'
 
@@ -14,6 +15,8 @@ export const MEAL_LIMITS = {
 export interface MealInput extends Nutrients {
   name: string
   grams: number | null
+  /** Приём пищи; без него — по времени добавления. */
+  slot?: MealSlot
 }
 
 const inRange = (v: number, { min, max }: { min: number; max: number }) =>
@@ -41,6 +44,7 @@ function normalize(input: MealInput): MealInput {
     name,
     grams: input.grams === null ? null : Math.round(input.grams),
     ...roundNutrients(input),
+    ...(isMealSlot(input.slot) ? { slot: input.slot } : {}),
   }
 }
 

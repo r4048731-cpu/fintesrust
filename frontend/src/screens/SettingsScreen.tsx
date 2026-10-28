@@ -27,6 +27,7 @@ import { Chips } from '../components/Field'
 import { Card, Screen, SectionLabel } from '../components/Screen'
 import { Segmented } from '../components/Segmented'
 import { TrainingReminderSettings } from '../components/reminder/TrainingReminderSettings'
+import { WaterReminderSettings } from '../components/reminder/WaterReminderSettings'
 import { StepsSettings } from '../components/steps/StepsSettings'
 import { isAndroidApp } from '../native/steps'
 import { Sheet } from '../components/Sheet'
@@ -214,6 +215,7 @@ export function SettingsScreen() {
       </Card>
 
       {isAndroidApp() && <TrainingReminderSettings />}
+      {isAndroidApp() && <WaterReminderSettings />}
 
       {isAndroidApp() && <StepsSettings />}
 
@@ -246,7 +248,7 @@ export function SettingsScreen() {
             ? `Последняя копия: ${formatLongDateInline(new Date(lastExportAt))}`
             : 'Копию ещё не сохраняли.'}
         </p>
-        <Button variant="primary" block onClick={exportBackup}>
+        <Button icon="save" variant="primary" block onClick={exportBackup}>
           Сохранить копию в файл
         </Button>
         <Button block onClick={() => fileInput.current?.click()}>

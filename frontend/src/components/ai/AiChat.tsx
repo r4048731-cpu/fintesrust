@@ -161,7 +161,7 @@ export function AiChat() {
             Стоп
           </Button>
         ) : (
-          <Button type="submit" variant="primary" disabled={!text.trim()}>
+          <Button type="submit" iconAfter="arrow" variant="primary" disabled={!text.trim()}>
             Отправить
           </Button>
         )}

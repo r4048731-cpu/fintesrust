@@ -109,6 +109,22 @@ class StepsPlugin : Plugin() {
         }
     }
 
+    /** Шаги сегодня по часам — для диаграммы дня на «Сегодня». */
+    @PluginMethod
+    fun hourly(call: PluginCall) {
+        scope.launch {
+            try {
+                val list = JSArray()
+                for (steps in StepsReader.hourly(context)) list.put(steps)
+                call.resolve(JSObject().put("hours", list))
+            } catch (e: SecurityException) {
+                call.reject("Нет разрешения на чтение шагов", "NO_PERMISSION")
+            } catch (e: Exception) {
+                call.reject("Не удалось прочитать шаги: ${e.message}")
+            }
+        }
+    }
+
     /** Включить или выключить вечернее уведомление: время и цель. */
     @PluginMethod
     fun setReminder(call: PluginCall) {

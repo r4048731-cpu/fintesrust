@@ -24,7 +24,7 @@ export function LiveCard({ lead, label, title, meta, onClick }: Props) {
         <span className={styles.meta}>{meta}</span>
       </span>
       <span className={styles.go} aria-hidden="true">
-        <Icon name="chevron" size={18} />
+        <Icon name="chevron" size={20} />
       </span>
     </button>
   )

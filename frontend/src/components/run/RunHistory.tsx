@@ -10,13 +10,14 @@ import styles from './Run.module.css'
 
 const dateFormat = new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'short' })
 
-/** Итоги и лента пробежек: «Бег и ходьба» и «Прогресс» → «Бег». */
-export function RunHistory({ limit }: { limit?: number }) {
+/** Итоги и лента пробежек: «Бег и ходьба» и «Прогресс» → «История». */
+export function RunHistory({ limit, hideEmpty }: { limit?: number; hideEmpty?: boolean }) {
   const repos = useRepos()
   const navigate = useNavigate()
   const runs = useLiveQuery(() => repos.runs.list(), [repos])
   if (!runs) return null
   if (runs.length === 0) {
+    if (hideEmpty) return null
     return (
       <EmptyState title="Пробежек пока нет" icon="run">
         <p>Нажмите «Старт» — приложение запишет маршрут, километры и темп по GPS.</p>

@@ -1,0 +1,388 @@
+/*
+ * Шапка «Сегодня» с историями: закреплена сверху, фон сплошной, без размытия.
+ * Свёрнута: маленькие кружки слева внахлёст, «Фитнес» по центру.
+ * Раскрыта: «Фитнес» вверху слева, под ним крупные кружки с подписями. Всё едет одним переходом.
+ */
+.head {
+  position: sticky;
+  top: 0;
+  z-index: 25;
+  height: calc(60px + env(safe-area-inset-top, 0px));
+  /* во всю ширину, поверх отступов страницы */
+  margin: calc(-1 * var(--page-top, 0px)) calc(-1 * var(--page-gutter, 0px)) -8px;
+  padding: env(safe-area-inset-top, 0px) var(--page-gutter, 0px) 0;
+  border-bottom: 1px solid var(--card-border);
+  background: var(--bg);
+  transition: height 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* без общего «подъёма» блоков экрана — иначе прилипание дёргается */
+  animation: none !important;
+}
+
+/* Содержимое шапки — по ширине колонки приложения */
+.inner {
+  position: relative;
+  max-width: var(--content-max);
+  height: 100%;
+  margin: 0 auto;
+}
+
+.head[data-expanded] {
+  height: calc(176px + env(safe-area-inset-top, 0px));
+}
+
+.title,
+.circles,
+.actions {
+  position: absolute;
+  transition:
+    top 320ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    left 320ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    translate 320ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    font-size 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.title {
+  top: 17px;
+  left: 50%;
+  translate: -50% 0;
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.head[data-expanded] .title {
+  top: 12px;
+  left: 0;
+  translate: 0 0;
+  font-size: 24px;
+}
+
+.actions {
+  top: 8px;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  box-shadow: 0 0 0 1px var(--line);
+}
+
+/* ——— Кружки ——— */
+.circles {
+  top: 12px;
+  left: 0;
+  display: flex;
+}
+
+.head[data-expanded] .circles {
+  top: 60px;
+}
+
+/* Невидимая кнопка поверх свёрнутых кружков: нажатие раскрывает шапку */
+.expand {
+  position: absolute;
+  inset: -6px;
+  z-index: 1;
+  padding: 0;
+  border: 0;
+  border-radius: 99px;
+  background: none;
+}
+
+.story {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 36px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  transition:
+    width 320ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    margin 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* свёрнуты — выглядывают друг из-под друга */
+.story + .story {
+  margin-left: -10px;
+}
+
+.head[data-expanded] .story {
+  width: 76px;
+}
+
+.head[data-expanded] .story + .story {
+  margin-left: 14px;
+}
+
+/* Кольцо — фирменный градиент; просмотренная история — серое кольцо */
+.ring {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 2px;
+  border-radius: 50%;
+  background: var(--gradient);
+  transition:
+    width 320ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    height 320ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    padding 320ms ease;
+}
+
+.head[data-expanded] .ring {
+  width: 72px;
+  height: 72px;
+  padding: 2.5px;
+}
+
+[data-seen] .ring {
+  background: var(--line);
+}
+
+.face {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border: 2px solid var(--bg);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.head[data-expanded] .face {
+  border-width: 3px;
+}
+
+.face svg {
+  width: 16px;
+  height: 16px;
+  transition:
+    width 320ms ease,
+    height 320ms ease;
+}
+
+.head[data-expanded] .face svg {
+  width: 26px;
+  height: 26px;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.head[data-expanded] .label {
+  opacity: 1;
+  transition-delay: 120ms;
+}
+
+/* ——— Просмотр истории на весь экран ——— */
+.viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) var(--gutter)
+    calc(24px + env(safe-area-inset-bottom, 0px));
+  background:
+    radial-gradient(
+      120% 70% at 0% 0%,
+      color-mix(in srgb, var(--pink) 45%, transparent),
+      transparent
+    ),
+    radial-gradient(
+      120% 70% at 100% 100%,
+      color-mix(in srgb, var(--violet) 45%, transparent),
+      transparent
+    ),
+    #09090b;
+  color: #fafafa;
+  animation: viewer-in 220ms ease-out;
+}
+
+@keyframes viewer-in {
+  from {
+    opacity: 0;
+    scale: 0.96;
+  }
+}
+
+.progress {
+  display: flex;
+  gap: 4px;
+}
+
+.track {
+  flex: 1;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 25%);
+}
+
+.fill {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: #fff;
+}
+
+.fill[data-state='done'] {
+  width: 100%;
+}
+
+.fill[data-state='now'] {
+  animation: fill linear forwards;
+}
+
+@keyframes fill {
+  to {
+    width: 100%;
+  }
+}
+
+.viewerHead {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.viewerHead button {
+  color: #fafafa;
+}
+
+.viewerLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+}
+
+.zonePrev,
+.zoneNext {
+  position: absolute;
+  top: 80px;
+  bottom: 110px;
+  z-index: 1;
+  width: 50%;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.zonePrev {
+  left: 0;
+}
+
+.zoneNext {
+  right: 0;
+}
+
+/* Нажатие на половину экрана не проседает, как кнопка */
+.zonePrev:active,
+.zoneNext:active {
+  scale: 1;
+}
+
+.slide {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  animation: slide-in 300ms ease-out;
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    translate: 0 10px;
+  }
+}
+
+.slideIcon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  background: rgb(255 255 255 / 14%);
+}
+
+.slideIcon svg {
+  width: 32px;
+  height: 32px;
+}
+
+.slideTitle {
+  color: #fafafa;
+  font-size: 32px;
+  line-height: 1.1;
+}
+
+.slideText {
+  margin: 0;
+  color: rgb(250 250 250 / 80%);
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.cta {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+  border: 0;
+  border-radius: var(--btn-radius);
+  background: #fafafa;
+  color: #09090b;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .head,
+  .title,
+  .circles,
+  .story,
+  .ring,
+  .label,
+  .viewer,
+  .slide {
+    transition: none;
+    animation: none;
+  }
+
+  .fill[data-state='now'] {
+    animation: none;
+    width: 100%;
+  }
+}

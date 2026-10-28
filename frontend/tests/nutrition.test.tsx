@@ -92,6 +92,7 @@ describe('расчёт нормы', () => {
     expect(estimatePlan(man, 80)).toEqual({
       bmr: 1780,
       maintenance: 2759,
+      proteinKg: 80,
       calories: 2760,
       protein: 128,
       fat: 92,

@@ -4,6 +4,8 @@ import { describe, expect, it } from 'vitest'
 import { DishArt } from '../src/components/DishArt'
 import { dishArt } from '../src/domain/dishArt'
 import { BUILTIN_VIEWS } from '../src/domain/recipes'
+import { RECIPE_PHOTOS, recipePhotoUrl } from '../src/domain/recipePhotos'
+import { RECIPES } from '../src/domain/recipes'
 
 const ing = (...list: [string, number][]) => list.map(([name, grams]) => ({ name, grams }))
 
@@ -64,5 +66,21 @@ describe('картинка блюда', () => {
       keys.add(`${art.vessel}|${art.base}|${art.toppings.join()}|${art.fill}`)
     }
     expect(keys.size).toBeGreaterThan(BUILTIN_VIEWS.length * 0.9)
+  })
+})
+
+describe('фото рецептов', () => {
+  it('у каждого встроенного рецепта есть фото и автор со свободной лицензией', () => {
+    const files = new Set(
+      Object.keys(import.meta.glob('../public/recipes/*.webp')).map((f) => f.split('/').pop()),
+    )
+    for (const r of RECIPES) {
+      const credit = RECIPE_PHOTOS[r.id]
+      expect(credit, r.id).toBeDefined()
+      expect(credit.license, r.id).toMatch(/^(CC0|CC BY(-SA)? \d\.\d)/)
+      expect(credit.source, r.id).toMatch(/^https:\/\/commons\.wikimedia\.org\/wiki\/File:/)
+      expect(files.has(`${r.id}.webp`), r.id).toBe(true)
+    }
+    expect(recipePhotoUrl('свой-рецепт')).toBeNull()
   })
 })

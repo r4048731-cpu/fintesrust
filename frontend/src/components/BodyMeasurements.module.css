@@ -14,6 +14,7 @@
 .title {
   margin: 0;
   font: 600 15px/1.2 var(--title-font);
+  color: var(--ink);
 }
 
 .empty {
@@ -42,16 +43,18 @@
 }
 
 .tiles {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   gap: 6px;
+  min-width: 0;
 }
 
 .tile {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  column-gap: 8px;
   min-width: 0;
   padding: 9px 10px;
   border: 1px solid transparent;
@@ -68,6 +71,7 @@
 
 .tile b {
   font: 600 15px/1.2 var(--num-font);
+  color: var(--ink);
 }
 
 .tile span:last-child:not(.label) {
@@ -97,6 +101,7 @@
 
 .ratio b {
   font-family: var(--num-font);
+  color: var(--ink);
 }
 
 .list {
@@ -161,4 +166,59 @@
 .actions {
   display: flex;
   gap: 8px;
+}
+
+/* ——— Фигура и обхваты в ряд ——— */
+.figureRow {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.figure {
+  flex: none;
+  width: 92px;
+  align-self: center;
+}
+
+.body {
+  fill: var(--surface-2);
+}
+
+.limbs {
+  fill: none;
+  stroke: var(--surface-2);
+  stroke-linecap: round;
+  stroke-width: 11;
+}
+
+.spot {
+  fill: var(--muted);
+}
+
+.spotActive {
+  fill: var(--accent);
+  stroke: color-mix(in srgb, var(--accent) 30%, transparent);
+  stroke-width: 6;
+}
+
+/* В плитке: подпись слева, значение и изменение справа */
+.tile .label {
+  grid-row: span 2;
+}
+
+.tile b,
+.tile span:last-child:not(.label) {
+  justify-self: end;
+}
+
+.chartHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.chartTitle {
+  font-size: 15px;
 }

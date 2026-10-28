@@ -5,6 +5,7 @@ import { Button } from '../components/Button'
 import { TextField } from '../components/Field'
 import { Card } from '../components/Screen'
 import { Segmented } from '../components/Segmented'
+import { toISODate } from '../domain/metrics'
 import { estimatePlan, type PlanEstimate } from '../domain/nutrition'
 import { formatDecimal, parseDecimal } from '../domain/number'
 import type { Activity, BodyProfile, NutritionGoal, Sex } from '../domain/types'
@@ -90,6 +91,9 @@ function CalcForm({
   const [age, setAge] = useState(profile ? String(profile.age) : '')
   const [height, setHeight] = useState(profile ? String(profile.heightCm) : '')
   const [weight, setWeight] = useState(lastWeight ? formatDecimal(lastWeight) : '')
+  const [target, setTarget] = useState(profile?.targetKg ? formatDecimal(profile.targetKg) : '')
+  /** Вес, с которого посчитан результат, — запоминается вместе с планом. */
+  const [resultKg, setResultKg] = useState<number | null>(null)
   const [activity, setActivity] = useState<Activity>(profile?.activity ?? 'moderate')
   const [goal, setGoal] = useState<NutritionGoal>(profile?.goal ?? 'maintain')
   const [result, setResult] = useState<PlanEstimate | null>(null)
@@ -119,6 +123,12 @@ function CalcForm({
       return setError(`Рост — от ${LIMITS.heightCm.min} до ${LIMITS.heightCm.max} см`)
     }
     if (bad(a, LIMITS.age)) return setError(`Возраст — от ${LIMITS.age.min} до ${LIMITS.age.max}`)
+    const t = target.trim() === '' ? null : parseDecimal(target)
+    if (target.trim() !== '' && bad(t, LIMITS.weightKg)) {
+      return setError(
+        `Целевой вес — от ${LIMITS.weightKg.min} до ${LIMITS.weightKg.max} кг или пусто`,
+      )
+    }
     setError(null)
     const next: BodyProfile = {
       sex,
@@ -126,8 +136,10 @@ function CalcForm({
       heightCm: Math.round(h!),
       activity,
       goal,
+      ...(t ? { targetKg: Math.round(t * 10) / 10 } : {}),
     }
     setResult(estimatePlan(next, w!))
+    setResultKg(w!)
     await repos.meta.set('bodyProfile', next)
   }
 
@@ -135,6 +147,10 @@ function CalcForm({
     if (!result) return
     const { calories, protein, fat, carbs } = result
     await repos.meta.set('nutritionPlan', { calories, protein, fat, carbs })
+    await repos.meta.set('planBasis', {
+      setAt: toISODate(new Date()),
+      weightKg: resultKg ?? undefined,
+    })
     onSaved()
   }
 
@@ -199,6 +215,15 @@ function CalcForm({
         <h2 className={styles.heading}>Цель</h2>
         <Segmented label="Цель" options={GOALS} value={goal} onChange={edited(setGoal)} />
         <p className={styles.hint}>{GOAL_HINT[goal]}</p>
+        {goal === 'lose' && (
+          <TextField
+            label="Целевой вес, кг — необязательно"
+            value={target}
+            inputMode="decimal"
+            autoComplete="off"
+            onChange={(e) => edited(setTarget)(e.target.value)}
+          />
+        )}
       </section>
 
       {error && (
@@ -206,7 +231,7 @@ function CalcForm({
           {error}
         </p>
       )}
-      <Button variant="primary" block onClick={calculate}>
+      <Button iconAfter="arrow" variant="primary" block onClick={calculate}>
         Рассчитать
       </Button>
 
@@ -225,8 +250,11 @@ function CalcForm({
             <p className={styles.hint} role="status">
               Обмен в покое ≈ {kcal(result.bmr)} ккал, с активностью ≈ {kcal(result.maintenance)}{' '}
               ккал.
+              {resultKg !== null && result.proteinKg !== resultKg && (
+                <> Белок — от {formatDecimal(result.proteinKg)} кг, а не от текущего веса.</>
+              )}
             </p>
-            <Button variant="primary" block onClick={save}>
+            <Button icon="check" variant="primary" block onClick={save}>
               Сделать планом
             </Button>
           </section>

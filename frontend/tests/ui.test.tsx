@@ -46,12 +46,13 @@ describe('навигация', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/progress'))
     expect(router.state.location.search).toBe('?view=history')
 
-    // ИИ по центру панели открывает шторку
+    // по центру панели — «+», первым пунктом в нём ИИ-помощник
     const links = within(nav)
       .getAllByRole('link')
       .map((l) => l.textContent)
     expect(links).toEqual(['Сегодня', 'Программы', 'Прогресс', 'Питание'])
-    await user.click(within(nav).getByRole('button', { name: 'ИИ-помощник' }))
+    await user.click(within(nav).getByRole('button', { name: 'Быстро добавить' }))
+    await user.click(await screen.findByRole('button', { name: /^Спросить ИИ/ }))
     // пока заглушка «скоро»
     expect(screen.getByRole('dialog', { name: 'ИИ-помощник' })).toHaveTextContent('Скоро')
   })

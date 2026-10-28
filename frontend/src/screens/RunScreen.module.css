@@ -5,7 +5,8 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 14px;
+  padding: 20px;
+  border: 1px solid var(--card-border);
   border-radius: var(--radius);
   background: var(--surface);
   box-shadow: var(--shadow);
@@ -66,14 +67,15 @@
   width: 46px;
   height: 46px;
   border-radius: 14px;
-  background: var(--gradient);
+  background: var(--accent-fill);
   color: var(--accent-ink);
-  box-shadow: 0 4px 14px rgb(124 58 237 / 30%);
+  box-shadow: var(--accent-shadow);
 }
 
 .startTitle {
   margin: 0;
   font: 600 18px/1.2 var(--title-font);
+  color: var(--ink);
 }
 
 .startGoal {
@@ -93,13 +95,13 @@
   100% {
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 25%),
-      0 6px 18px rgb(124 58 237 / 28%);
+      0 6px 18px color-mix(in srgb, var(--accent-fill) 28%, transparent);
   }
 
   20% {
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 25%),
-      0 8px 28px rgb(219 39 119 / 40%);
+      0 8px 28px color-mix(in srgb, var(--accent-fill) 40%, transparent);
   }
 }
 
@@ -150,8 +152,8 @@
 
 .preset[aria-pressed='true'] {
   border-color: transparent;
-  background: var(--gradient);
-  color: #fff;
+  background: var(--accent-fill);
+  color: var(--accent-ink);
 }
 
 .preset[aria-pressed='true'] span {

@@ -1,5 +1,8 @@
 /*
- * Токены темы: белая и чёрная, акценты в оттенках синего, фиолетового и розового.
+ * Токены темы — палитра «Холодный графит»: графитовые поверхности, розово-красный акцент,
+ * градиент розово-красный → фиолетовый только для графиков, колец и экранов успеха.
+ * Компоненты пользуются короткими именами (--bg, --surface, --ink, --accent…),
+ * они ссылаются на токены палитры, которые меняются по темам.
  * Тема задаётся атрибутом data-theme на <html> (см. theme.ts): кнопка в верхней панели
  * переключает её вручную, до первого нажатия действует настройка телефона.
  */
@@ -11,119 +14,145 @@
   --topbar-h: 56px;
   --tabbar-h: 60px;
   --tabbar-inset: 12px;
-  --radius: 20px;
-  --radius-sm: 14px;
-  --btn-radius: 14px;
+  --radius: 16px; /* карточки */
+  --radius-sm: 12px;
+  --btn-radius: 12px; /* кнопки */
+  --card-pad: 24px;
+  --section-gap: 24px; /* между блоками экрана */
+  /* Закреплённые сверху полосы: шапка раздела и переключатель под ней — под них прилипают следующие */
+  --screen-head-h: 68px;
+  --pinned-bar-h: 57px;
 
-  --font-body: 'Golos Text', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --title-font: 'Unbounded', 'Golos Text', system-ui, sans-serif;
-  --title-weight: 600;
-  --title-size: 24px;
+  --font-body: 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --title-font: var(--font-body);
+  --title-weight: 800;
+  --title-size: 28px;
   --title-transform: none;
-  --title-spacing: -0.01em;
-  --num-font: 'Unbounded', system-ui, sans-serif;
+  --title-spacing: -0.025em;
+  --num-font: var(--font-body);
 
-  /* Белая тема */
-  --bg: #f7f6fb;
-  --surface: #ffffff;
-  --surface-2: #efedf6;
-  --ink: #16131f;
-  --muted: #6b6680;
-  --line: #e4e1ee;
+  /* ——— Палитра: белая тема ——— */
+  --bg-main: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-elevated: #f1f5f9;
+  --text-main: #18181b;
+  --text-body: #52525b;
+  --text-muted: #71717a;
+  --border-color: #f1f5f9;
+  --divider: #e4e4e7; /* поля ввода и разделители */
+  /* На белом #f43f5e даёт 3.7:1 — для текста и цифр берём оттенок темнее (4.7:1) */
+  --accent-main: #e11d48;
+  --accent-hover: #be123c;
+  --accent-soft: #fff1f2;
+  --accent-gradient: linear-gradient(135deg, #f43f5e, #8b5cf6);
+  /* Заливка главных кнопок в обеих темах: белый текст на ней 4.7:1 (на #f43f5e было бы 3.7:1) */
+  --accent-fill: #e11d48;
+  --accent-fill-hover: #be123c;
 
   --violet: #7c3aed;
-  --pink: #db2777;
+  --pink: #e11d48;
   --blue: #3563e9;
-  --accent: var(--violet);
-  --accent-ink: #ffffff;
-  --accent-soft: #efe8fd;
-  --gradient: linear-gradient(120deg, #3563e9 0%, #7c3aed 50%, #db2777 100%);
-
-  /* Линии графиков: проверены на различимость, в том числе при дальтонизме (dataviz validate_palette) */
+  /* Линии графиков: фиолетовая и розово-красная, различимы и при дальтонизме */
   --chart-1: #7c3aed;
-  --chart-2: #db2777;
-  --chart-grid: #ebe8f3;
-  --grid-line: rgb(22 19 31 / 7%); /* декоративная сетка-миллиметровка */
-  /* Узоры для фона и карточек; цвет линий берут из --grid-line текущей темы */
-  --pattern-grid:
-    linear-gradient(var(--grid-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-  /* Лупа в полях поиска; серый средней яркости читается в обеих темах */
-  --search-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a85a0' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='6.5'/%3E%3Cpath d='m16 16 4 4'/%3E%3C/svg%3E");
-  --pattern-dots: radial-gradient(var(--grid-line) 1.3px, transparent 1.6px);
+  --chart-2: #e11d48;
+  --chart-grid: #e4e4e7;
+  --grid-line: rgb(24 24 27 / 7%);
 
   --good: #15803d;
   --good-soft: #dcf5e4;
   --danger: #c81e4a;
-  --backdrop: rgb(22 19 31 / 40%);
-  --shadow: 0 1px 2px rgb(22 19 31 / 5%), 0 8px 28px rgb(76 29 149 / 8%);
-  --glass: rgb(255 255 255 / 82%);
+  --backdrop: rgb(9 9 11 / 40%);
+  --shadow: 0 1px 2px 0 rgb(0 0 0 / 5%);
+  --shadow-float: 0 1px 2px rgb(9 9 11 / 4%), 0 12px 32px -8px rgb(9 9 11 / 14%);
+
+  /* ——— Короткие имена для компонентов ——— */
+  --bg: var(--bg-main);
+  --surface: var(--bg-card);
+  --surface-2: var(--bg-elevated);
+  --ink: var(--text-main);
+  --text: var(--text-body);
+  --muted: var(--text-muted);
+  --line: var(--divider);
+  --card-border: var(--border-color);
+  --accent: var(--accent-main);
+  --accent-ink: #ffffff;
+  /* Свечение главной кнопки; при наведении — ярче */
+  --accent-shadow: 0 0 24px rgb(244 63 94 / 35%);
+  --accent-shadow-hover: 0 0 32px rgb(244 63 94 / 50%);
+  --gradient: var(--accent-gradient);
+  /* Полупрозрачная поверхность под размытием: в тёмной теме это rgba(24, 24, 27, 0.8) */
+  --glass: color-mix(in srgb, var(--bg-card) 80%, transparent);
+  /* Лупа в полях поиска; серый средней яркости читается в обеих темах */
+  --search-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='6.5'/%3E%3Cpath d='m16 16 4 4'/%3E%3C/svg%3E");
+  --pattern-dots: radial-gradient(var(--grid-line) 1.3px, transparent 1.6px);
 
   color-scheme: light;
 }
 
-/* Чёрная тема: по настройке телефона, пока пользователь не выбрал тему сам */
+/* Тёмная тема: по настройке телефона, пока пользователь не выбрал тему сам */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --bg: #09080d;
-    --surface: #15131c;
-    --surface-2: #211e2b;
-    --ink: #f4f2fa;
-    --muted: #9d98b0;
-    --line: #2a2636;
+    --bg-main: #09090b; /* глубокий чёрный — фон приложения */
+    --bg-card: #18181b; /* тёмный графит — карточки и панели */
+    --bg-elevated: #27272a; /* всплывающее и наведение */
+    --text-main: #fafafa; /* заголовки и важные цифры */
+    --text-body: #a1a1aa; /* основной текст: 6.9:1 на карточке */
+    /* Подписи. #71717a из палитры даёт на карточке только 3.7:1 — светлее, чтобы читалось (5.3:1) */
+    --text-muted: #8b8b94;
+    --border-color: #27272a;
+    --divider: #27272a;
+    --accent-main: #f43f5e; /* важные цифры, иконки, ссылки: 4.8:1 на карточке */
+    --accent-hover: #fb7185;
+    --accent-soft: #3a1720;
 
-    --violet: #a78bfa;
-    --pink: #f472b6;
+    --violet: #8b5cf6;
+    --pink: #f43f5e;
     --blue: #7aa2ff;
-    --accent: var(--violet);
-    --accent-ink: #ffffff;
-    --accent-soft: #2a2145;
-    --gradient: linear-gradient(120deg, #4f6ef7 0%, #8b5cf6 50%, #e0447f 100%);
-
-    --chart-1: #8f63f5;
-    --chart-2: #e24d8c;
-    --chart-grid: #26222f;
+    --chart-1: #8b5cf6;
+    --chart-2: #f43f5e;
+    --chart-grid: #27272a;
     --grid-line: rgb(255 255 255 / 6%);
 
     --good: #4ade80;
     --good-soft: #10291a;
-    --danger: #fb7196;
+    --danger: #fb7185;
     --backdrop: rgb(0 0 0 / 65%);
-    --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 10px 30px rgb(0 0 0 / 45%);
-    --glass: rgb(21 19 28 / 82%);
+    --shadow: 0 1px 2px rgb(0 0 0 / 40%);
+    --shadow-float: 0 1px 2px rgb(0 0 0 / 40%), 0 12px 32px rgb(0 0 0 / 50%);
 
     color-scheme: dark;
   }
 }
 
-/* Чёрная тема, выбранная кнопкой */
+/* Тёмная тема, выбранная кнопкой */
 :root[data-theme='dark'] {
-  --bg: #09080d;
-  --surface: #15131c;
-  --surface-2: #211e2b;
-  --ink: #f4f2fa;
-  --muted: #9d98b0;
-  --line: #2a2636;
+  --bg-main: #09090b; /* глубокий чёрный — фон приложения */
+  --bg-card: #18181b; /* тёмный графит — карточки и панели */
+  --bg-elevated: #27272a; /* всплывающее и наведение */
+  --text-main: #fafafa; /* заголовки и важные цифры */
+  --text-body: #a1a1aa; /* основной текст: 6.9:1 на карточке */
+  /* Подписи. #71717a из палитры даёт на карточке только 3.7:1 — светлее, чтобы читалось (5.3:1) */
+  --text-muted: #8b8b94;
+  --border-color: #27272a;
+  --divider: #27272a;
+  --accent-main: #f43f5e; /* важные цифры, иконки, ссылки: 4.8:1 на карточке */
+  --accent-hover: #fb7185;
+  --accent-soft: #3a1720;
 
-  --violet: #a78bfa;
-  --pink: #f472b6;
+  --violet: #8b5cf6;
+  --pink: #f43f5e;
   --blue: #7aa2ff;
-  --accent: var(--violet);
-  --accent-ink: #ffffff;
-  --accent-soft: #2a2145;
-  --gradient: linear-gradient(120deg, #4f6ef7 0%, #8b5cf6 50%, #e0447f 100%);
-
-  --chart-1: #8f63f5;
-  --chart-2: #e24d8c;
-  --chart-grid: #26222f;
+  --chart-1: #8b5cf6;
+  --chart-2: #f43f5e;
+  --chart-grid: #27272a;
   --grid-line: rgb(255 255 255 / 6%);
 
   --good: #4ade80;
   --good-soft: #10291a;
-  --danger: #fb7196;
+  --danger: #fb7185;
   --backdrop: rgb(0 0 0 / 65%);
-  --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 10px 30px rgb(0 0 0 / 45%);
-  --glass: rgb(21 19 28 / 82%);
+  --shadow: 0 1px 2px rgb(0 0 0 / 40%);
+  --shadow-float: 0 1px 2px rgb(0 0 0 / 40%), 0 12px 32px rgb(0 0 0 / 50%);
 
   color-scheme: dark;
 }
@@ -131,23 +160,23 @@
 /* Чистый чёрный (AMOLED): только поверх тёмной темы — чёрные пиксели на таких экранах не светятся */
 @media (prefers-color-scheme: dark) {
   :root[data-amoled]:not([data-theme='light']) {
-    --bg: #000;
-    --surface: #0c0b10;
-    --surface-2: #17151e;
-    --line: #201d29;
-    --chart-grid: #1a1822;
-    --glass: rgb(0 0 0 / 78%);
+    --bg-main: #000;
+    --bg-card: #0e0e10;
+    --bg-elevated: #1c1c1f;
+    --border-color: #1c1c1f;
+    --divider: #1c1c1f;
+    --chart-grid: #1c1c1f;
     --shadow: 0 0 0 1px rgb(255 255 255 / 4%);
   }
 }
 
 :root[data-amoled][data-theme='dark'] {
-  --bg: #000;
-  --surface: #0c0b10;
-  --surface-2: #17151e;
-  --line: #201d29;
-  --chart-grid: #1a1822;
-  --glass: rgb(0 0 0 / 78%);
+  --bg-main: #000;
+  --bg-card: #0e0e10;
+  --bg-elevated: #1c1c1f;
+  --border-color: #1c1c1f;
+  --divider: #1c1c1f;
+  --chart-grid: #1c1c1f;
   --shadow: 0 0 0 1px rgb(255 255 255 / 4%);
 }
 
@@ -166,8 +195,8 @@ body {
 body {
   min-height: 100dvh;
   background: var(--bg);
-  color: var(--ink);
-  font: 15px/1.45 var(--font-body);
+  color: var(--text);
+  font: 15px/1.5 var(--font-body);
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -179,14 +208,38 @@ textarea {
   color: inherit;
 }
 
-button {
+button,
+a,
+summary,
+[role='button'] {
   cursor: pointer;
-  transition: scale 120ms ease;
+  transition: scale 100ms ease;
 }
 
-/* Отклик на нажатие: кнопка чуть проседает */
-button:active:not(:disabled) {
-  scale: 0.98;
+/* Отклик на нажатие: кнопки и кликабельные карточки чуть проседают */
+button:active:not(:disabled),
+a:active,
+summary:active,
+[role='button']:active {
+  scale: 0.97;
+}
+
+/* Тонкий скроллбар в цветах темы (на телефоне его не видно, на ноутбуке — да) */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-main);
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  background: var(--bg-elevated);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-main);
 }
 
 ::selection {
@@ -202,7 +255,15 @@ h1,
 h2,
 h3 {
   margin: 0;
+  color: var(--ink);
+  font-weight: 800;
+  letter-spacing: -0.025em;
   text-wrap: balance;
+}
+
+b,
+strong {
+  color: var(--ink);
 }
 
 .num {

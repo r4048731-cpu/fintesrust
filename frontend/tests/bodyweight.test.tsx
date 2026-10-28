@@ -102,7 +102,7 @@ describe('раздел «Вес»', () => {
     )
     const user = userEvent.setup()
     await user.click(await screen.findByRole('link', { name: 'Прогресс' }))
-    await user.click(await screen.findByRole('button', { name: 'Вес тела' }))
+    await user.click(await screen.findByRole('button', { name: 'Тело' }))
     return { r, user }
   }
 

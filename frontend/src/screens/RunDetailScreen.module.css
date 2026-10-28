@@ -17,6 +17,7 @@
 .main b {
   font: 600 24px/1.1 var(--num-font);
   font-variant-numeric: tabular-nums;
+  color: var(--ink);
 }
 
 .main span {
@@ -83,6 +84,7 @@
 .pace {
   font: 600 13px var(--num-font);
   text-align: right;
+  color: var(--ink);
 }
 
 .note {

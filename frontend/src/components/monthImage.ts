@@ -9,8 +9,8 @@ import { plural } from '../domain/plural'
 const W = 1080
 const H = 1350
 const PAD = 84
-const TITLE = 'Unbounded'
-const BODY = '"Golos Text"'
+const TITLE = 'Manrope'
+const BODY = 'Manrope'
 const INK = '#f4f2fa'
 const MUTED = '#a29cb8'
 const CARD = 'rgba(255,255,255,0.06)'
@@ -80,7 +80,7 @@ export async function renderMonthImage(
   ongoing = false,
 ): Promise<Blob> {
   await Promise.all(
-    [`600 100px ${TITLE}`, `700 40px ${TITLE}`, `400 32px ${BODY}`, `600 32px ${BODY}`].map((f) =>
+    [`800 100px ${TITLE}`, `800 40px ${TITLE}`, `400 32px ${BODY}`, `600 32px ${BODY}`].map((f) =>
       document.fonts?.load(f).catch(() => null),
     ),
   )
@@ -130,16 +130,16 @@ export async function renderMonthImage(
   const [month, year] = monthTitle(s.month).split(' ')
   y += 112
   ctx.fillStyle = INK
-  ctx.font = `600 96px ${TITLE}`
+  ctx.font = `800 96px ${TITLE}`
   ctx.fillText(month, PAD, y)
   const mw = ctx.measureText(month).width
-  ctx.font = `600 52px ${TITLE}`
+  ctx.font = `800 52px ${TITLE}`
   ctx.fillStyle = gradient(ctx, PAD + mw, y - 50, PAD + mw + 200, y)
   ctx.fillText(` ${year}`, PAD + mw, y)
 
   // главная цифра — тренировки
   y += 236
-  ctx.font = `700 210px ${TITLE}`
+  ctx.font = `800 210px ${TITLE}`
   ctx.fillStyle = gradient(ctx, PAD, y - 180, PAD + 420, y)
   const n = String(s.workouts)
   ctx.fillText(n, PAD - 6, y)
@@ -178,14 +178,14 @@ export async function renderMonthImage(
     ctx.font = `400 28px ${BODY}`
     ctx.fillText(label, x + 28, y + 52)
     ctx.fillStyle = INK
-    ctx.font = `600 ${value.length > 8 ? 34 : 42}px ${TITLE}`
+    ctx.font = `800 ${value.length > 8 ? 34 : 42}px ${TITLE}`
     ctx.fillText(fit(ctx, value, tw - 56), x + 28, y + 114)
   })
   y += 150 + 76
 
   // рекорды
   ctx.fillStyle = INK
-  ctx.font = `600 40px ${TITLE}`
+  ctx.font = `800 40px ${TITLE}`
   ctx.fillText('Рекорды', PAD, y)
   if (s.records.length) {
     ctx.fillStyle = MUTED
@@ -225,7 +225,7 @@ export async function renderMonthImage(
     ctx.fillRect(cx - 8, cy + 9, 16, 4)
 
     const value = formatRecordValue(r.kind, r.value)
-    ctx.font = `600 34px ${TITLE}`
+    ctx.font = `800 34px ${TITLE}`
     const vw = ctx.measureText(value).width
     ctx.textAlign = 'right'
     ctx.fillStyle = INK
@@ -261,7 +261,7 @@ export async function renderMonthImage(
   }
   ctx.fillStyle = 'rgba(255,255,255,0.12)'
   ctx.fillRect(PAD, H - PAD - 50, W - PAD * 2, 2)
-  ctx.font = `700 34px ${TITLE}`
+  ctx.font = `800 34px ${TITLE}`
   ctx.fillStyle = gradient(ctx, PAD, 0, PAD + 200, 0)
   ctx.fillText('fitnes', PAD, H - PAD + 6)
   ctx.textAlign = 'right'

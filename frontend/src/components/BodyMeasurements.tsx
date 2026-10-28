@@ -10,8 +10,17 @@ import {
 } from '../data/repositories/measurements'
 import { toISODate } from '../domain/metrics'
 import { formatDecimal } from '../domain/number'
-import { MEASURE_KEYS, MEASURE_LABELS, type MeasureKey, type Measurement } from '../domain/types'
+import {
+  FIGURE_ORDER,
+  MEASURE_KEYS,
+  MEASURE_LABELS,
+  type MeasureKey,
+  type Measurement,
+} from '../domain/types'
+import { inPeriod, type Period } from '../domain/period'
+import { BodyFigure } from './BodyFigure'
 import { Button } from './Button'
+import { PeriodSelect } from './charts/PeriodSelect'
 import { LineChart } from './charts/LineChart'
 import { shortDate } from './dates'
 import { Card } from './Screen'
@@ -22,12 +31,13 @@ import styles from './BodyMeasurements.module.css'
 const cm = (v: number) => `${formatDecimal(v)} см`
 const signed = (v: number) => (v === 0 ? '0 см' : `${v > 0 ? '+' : '−'}${cm(Math.abs(v))}`)
 
-/** «Прогресс» → «Вес тела»: обхваты по датам, изменения и график выбранного замера. */
+/** «Прогресс» → «Тело»: фигура с обхватами, изменения и график выбранного замера за период. */
 export function BodyMeasurements() {
   const repos = useRepos()
   const rows = useLiveQuery(() => repos.measurements.list(), [repos])
   const profile = useLiveQuery(() => repos.meta.get('bodyProfile'), [repos])
   const [chartKey, setChartKey] = useState<MeasureKey>('waist')
+  const [period, setPeriod] = useState<Period>('all')
   /** Открытая шторка: новая запись или правка существующей. */
   const [editing, setEditing] = useState<Measurement | 'new' | null>(null)
   // форма шторки пересоздаётся при каждом открытии, а при закрытии остаётся до конца анимации
@@ -39,7 +49,8 @@ export function BodyMeasurements() {
   if (!rows) return null
 
   const last = rows.at(-1)
-  const series = measureSeries(rows, chartKey)
+  const allSeries = measureSeries(rows, chartKey)
+  const series = inPeriod(allSeries, period, toISODate(new Date()))
   const waist = measureTrend(rows, 'waist')
   const ratio = waist && profile ? waistToHeight(waist.cm, profile.heightCm) : null
 
@@ -54,6 +65,32 @@ export function BodyMeasurements() {
         )}
       </div>
 
+      {/* Как в приложениях замеров: фигура слева, обхваты справа сверху вниз */}
+      <div className={styles.figureRow}>
+        <BodyFigure active={chartKey} />
+        <div className={styles.tiles} role="group" aria-label="Замер для графика">
+          {FIGURE_ORDER.map((key) => {
+            const t = measureTrend(rows, key)
+            return (
+              <button
+                key={key}
+                type="button"
+                className={styles.tile}
+                aria-pressed={key === chartKey}
+                // пока замеров нет, нажатие сразу открывает запись
+                onClick={() => (rows.length ? setChartKey(key) : open('new'))}
+              >
+                <span className={styles.label}>{MEASURE_LABELS[key]}</span>
+                <b>{t ? cm(t.cm) : '—'}</b>
+                {t?.change !== null && t?.change !== undefined && (
+                  <span className={trendClass(key, t.change)}>{signed(t.change)}</span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
       {rows.length === 0 ? (
         <div className={styles.empty}>
           <p>
@@ -66,27 +103,10 @@ export function BodyMeasurements() {
         </div>
       ) : (
         <>
-          <div className={styles.tiles} role="group" aria-label="Замер для графика">
-            {MEASURE_KEYS.map((key) => {
-              const t = measureTrend(rows, key)
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  className={styles.tile}
-                  aria-pressed={key === chartKey}
-                  onClick={() => setChartKey(key)}
-                >
-                  <span className={styles.label}>{MEASURE_LABELS[key]}</span>
-                  <b>{t ? cm(t.cm) : '—'}</b>
-                  {t?.change !== null && t?.change !== undefined && (
-                    <span className={trendClass(key, t.change)}>{signed(t.change)}</span>
-                  )}
-                </button>
-              )
-            })}
+          <div className={styles.chartHead}>
+            <h3 className={styles.chartTitle}>{MEASURE_LABELS[chartKey]}, см</h3>
+            <PeriodSelect value={period} onChange={setPeriod} label="Период графика замеров" />
           </div>
-
           {series.length >= 2 ? (
             <LineChart
               points={series.map((p) => ({ label: shortDate(p.date), values: { cm: p.cm } }))}
@@ -96,7 +116,9 @@ export function BodyMeasurements() {
             />
           ) : (
             <p className={styles.hint}>
-              График «{MEASURE_LABELS[chartKey].toLowerCase()}» появится после второго замера.
+              {allSeries.length >= 2
+                ? 'Нет данных за этот период.'
+                : `График «${MEASURE_LABELS[chartKey].toLowerCase()}» появится после второго замера.`}
             </p>
           )}
 
@@ -135,9 +157,9 @@ export function BodyMeasurements() {
   )
 }
 
-/** Талия, бёдра и бедро: уменьшение — зелёным; грудь и бицепс — без оценки. */
+/** Талия, живот, бёдра и бедро: уменьшение — зелёным; грудь, плечи и бицепс — без оценки. */
 function trendClass(key: MeasureKey, change: number): string {
-  if (change === 0 || !['waist', 'hips', 'thigh'].includes(key)) return styles.same
+  if (change === 0 || !['waist', 'belly', 'hips', 'thigh'].includes(key)) return styles.same
   return change < 0 ? styles.good : styles.warn
 }
 
@@ -186,7 +208,7 @@ function MeasureSheet({
               Удалить
             </Button>
           )}
-          <Button variant="primary" block onClick={() => void save()}>
+          <Button icon="check" variant="primary" block onClick={() => void save()}>
             Сохранить
           </Button>
         </div>
@@ -206,7 +228,7 @@ function MeasureSheet({
           </label>
         )}
         <div className={styles.grid}>
-          {MEASURE_KEYS.map((key) => (
+          {FIGURE_ORDER.map((key) => (
             <div key={key} className={styles.field}>
               <span className={styles.label} aria-hidden="true">
                 {MEASURE_LABELS[key]}, см

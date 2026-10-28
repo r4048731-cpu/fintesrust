@@ -5,9 +5,11 @@ import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.HealthConnectFeatures
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.StepsRecord
+import androidx.health.connect.client.request.AggregateGroupByDurationRequest
 import androidx.health.connect.client.request.AggregateGroupByPeriodRequest
 import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.time.TimeRangeFilter
+import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.Period
@@ -51,6 +53,25 @@ object StepsReader {
             ),
         )
         return result[StepsRecord.COUNT_TOTAL] ?: 0L
+    }
+
+    /** Шаги сегодня по часам: 24 числа, час 0 — с полуночи до часу ночи; будущие часы — нули. */
+    suspend fun hourly(context: Context): List<Long> {
+        val zone = ZoneId.systemDefault()
+        val start = LocalDate.now(zone).atStartOfDay(zone).toInstant()
+        val groups = client(context).aggregateGroupByDuration(
+            AggregateGroupByDurationRequest(
+                metrics = setOf(StepsRecord.COUNT_TOTAL),
+                timeRangeFilter = TimeRangeFilter.between(start, java.time.Instant.now()),
+                timeRangeSlicer = Duration.ofHours(1),
+            ),
+        )
+        val hours = LongArray(24)
+        for (g in groups) {
+            val hour = g.startTime.atZone(zone).hour
+            hours[hour] += g.result[StepsRecord.COUNT_TOTAL] ?: 0L
+        }
+        return hours.toList()
     }
 
     /** Шаги по дням за последние `days` дней, включая сегодня: дата YYYY-MM-DD → шаги. */

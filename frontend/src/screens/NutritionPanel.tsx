@@ -4,15 +4,18 @@ import { useRepos } from '../app/dataContext'
 import { BotLinks } from '../components/BotLinks'
 import { Button, IconButton } from '../components/Button'
 import { LineChart } from '../components/charts/LineChart'
+import { DayTrackers } from '../components/day/DayTrackers'
+import { Icon, type IconName } from '../components/Icon'
 import { MealSheet } from '../components/MealSheet'
 import { NutritionPlanSheet } from '../components/NutritionPlanSheet'
-import { Icon } from '../components/Icon'
+import { PlanAdviceCard } from '../components/nutrition/PlanAdviceCard'
 import { Card, SectionLabel } from '../components/Screen'
 import { Sheet } from '../components/Sheet'
 import { parseISODate, toISODate } from '../domain/metrics'
 import { addDays, dailyTotals, sumNutrients } from '../domain/nutrition'
 import { formatDecimal } from '../domain/number'
-import type { Meal, Nutrients } from '../domain/types'
+import { MEAL_SLOT_LABELS, MEAL_SLOTS, mealSlot } from '../domain/mealSlots'
+import type { Meal, MealSlot, Nutrients } from '../domain/types'
 import { CountUp } from '../components/fx/CountUp'
 import styles from './NutritionPanel.module.css'
 
@@ -31,6 +34,13 @@ const MONTHS_SHORT = [
   'дек',
 ]
 const WEEKDAYS = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб']
+
+const SLOT_ICONS: Record<MealSlot, IconName> = {
+  breakfast: 'coffee',
+  snack: 'apple',
+  lunch: 'soup',
+  dinner: 'salad',
+}
 
 const MACROS: {
   key: Exclude<keyof Nutrients, 'calories'>
@@ -65,6 +75,8 @@ export function NutritionPanel({ onCalc }: { onCalc: () => void }) {
   const today = toISODate(new Date())
   const [date, setDate] = useState(today)
   const [editing, setEditing] = useState<Meal | 'new' | null>(null)
+  /** С какой плитки добавляют: «+» на «Завтраке» сразу ставит завтрак. */
+  const [addSlot, setAddSlot] = useState<MealSlot | undefined>()
   const [planOpen, setPlanOpen] = useState(false)
   const [breakdownOpen, setBreakdownOpen] = useState(false)
 
@@ -96,37 +108,69 @@ export function NutritionPanel({ onCalc }: { onCalc: () => void }) {
         />
       </div>
 
+      {date === today && <PlanAdviceCard />}
+
       <Card framed>
-        <div className={styles.calHead}>
-          <span className={styles.label}>Калории</span>
-          <Button size="sm" variant="ghost" onClick={() => setPlanOpen(true)}>
-            {plan ? 'План' : 'Задать план'}
-          </Button>
+        {/* Как в дневниках питания: слева норма, в центре кольцо со съеденным, справа остаток */}
+        <div className={styles.hero}>
+          <button
+            type="button"
+            className={styles.side}
+            onClick={() => setPlanOpen(true)}
+            aria-label={plan ? `Норма ${kcal(plan.calories)} ккал — изменить план` : 'Задать план'}
+          >
+            <b>{plan ? kcal(plan.calories) : '—'}</b>
+            <span>{plan ? 'норма' : 'Задать план'}</span>
+          </button>
+          <button
+            type="button"
+            className={styles.ring}
+            onClick={() => setBreakdownOpen(true)}
+            aria-label={`${kcal(total.calories)} ккал — откуда калории`}
+          >
+            <svg viewBox="0 0 120 120" aria-hidden="true">
+              <defs>
+                <linearGradient id="kcalRing" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="var(--pink)" />
+                  <stop offset="100%" stopColor="var(--violet)" />
+                </linearGradient>
+              </defs>
+              <circle cx="60" cy="60" r="52" className={styles.ringTrack} />
+              {plan && total.calories > 0 && (
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="52"
+                  pathLength={100}
+                  className={
+                    left !== null && left < 0
+                      ? `${styles.ringArc} ${styles.ringOver}`
+                      : styles.ringArc
+                  }
+                  style={{
+                    strokeDasharray: `${plan ? percent(total.calories, plan.calories) : 0} 100`,
+                  }}
+                />
+              )}
+            </svg>
+            <span className={styles.ringValue}>
+              <CountUp value={total.calories} format={kcal} />
+              <span>ккал</span>
+            </span>
+          </button>
+          <div className={styles.side}>
+            <b className={left !== null && left < 0 ? styles.overText : undefined}>
+              {left === null ? '—' : kcal(Math.abs(left))}
+            </b>
+            <span>{left !== null && left < 0 ? 'сверх плана' : 'осталось'}</span>
+          </div>
         </div>
-        <button
-          type="button"
-          className={styles.big}
-          onClick={() => setBreakdownOpen(true)}
-          aria-label={`${kcal(total.calories)} ккал — откуда калории`}
-        >
-          <CountUp value={total.calories} format={kcal} />
-          <span> {plan ? `/ ${kcal(plan.calories)} ккал` : 'ккал'}</span>
-          <Icon name="chevron" size={18} />
-        </button>
         {plan && (
-          <>
-            <div className={styles.bar} aria-hidden="true">
-              <span
-                className={left !== null && left < 0 ? styles.over : undefined}
-                style={{ width: `${percent(total.calories, plan.calories)}%` }}
-              />
-            </div>
-            <p className={styles.left}>
-              {left !== null && left >= 0
-                ? `Осталось ${kcal(left)} ккал`
-                : `Больше плана на ${kcal(-(left ?? 0))} ккал`}
-            </p>
-          </>
+          <p className="visually-hidden">
+            {left !== null && left >= 0
+              ? `Осталось ${kcal(left)} ккал`
+              : `Больше плана на ${kcal(-(left ?? 0))} ккал`}
+          </p>
         )}
         {!plan && <MacroSplit total={total} />}
         <div className={styles.macros}>
@@ -153,13 +197,52 @@ export function NutritionPanel({ onCalc }: { onCalc: () => void }) {
         </div>
       </Card>
 
-      <Button variant="primary" block icon="plus" onClick={() => setEditing('new')}>
+      <Button
+        variant="primary"
+        block
+        icon="plus"
+        onClick={() => {
+          setAddSlot(undefined)
+          setEditing('new')
+        }}
+      >
         Добавить еду
       </Button>
 
+      <SectionLabel>Приёмы пищи</SectionLabel>
+      <div className={styles.slots}>
+        {MEAL_SLOTS.map(({ value, label }) => {
+          const sum = meals.filter((m) => mealSlot(m) === value).reduce((n, m) => n + m.calories, 0)
+          return (
+            <button
+              key={value}
+              type="button"
+              className={styles.slot}
+              aria-label={`${label}: ${kcal(sum)} ккал — добавить`}
+              onClick={() => {
+                setAddSlot(value)
+                setEditing('new')
+              }}
+            >
+              <span className={styles.slotHead}>
+                <b>{label}</b>
+                <span className={styles.slotPlus}>
+                  <Icon name="plus" size={20} />
+                </span>
+              </span>
+              <span className={styles.slotKcal}>
+                {kcal(sum)} <span>ккал</span>
+              </span>
+              <span className={styles.slotIcon}>
+                <Icon name={SLOT_ICONS[value]} size={24} />
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
       {meals.length > 0 && (
         <>
-          <SectionLabel>Приёмы пищи</SectionLabel>
           <ul className={styles.list} aria-label="Приёмы пищи">
             {meals.map((m) => (
               <li key={m.id}>
@@ -167,7 +250,7 @@ export function NutritionPanel({ onCalc }: { onCalc: () => void }) {
                   <span className={styles.mealText}>
                     <b>{m.name}</b>
                     <span>
-                      {m.grams ? `${m.grams} г · ` : ''}
+                      {MEAL_SLOT_LABELS[mealSlot(m)]} · {m.grams ? `${m.grams} г · ` : ''}
                       {MACROS.map((x) => `${x.short} ${grams(m[x.key])}`).join(' · ')}
                     </span>
                   </span>
@@ -211,6 +294,9 @@ export function NutritionPanel({ onCalc }: { onCalc: () => void }) {
         </Card>
       )}
 
+      <SectionLabel>Отслеживание</SectionLabel>
+      <DayTrackers date={date} />
+
       <BotLinks text="Записывайте еду сообщением или фото прямо из мессенджера — бот посчитает КБЖУ и добавит в дневник." />
 
       <MealSheet
@@ -218,6 +304,7 @@ export function NutritionPanel({ onCalc }: { onCalc: () => void }) {
         onClose={() => setEditing(null)}
         date={date}
         meal={editing === 'new' ? null : editing}
+        slot={editing === 'new' ? addSlot : undefined}
       />
       <Sheet
         open={breakdownOpen}

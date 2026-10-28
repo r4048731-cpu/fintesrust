@@ -1,6 +1,6 @@
-/* Поиск прилипает под верхней панелью приложения */
+/* Поиск прилипает под закреплённой шапкой раздела (44 px кнопка + 12 + 12 отступы) */
 .browser {
-  --controls-top: calc(var(--topbar-h) + env(safe-area-inset-top, 0px));
+  --controls-top: calc(var(--screen-head-h) + env(safe-area-inset-top, 0px));
 }
 
 /* Авторы картинок техники — их требуют лицензии рисунков и фото */
@@ -9,5 +9,4 @@
   color: var(--muted);
   font-size: 11.5px;
   line-height: 1.4;
-  text-align: center;
 }

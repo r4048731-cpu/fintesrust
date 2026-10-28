@@ -15,7 +15,7 @@
     linear-gradient(to bottom, transparent 15%, var(--surface) 60%) border-box,
     var(--gradient) border-box;
   color: var(--ink);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-float);
 }
 
 .sheet::backdrop {
@@ -40,6 +40,11 @@
 
 .sheet.closing::backdrop {
   animation: backdrop-out 220ms ease forwards;
+}
+
+/* Содержимое шторки проявляется следом за выездом */
+.sheet[open] .body {
+  animation: fadeIn 300ms ease-out 60ms backwards;
 }
 
 /* Пока шторку тянут пальцем — без плавности, точно за пальцем */
@@ -75,7 +80,8 @@
   .sheet[open],
   .sheet[open]::backdrop,
   .sheet.closing,
-  .sheet.closing::backdrop {
+  .sheet.closing::backdrop,
+  .sheet[open] .body {
     animation: none;
   }
 }
@@ -119,6 +125,7 @@
   line-height: 1.2;
   text-transform: var(--title-transform);
   letter-spacing: var(--title-spacing);
+  color: var(--ink);
 }
 
 .body {
@@ -160,30 +167,6 @@
   min-height: 0;
 }
 
-/* Верх шторки: цветное свечение и сетка, как за верхом экрана */
-.inner::before {
-  position: absolute;
-  inset: 0 0 auto;
-  z-index: -1;
-  height: 180px;
-  border-radius: inherit;
-  background:
-    var(--pattern-grid) 0 -1px / 22px 22px,
-    radial-gradient(
-      70% 90% at 10% 0%,
-      color-mix(in srgb, var(--blue) 12%, transparent),
-      transparent
-    ),
-    radial-gradient(
-      60% 80% at 95% 0%,
-      color-mix(in srgb, var(--pink) 11%, transparent),
-      transparent
-    );
-  content: '';
-  mask-image: linear-gradient(to bottom, #000 20%, transparent);
-  pointer-events: none;
-}
-
 /* Точка-акцент после заголовка, как у заголовков экранов */
 .title::after {
   display: inline-block;
@@ -210,4 +193,17 @@
 
 .sheet[data-dragging] .grab {
   width: 56px;
+}
+
+/* Плавное появление (CSS Modules делают имена анимаций локальными, поэтому описано здесь) */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    translate: 0 10px;
+  }
+
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
 }

@@ -218,7 +218,7 @@ export function RunActiveScreen() {
     return (
       <div className={styles.page}>
         <p className={styles.empty}>Пробежка не идёт.</p>
-        <Button variant="primary" onClick={() => navigate('/run')}>
+        <Button iconAfter="arrow" variant="primary" onClick={() => navigate('/run')}>
           К бегу и ходьбе
         </Button>
       </div>
@@ -353,7 +353,7 @@ export function RunActiveScreen() {
         <Button variant={r.resumedAt !== null ? 'secondary' : 'primary'} onClick={togglePause}>
           {r.resumedAt !== null ? 'Пауза' : 'Продолжить'}
         </Button>
-        <Button variant="primary" onClick={() => setConfirm('finish')}>
+        <Button icon="check" variant="primary" onClick={() => setConfirm('finish')}>
           Завершить
         </Button>
       </div>
@@ -379,7 +379,7 @@ export function RunActiveScreen() {
               {formatKm(r.distanceM)} км за {formatClock(ms / 1000)}.
               {r.distanceM < 50 && ' Меньше 50 м — такая пробежка не сохранится.'}
             </p>
-            <Button block variant="primary" onClick={finish}>
+            <Button block icon="check" variant="primary" onClick={finish}>
               Завершить
             </Button>
           </>

@@ -1,52 +1,12 @@
-.topbar {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  padding-top: env(safe-area-inset-top, 0px);
-  background: var(--glass);
-  backdrop-filter: saturate(1.6) blur(16px);
-  -webkit-backdrop-filter: saturate(1.6) blur(16px);
-  border-bottom: 1px solid var(--line);
-}
-
-/* Цветная линия по нижнему краю шапки, к краям тает */
-.topbar::after {
-  position: absolute;
-  inset: auto 0 -1px;
-  height: 1px;
-  background: var(--gradient);
-  content: '';
-  mask-image: linear-gradient(to right, transparent, #000 30%, #000 70%, transparent);
-  opacity: 0.6;
-}
-
-.topbarInner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  max-width: var(--content-max);
-  min-height: var(--topbar-h);
-  margin: 0 auto;
-  padding-inline: var(--gutter);
-}
-
-/* Название приложения градиентом */
-.brand {
-  font: 700 18px/1 var(--title-font);
-  letter-spacing: -0.01em;
-  background: var(--gradient) 0 0 / 200% 100%;
-  animation: brand-flow 6s ease-in-out infinite alternate;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
 .main {
+  /* Отступы страницы: по ним закреплённые шапки экранов растягиваются до краёв и под вырез */
+  --page-top: calc(24px + env(safe-area-inset-top, 0px));
+  --page-gutter: var(--gutter);
+
   max-width: var(--content-max);
   margin: 0 auto;
   padding-inline: var(--gutter);
-  padding-top: 16px;
+  padding-top: var(--page-top);
   /* Место под плавающую панель вкладок, чтобы она не закрывала последний блок */
   padding-bottom: calc(
     var(--tabbar-h) + 2 * var(--tabbar-inset) + 16px + env(safe-area-inset-bottom, 0px)
@@ -69,12 +29,13 @@
   max-width: calc(var(--content-max) - 2 * var(--tabbar-inset));
   margin: 0 auto;
   padding: 6px;
-  border: 1px solid var(--line);
-  border-radius: 24px;
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  /* Стекло: полупрозрачный графит, содержимое под панелью размыто */
   background: var(--glass);
-  backdrop-filter: saturate(1.6) blur(16px);
-  -webkit-backdrop-filter: saturate(1.6) blur(16px);
-  box-shadow: var(--shadow);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-float);
   pointer-events: auto;
 }
 
@@ -85,10 +46,10 @@
   justify-content: center;
   gap: 2px;
   min-height: calc(var(--tabbar-h) - 12px);
-  border-radius: 18px;
+  border-radius: 14px;
   color: var(--muted);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   text-decoration: none;
 }
 
@@ -97,45 +58,36 @@
   place-items: center;
 }
 
-/* ИИ по центру: выделенная круглая кнопка */
-.aiTab {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
+/* «+» по центру: круглая кнопка быстрых действий, чуть приподнята над панелью */
+.addTab {
+  display: grid;
+  place-items: center;
   min-height: calc(var(--tabbar-h) - 12px);
   padding: 0;
   border: 0;
   background: none;
-  color: var(--ink);
-  font-size: 11px;
-  font-weight: 700;
 }
 
-.aiIcon {
+.addIcon {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 30px;
-  border-radius: 15px;
-  background: var(--gradient);
+  width: 52px;
+  height: 52px;
+  margin-top: -18px;
+  border: 4px solid var(--bg);
+  border-radius: 50%;
+  background: var(--accent-fill);
   color: var(--accent-ink);
-  box-shadow: 0 4px 14px var(--accent-soft);
+  box-shadow: var(--accent-shadow);
 }
 
 .active {
   background: var(--accent-soft);
-  color: var(--ink);
+  color: var(--accent);
 }
 
 .active .tabIcon {
   color: var(--accent);
-}
-
-.topActions {
-  display: flex;
-  gap: 8px;
 }
 
 .active .tabIcon {
@@ -148,36 +100,7 @@
   }
 }
 
-@keyframes brand-flow {
-  to {
-    background-position: 100% 0;
-  }
-}
-
-/* Кнопка ИИ раз в 8 секунд мягко вспыхивает свечением */
-.aiIcon {
-  animation: ai-glow 8s ease-in-out infinite;
-}
-
-@keyframes ai-glow {
-  0%,
-  24%,
-  100% {
-    box-shadow: 0 4px 14px var(--accent-soft);
-  }
-
-  12% {
-    box-shadow:
-      0 4px 14px var(--accent-soft),
-      0 0 0 5px color-mix(in srgb, var(--violet) 18%, transparent);
-  }
-}
-
-/* ——— Смена вкладки (View Transitions): экран мягко сдвигается, шапка, панель и «+» стоят ——— */
-.topbar {
-  view-transition-name: topbar;
-}
-
+/* ——— Смена вкладки (View Transitions): экран мягко сдвигается, панель и «+» стоят ——— */
 .tabbar {
   view-transition-name: tabbar;
 }

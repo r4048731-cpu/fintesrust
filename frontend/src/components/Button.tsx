@@ -9,6 +9,8 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: 'md' | 'sm'
   block?: boolean
   icon?: IconName
+  /** Иконка после подписи — например, стрелка «дальше». */
+  iconAfter?: IconName
   children?: ReactNode
 }
 
@@ -17,6 +19,7 @@ export function Button({
   size = 'md',
   block = false,
   icon,
+  iconAfter,
   children,
   className,
   type = 'button',
@@ -33,13 +36,14 @@ export function Button({
     .join(' ')
   return (
     <button type={type} className={cls} {...rest}>
-      {icon && <Icon name={icon} size={size === 'sm' ? 18 : 20} />}
+      {icon && <Icon name={icon} size={20} />}
       {children}
+      {iconAfter && <Icon name={iconAfter} size={20} />}
     </button>
   )
 }
 
-interface IconButtonProps extends Omit<Props, 'children' | 'icon' | 'block'> {
+interface IconButtonProps extends Omit<Props, 'children' | 'icon' | 'iconAfter' | 'block'> {
   icon: IconName
   /** Подпись для экранного диктора: у кнопки нет видимого текста. */
   label: string
