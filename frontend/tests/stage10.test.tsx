@@ -205,7 +205,8 @@ describe('инструкция', () => {
 
     await user.click(screen.getByRole('button', { name: 'Назад' }))
     await waitFor(() => expect(router.state.location.pathname).toBe('/'))
-    await user.click(screen.getByRole('button', { name: 'Ещё' }))
+    // «Сегодня» дорисовывается после загрузки данных — ждём шапку
+    await user.click(await screen.findByRole('button', { name: 'Ещё' }))
     await user.click(await screen.findByRole('button', { name: /^Настройки/ }))
     await screen.findByRole('heading', { name: 'Настройки' })
     await user.click(screen.getByRole('button', { name: 'Как пользоваться' }))
