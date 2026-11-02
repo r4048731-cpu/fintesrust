@@ -117,9 +117,22 @@
   animation: draw 900ms cubic-bezier(0.4, 0, 0.2, 1) backwards;
 }
 
-.chart svg > path:not(.mainLine),
-.dot {
+.chart svg > path:not(.mainLine) {
   animation: chart-fade 500ms ease 450ms backwards;
+}
+
+/* Точка «выпрыгивает»; задержка у каждой своя — из разметки */
+.dot {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: dot-pop 380ms cubic-bezier(0.3, 1.6, 0.5, 1) backwards;
+}
+
+@keyframes dot-pop {
+  from {
+    opacity: 0;
+    scale: 0;
+  }
 }
 
 @keyframes draw {

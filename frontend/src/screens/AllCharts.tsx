@@ -13,6 +13,7 @@ import { inPeriod, type Period } from '../domain/period'
 import { formatPace, paceSecPerKm } from '../domain/run'
 import { FIGURE_ORDER, MEASURE_LABELS, type ISODate, type MeasureKey } from '../domain/types'
 import styles from './ProgressScreen.module.css'
+import { Skeleton } from '../components/Skeleton'
 
 const PERIOD_DAYS: Record<Exclude<Period, 'all'>, number> = { week: 7, month: 30, quarter: 90 }
 
@@ -74,7 +75,7 @@ export function AllCharts({ period }: { period: Period }) {
     ])
     return { workouts, weights, measurements, meals, trackers, plan, runs }
   }, [repos, today])
-  if (!data) return null
+  if (!data) return <Skeleton cards={2} />
   const { workouts, weights, measurements, meals, trackers, plan, runs } = data
 
   // ——— Тренировки по неделям ———

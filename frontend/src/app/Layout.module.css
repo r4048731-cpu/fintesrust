@@ -94,6 +94,40 @@
   animation: tab-pop 320ms cubic-bezier(0.3, 1.6, 0.5, 1);
 }
 
+/* Активная иконка «заливается» мягким цветом, под подписью — точка */
+.tab {
+  position: relative;
+}
+
+.tabIcon :global(svg) {
+  transition: fill-opacity 200ms ease;
+  fill: currentColor;
+  fill-opacity: 0;
+}
+
+.active .tabIcon :global(svg) {
+  fill-opacity: 0.2;
+}
+
+.active::after {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: dot-in 260ms cubic-bezier(0.3, 1.6, 0.5, 1) 80ms backwards;
+}
+
+@keyframes dot-in {
+  from {
+    scale: 0;
+  }
+}
+
 @keyframes tab-pop {
   from {
     scale: 0.7;

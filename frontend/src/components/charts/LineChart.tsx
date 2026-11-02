@@ -178,6 +178,8 @@ export function LineChart({ points, series, format, ariaLabel, xLabels }: Props)
                 r={i === last ? 4.5 : 2.5}
                 fill={s.color}
                 className={styles.dot}
+                // точки появляются по очереди, вслед за прорисовкой линии
+                style={{ animationDelay: `${300 + Math.round((i * 600) / points.length)}ms` }}
               />
             )),
           )}

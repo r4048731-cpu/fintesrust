@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { IconButton } from './Button'
 import frame from './frame.module.css'
 import styles from './Screen.module.css'
@@ -16,13 +16,36 @@ interface Props {
   children: ReactNode
 }
 
-/** Экран вкладки: заголовок и колонка содержимого с одинаковыми отступами. */
+/** Прокрутка, после которой большой заголовок сжимается, px. */
+const SHRINK_AFTER_PX = 16
+
+/** Прокручена ли страница вниз; состояние меняется только при переходе через порог. */
+function useScrolled(enabled: boolean): boolean {
+  const [scrolled, setScrolled] = useState(false)
+  useEffect(() => {
+    if (!enabled) return
+    const onScroll = () => setScrolled(window.scrollY > SHRINK_AFTER_PX)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [enabled])
+  return enabled && scrolled
+}
+
+/**
+ * Экран вкладки: заголовок и колонка содержимого с одинаковыми отступами.
+ * Большой заголовок при прокрутке сжимается и остаётся в закреплённой шапке.
+ */
 export function Screen({ title, eyebrow, action, onBack, top, children }: Props) {
+  const scrolled = useScrolled(!top && !onBack)
   return (
     <div className={styles.screen}>
       {top}
       {/* Шапка раздела закреплена сверху; если над ней своя шапка (top) — обычная */}
-      <header className={top ? `${styles.head} ${styles.plain}` : styles.head}>
+      <header
+        className={top ? `${styles.head} ${styles.plain}` : styles.head}
+        data-scrolled={scrolled || undefined}
+      >
         {onBack && (
           <IconButton icon="back" label="Назад" onClick={onBack} className={styles.back} />
         )}

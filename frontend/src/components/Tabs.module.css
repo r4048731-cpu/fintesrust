@@ -1,5 +1,6 @@
 /* Ширина вкладки — по названию, остаток делится поровну; счётчик под названием */
 .tabs {
+  position: relative;
   display: flex;
   border-bottom: 1px solid var(--line);
 }
@@ -31,8 +32,20 @@
 }
 
 .tab[aria-selected='true'] {
-  border-bottom-color: var(--accent);
   color: var(--ink);
+}
+
+/* Подчёркивание выбранной вкладки — одно на все, переезжает при смене */
+.line {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent);
+  transition:
+    translate 300ms cubic-bezier(0.3, 1.2, 0.5, 1),
+    width 300ms cubic-bezier(0.3, 1.2, 0.5, 1);
 }
 
 .count {

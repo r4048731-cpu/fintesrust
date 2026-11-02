@@ -27,6 +27,7 @@ import { AllCharts } from './AllCharts'
 import { HistoryPanel } from './HistoryPanel'
 import { WeightPanel } from './WeightPanel'
 import styles from './ProgressScreen.module.css'
+import { Skeleton } from '../components/Skeleton'
 
 const MONTHS_SHORT = [
   'янв',
@@ -138,7 +139,7 @@ export function ProgressScreen() {
     [repos],
   )
   const hasWeights = useLiveQuery(async () => (await repos.bodyWeights.list()).length > 0, [repos])
-  if (hasWorkouts === undefined || hasWeights === undefined) return null
+  if (hasWorkouts === undefined || hasWeights === undefined) return <Skeleton cards={3} />
 
   const view = viewOf(params.get('view'), hasWorkouts, hasWeights)
 
@@ -185,7 +186,7 @@ function WorkoutProgress() {
     return { workouts, usage, exercises }
   }, [repos])
 
-  if (!data) return null
+  if (!data) return <Skeleton cards={2} />
   const { workouts, usage, exercises } = data
 
   const options = [...usage.entries()]

@@ -32,6 +32,15 @@
   height: 100%;
   border-radius: inherit;
   background: var(--gradient);
+  transition: width 500ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* полоска растёт от нуля до своей доли */
+  animation: bar-grow 800ms cubic-bezier(0.2, 0.8, 0.2, 1) 200ms backwards;
+}
+
+@keyframes bar-grow {
+  from {
+    width: 0;
+  }
 }
 
 .bar span.over {
@@ -324,7 +333,16 @@ button.side span {
   stroke: url(#kcalRing);
   stroke-linecap: round;
   transition: stroke-dasharray 600ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: ring-in 900ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
 }
+
+/* Кольцо заполняется от нуля при каждом показе экрана */
+@keyframes ring-in {
+  from {
+    stroke-dasharray: 0 100;
+  }
+}
+
 
 .ringOver {
   stroke: var(--danger);
@@ -394,6 +412,52 @@ button.side span {
 .slotKcal {
   font: 800 22px/1 var(--num-font);
   font-variant-numeric: tabular-nums;
+  transform-origin: left bottom;
+  animation: kcal-bump 420ms cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+
+/* «+300» взлетает над плиткой, куда только что добавили еду */
+.slotAdded {
+  position: absolute;
+  left: 16px;
+  bottom: 44px;
+  padding: 4px 10px;
+  border-radius: 99px;
+  background: var(--accent-fill);
+  color: var(--accent-ink);
+  font: 800 14px/1 var(--num-font);
+  box-shadow: var(--accent-shadow);
+  pointer-events: none;
+  animation: kcal-fly 1100ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes kcal-bump {
+  40% {
+    scale: 1.18;
+  }
+}
+
+@keyframes kcal-fly {
+  0% {
+    opacity: 0;
+    translate: 0 30px;
+    scale: 0.6;
+  }
+
+  25% {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+  }
+
+  75% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    translate: 0 -24px;
+  }
 }
 
 .slotKcal span {
@@ -413,4 +477,29 @@ button.side span {
   border-radius: 50%;
   background: var(--surface-2);
   color: var(--muted);
+}
+
+/* Плитки приёмов пищи появляются лесенкой */
+.slots > * {
+  animation: tile-in 360ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
+.slots > :nth-child(2) {
+  animation-delay: 50ms;
+}
+
+.slots > :nth-child(3) {
+  animation-delay: 100ms;
+}
+
+.slots > :nth-child(4) {
+  animation-delay: 150ms;
+}
+
+@keyframes tile-in {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+    scale: 0.96;
+  }
 }

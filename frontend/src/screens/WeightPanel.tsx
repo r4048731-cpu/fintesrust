@@ -16,6 +16,7 @@ import { formatDecimal } from '../domain/number'
 import { inPeriod, type Period } from '../domain/period'
 import type { BodyWeight } from '../domain/types'
 import styles from './WeightPanel.module.css'
+import { Skeleton } from '../components/Skeleton'
 
 const WEEKDAYS = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб']
 const kg = (v: number) => `${formatDecimal(v)} кг`
@@ -44,7 +45,7 @@ export function WeightPanel() {
   const rows = useLiveQuery(() => repos.bodyWeights.list(), [repos])
   const [editingId, setEditingId] = useState<string | null>(null)
   const [period, setPeriod] = useState<Period>('all')
-  if (!rows) return null
+  if (!rows) return <Skeleton cards={2} />
   const editing = rows.find((r) => r.id === editingId)
 
   const today = toISODate(new Date())

@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRepos } from '../app/dataContext'
 import { BotLinks } from '../components/BotLinks'
 import { Button, IconButton } from '../components/Button'
@@ -17,7 +17,10 @@ import { formatDecimal } from '../domain/number'
 import { MEAL_SLOT_LABELS, MEAL_SLOTS, mealSlot } from '../domain/mealSlots'
 import type { Meal, MealSlot, Nutrients } from '../domain/types'
 import { CountUp } from '../components/fx/CountUp'
+import { GoalBadge } from '../components/fx/GoalBadge'
+import goalFx from '../components/fx/goal.module.css'
 import styles from './NutritionPanel.module.css'
+import { Skeleton } from '../components/Skeleton'
 
 const MONTHS_SHORT = [
   'янв',
@@ -69,6 +72,40 @@ const grams = (v: number) => formatDecimal(Math.round(v))
 const percent = (value: number, target: number) =>
   target > 0 ? Math.min(100, Math.round((value / target) * 100)) : 0
 
+/**
+ * Сколько ккал только что добавилось в приём пищи — над плиткой взлетает «+300».
+ * Смена дня и первая загрузка не считаются.
+ */
+function useAdded(date: string, meals: Meal[] | undefined) {
+  const [added, setAdded] = useState<{ slot: MealSlot; kcal: number; at: number } | null>(null)
+  const prev = useRef<{ date: string; sums: Record<MealSlot, number> } | null>(null)
+  const sums = Object.fromEntries(
+    MEAL_SLOTS.map(({ value }) => [
+      value,
+      (meals ?? []).filter((m) => mealSlot(m) === value).reduce((n, m) => n + m.calories, 0),
+    ]),
+  ) as Record<MealSlot, number>
+  const key = meals ? MEAL_SLOTS.map(({ value }) => sums[value]).join() : ''
+
+  useEffect(() => {
+    if (!key) return
+    const p = prev.current
+    prev.current = { date, sums }
+    if (!p || p.date !== date) return
+    const slot = MEAL_SLOTS.find(({ value }) => sums[value] > p.sums[value])?.value
+    if (slot) setAdded({ slot, kcal: sums[slot] - p.sums[slot], at: Date.now() })
+    // sums меняется вместе с key
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [date, key])
+
+  useEffect(() => {
+    if (!added) return
+    const t = setTimeout(() => setAdded(null), 1200)
+    return () => clearTimeout(t)
+  }, [added])
+  return added
+}
+
 /** «Питание» → «Дневник»: еда по дням, итоги против плана, график калорий за неделю. */
 export function NutritionPanel({ onCalc }: { onCalc: () => void }) {
   const repos = useRepos()
@@ -83,10 +120,13 @@ export function NutritionPanel({ onCalc }: { onCalc: () => void }) {
   const meals = useLiveQuery(() => repos.meals.listDay(date), [repos, date])
   const week = useLiveQuery(() => repos.meals.listRange(addDays(today, -6), today), [repos, today])
   const plan = useLiveQuery(() => repos.meta.get('nutritionPlan'), [repos])
-  if (!meals || !week || plan === undefined) return null
+  const added = useAdded(date, meals)
+  if (!meals || !week || plan === undefined) return <Skeleton cards={2} />
 
   const total = sumNutrients(meals)
   const left = plan ? plan.calories - total.calories : null
+  /** Норма набрана: от 95 % плана и не больше чем на 5 % сверх. */
+  const normDone = !!plan && Math.abs(total.calories - plan.calories) <= plan.calories * 0.05
   const days = dailyTotals(week, today, 7)
 
   return (
@@ -124,7 +164,7 @@ export function NutritionPanel({ onCalc }: { onCalc: () => void }) {
           </button>
           <button
             type="button"
-            className={styles.ring}
+            className={normDone ? `${styles.ring} ${goalFx.glow}` : styles.ring}
             onClick={() => setBreakdownOpen(true)}
             aria-label={`${kcal(total.calories)} ккал — откуда калории`}
           >
@@ -156,6 +196,7 @@ export function NutritionPanel({ onCalc }: { onCalc: () => void }) {
             <span className={styles.ringValue}>
               <CountUp value={total.calories} format={kcal} />
               <span>ккал</span>
+              {normDone && <GoalBadge>Норма</GoalBadge>}
             </span>
           </button>
           <div className={styles.side}>
@@ -230,9 +271,15 @@ export function NutritionPanel({ onCalc }: { onCalc: () => void }) {
                   <Icon name="plus" size={20} />
                 </span>
               </span>
-              <span className={styles.slotKcal}>
+              {/* key: число пересоздаётся при изменении и подпрыгивает */}
+              <span key={sum} className={styles.slotKcal}>
                 {kcal(sum)} <span>ккал</span>
               </span>
+              {added?.slot === value && (
+                <span key={added.at} className={styles.slotAdded} aria-hidden="true">
+                  +{kcal(added.kcal)}
+                </span>
+              )}
               <span className={styles.slotIcon}>
                 <Icon name={SLOT_ICONS[value]} size={24} />
               </span>

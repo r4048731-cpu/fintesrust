@@ -15,7 +15,10 @@
     linear-gradient(to bottom, transparent 15%, var(--surface) 60%) border-box,
     var(--gradient) border-box;
   color: var(--ink);
-  box-shadow: var(--shadow-float);
+  /* Вторая тень — «подол» того же цвета: при пружинном перелёте вверх снизу не видно щели */
+  box-shadow:
+    var(--shadow-float),
+    0 40px 0 0 var(--surface);
 }
 
 .sheet::backdrop {
@@ -24,10 +27,11 @@
   -webkit-backdrop-filter: blur(3px);
 }
 
-/* Выезд снизу и плавное затемнение; уход — в обратную сторону */
+/* Выезд снизу с лёгким пружинным перелётом; уход — в обратную сторону.
+   Отпустили, не дотянув до закрытия, — шторка пружиной возвращается на место */
 .sheet[open] {
-  animation: sheet-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
-  transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: sheet-in 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: transform 380ms cubic-bezier(0.3, 1.4, 0.5, 1);
 }
 
 .sheet[open]::backdrop {
@@ -55,6 +59,14 @@
 @keyframes sheet-in {
   from {
     transform: translateY(100%);
+  }
+
+  65% {
+    transform: translateY(-10px);
+  }
+
+  85% {
+    transform: translateY(3px);
   }
 }
 

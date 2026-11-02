@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef, useState } from 'react'
 import styles from './Tabs.module.css'
 
 interface Props<T extends string> {
@@ -10,11 +11,25 @@ interface Props<T extends string> {
 
 /**
  * Вкладки внутри раздела: текст с подчёркиванием и счётчиком. Отличаются от `Segmented`
- * на вид, чтобы два уровня переключателей не сливались.
+ * на вид, чтобы два уровня переключателей не сливались. Подчёркивание переезжает к выбранной.
  */
 export function Tabs<T extends string>({ label, options, value, onChange }: Props<T>) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [line, setLine] = useState<{ left: number; width: number } | null>(null)
+
+  // ширина вкладок — по названию, поэтому положение подчёркивания меряется
+  useLayoutEffect(() => {
+    const measure = () => {
+      const tab = ref.current?.querySelector<HTMLElement>('[aria-selected="true"]')
+      setLine(tab && tab.offsetWidth ? { left: tab.offsetLeft, width: tab.offsetWidth } : null)
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [value, options.length])
+
   return (
-    <div className={styles.tabs} role="tablist" aria-label={label}>
+    <div ref={ref} className={styles.tabs} role="tablist" aria-label={label}>
       {options.map((o) => (
         <button
           key={o.value}
@@ -28,6 +43,13 @@ export function Tabs<T extends string>({ label, options, value, onChange }: Prop
           {o.count !== undefined && <span className={styles.count}>{o.count}</span>}
         </button>
       ))}
+      {line && (
+        <span
+          className={styles.line}
+          aria-hidden="true"
+          style={{ width: line.width, translate: `${line.left}px 0` }}
+        />
+      )}
     </div>
   )
 }

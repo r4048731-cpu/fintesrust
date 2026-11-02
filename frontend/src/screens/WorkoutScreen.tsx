@@ -5,6 +5,7 @@ import { useRepos } from '../app/dataContext'
 import { useNow } from '../app/hooks/useNow'
 import { useWakeLock } from '../app/hooks/useWakeLock'
 import { restEndSignal, tapFeedback, unlockAudio } from '../app/signal'
+import { Confetti } from '../components/fx/Confetti'
 import { cancelRestAlarm, scheduleRestAlarm, vibrate } from '../native/workoutAlerts'
 import { Button, IconButton } from '../components/Button'
 import { ExercisePicker } from '../components/ExercisePicker'
@@ -110,6 +111,8 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
   const signaledFor = useRef<number | null>(null)
   /** Рекорд, поставленный только что отмеченным подходом, — плашка на 3,5 с. */
   const [flash, setFlash] = useState<{ record: NewRecord; at: number } | null>(null)
+  /** Только что отмеченный подход «упр.-подход»: строка вспыхивает, галочка прорисовывается. */
+  const [justDone, setJustDone] = useState<string | null>(null)
 
   const now = useNow(250, !!workout && !editing)
   useWakeLock(!!workout && !editing)
@@ -676,6 +679,9 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
             return (
               <>
                 {flash && flash.record.exerciseId === entry.exerciseId && (
+                  <Confetti key={`c${flash.at}`} />
+                )}
+                {flash && flash.record.exerciseId === entry.exerciseId && (
                   <div key={flash.at} className={styles.recordFlash} role="status">
                     <span className={styles.recordIcon} aria-hidden="true">
                       <Icon name="trophy" size={20} />
@@ -786,6 +792,7 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
                         .filter(Boolean)
                         .join(' ')}
                       aria-current={next?.ei === ei && next.si === si ? 'step' : undefined}
+                      data-just={(set.done && justDone === `${ei}-${si}`) || undefined}
                     >
                       {timed ? (
                         <div className={styles.span2}>
@@ -839,7 +846,10 @@ export function WorkoutScreen({ mode = 'active' }: Props) {
                               return
                             }
                             unlockAudio()
-                            if (!set.done) tapFeedback()
+                            if (!set.done) {
+                              tapFeedback()
+                              setJustDone(`${ei}-${si}`)
+                            }
                             const after = toggleDone(w, ei, si, Date.now())
                             change(after)
                             const record =

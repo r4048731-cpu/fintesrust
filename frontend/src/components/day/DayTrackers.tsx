@@ -4,6 +4,8 @@ import { useRepos } from '../../app/dataContext'
 import { formatSleep, GLASS_ML, SLEEP_GOAL_MIN, waterGoalMl, withDay } from '../../domain/trackers'
 import type { DayTracker, ISODate } from '../../domain/types'
 import { Button, IconButton } from '../Button'
+import { GoalBadge } from '../fx/GoalBadge'
+import goalFx from '../fx/goal.module.css'
 import { Icon, type IconName } from '../Icon'
 import { Sheet } from '../Sheet'
 import { Stepper } from '../Stepper'
@@ -40,7 +42,9 @@ export function DayTrackers({ date }: { date: ISODate }) {
       <div className={styles.card}>
         <Ring icon="water" tone="water" value={water / goal} />
         <div className={styles.text}>
-          <span className={styles.label}>Вода</span>
+          <span className={styles.label}>
+            Вода {water >= goal && <GoalBadge />}
+          </span>
           <b>
             {(water / 1000).toLocaleString('ru-RU', { maximumFractionDigits: 2 })}
             <span> / {(goal / 1000).toLocaleString('ru-RU')} л</span>
@@ -73,7 +77,9 @@ export function DayTrackers({ date }: { date: ISODate }) {
       >
         <Ring icon="sleep" tone="sleep" value={sleep / SLEEP_GOAL_MIN} />
         <span className={styles.text}>
-          <span className={styles.label}>Сон</span>
+          <span className={styles.label}>
+            Сон {sleep >= SLEEP_GOAL_MIN && <GoalBadge />}
+          </span>
           <b>{sleep ? formatSleep(sleep) : '—'}</b>
         </span>
         <span className={styles.chevron}>
@@ -99,7 +105,11 @@ export function DayTrackers({ date }: { date: ISODate }) {
 function Ring({ icon, tone, value }: { icon: IconName; tone: 'water' | 'sleep'; value: number }) {
   const pct = Math.min(100, Math.round(value * 100))
   return (
-    <span className={styles.ring} data-tone={tone} aria-hidden="true">
+    <span
+      className={pct >= 100 ? `${styles.ring} ${goalFx.glow}` : styles.ring}
+      data-tone={tone}
+      aria-hidden="true"
+    >
       <svg viewBox="0 0 48 48" className={styles.ringSvg}>
         <circle cx="24" cy="24" r="20" className={styles.track} />
         {pct > 0 && (

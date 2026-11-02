@@ -3,6 +3,8 @@ import { Steps, DEFAULT_STEPS_GOAL, type DaySteps, type StepsStatus } from '../.
 import { Button } from '../Button'
 import { Segmented } from '../Segmented'
 import frame from '../frame.module.css'
+import { GoalBadge } from '../fx/GoalBadge'
+import goalFx from '../fx/goal.module.css'
 import styles from './Steps.module.css'
 
 const WEEKDAYS = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб']
@@ -99,11 +101,11 @@ export function StepsCard() {
           <span className={styles.label}>Шаги сегодня</span>
           <b className={styles.big}>{fmt(today)}</b>
           <span className={styles.muted}>
-            {today >= goal ? 'цель выполнена' : `из ${fmt(goal)} · осталось ${fmt(goal - today)}`}
+            {today >= goal ? <GoalBadge>Цель выполнена</GoalBadge> : `из ${fmt(goal)} · осталось ${fmt(goal - today)}`}
           </span>
         </div>
         <div
-          className={styles.ring}
+          className={today >= goal ? `${styles.ring} ${goalFx.glow}` : styles.ring}
           style={{ ['--p' as string]: `${share * 360}deg` }}
           aria-hidden="true"
         >

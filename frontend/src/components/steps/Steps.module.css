@@ -50,7 +50,16 @@
 }
 
 /* Кольцо выполнения цели */
+/* Доля кольца шагов — угол; зарегистрирован, чтобы его можно было плавно менять */
+@property --p {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
 .ring {
+  transition: --p 600ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: ring-in 1000ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
   display: grid;
   flex: none;
   place-items: center;
@@ -61,6 +70,12 @@
   background:
     conic-gradient(transparent var(--p), var(--surface-2) 0),
     conic-gradient(var(--pink), var(--violet), var(--pink));
+}
+
+@keyframes ring-in {
+  from {
+    --p: 0deg;
+  }
 }
 
 .ring span {
@@ -101,6 +116,14 @@
 .barDone {
   width: 100%;
   border-radius: 6px;
+  /* столбики вырастают снизу */
+  animation: bar-up 700ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
+@keyframes bar-up {
+  from {
+    height: 0;
+  }
 }
 
 .bar {

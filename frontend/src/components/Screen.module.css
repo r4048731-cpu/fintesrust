@@ -69,6 +69,34 @@
   color: var(--ink);
 }
 
+/* Прокрутили вниз: заголовок плавно сжимается к левому краю, мелкая строка над ним уходит,
+   у шапки появляется тень. Высота шапки не меняется — закреплённые под ней полосы стоят */
+.head .title,
+.head .eyebrow {
+  transform-origin: left center;
+  transition:
+    scale 260ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    translate 260ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 200ms ease;
+}
+
+.head {
+  transition: box-shadow 200ms ease;
+}
+
+.head[data-scrolled] {
+  box-shadow: 0 6px 16px -10px rgb(0 0 0 / 0.5);
+}
+
+.head[data-scrolled] .title {
+  scale: 0.72;
+}
+
+.head[data-scrolled] .eyebrow {
+  opacity: 0;
+  translate: 0 -6px;
+}
+
 /* Вложенный экран (со стрелкой «Назад»): заголовок мельче и в одну строку */
 .nested {
   overflow: hidden;

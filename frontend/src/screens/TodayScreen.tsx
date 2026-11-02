@@ -25,10 +25,11 @@ import { countSets, formatClock } from '../domain/workout'
 import { useToday, type TodayPlan, type WeekDay } from './today/useToday'
 import { Stories } from './today/Stories'
 import { WeekStrip } from './today/WeekStrip'
-import { DayRings } from '../components/DayRings'
+import { DayTiles } from '../components/day/DayTiles'
 import { ExerciseThumb } from '../components/ExerciseThumb'
 import frame from '../components/frame.module.css'
 import styles from './TodayScreen.module.css'
+import { Skeleton } from '../components/Skeleton'
 
 export function TodayScreen() {
   const repos = useRepos()
@@ -52,7 +53,7 @@ export function TodayScreen() {
   // Совсем пустое приложение — сначала знакомство: цель, программа, вес
   if (firstRun) return <Navigate to="/welcome" replace />
   if (t.active === undefined || t.plan === undefined || !t.week || firstRun === undefined) {
-    return null
+    return <Skeleton cards={3} />
   }
 
   const quick: { icon: IconName; label: string; aria?: string; onClick: () => void }[] = [
@@ -210,10 +211,7 @@ export function TodayScreen() {
       )}
 
       {week}
-      <DayRings
-        active={liveSets}
-        doneToday={t.week.days.find((d) => d.today)?.workouts.length ?? 0}
-      />
+      <DayTiles />
       {/* В браузере шагов нет — карточка объясняет, где их смотреть */}
       {isAndroidApp() ? <StepsCard /> : <StepsWebCard />}
       {t.week.backupDue && !t.active && (
@@ -325,7 +323,8 @@ function PlanList({
   const extra = Math.max(0, plan.items.length - PLAN_PREVIEW)
   const shown = expanded ? plan.items : plan.items.slice(0, PLAN_PREVIEW)
   return (
-    <section className={`${styles.card} ${frame.frame}`} aria-label={plan.source}>
+    <section className={`${styles.card} ${styles.hero} ${frame.frame}`} aria-label={plan.source}>
+      {/* Шапка-герой: тренировка дня крупно на фирменном градиенте */}
       <div className={styles.listHead}>
         <div>
           <span className={styles.listSource}>{plan.source}</span>
